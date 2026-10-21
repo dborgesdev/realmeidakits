@@ -2,17 +2,22 @@ import { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/home/Header";
 import Footer from "./components/home/Footer";
+import ConclusionPage from "./pages/ConclusionPage";
 import Home from "./pages/Home";
 import EventsPage from "./pages/EventsPage";
 import RequestPage from "./pages/RequestPage";
+import TrackingPage from "./pages/TrackingPage";
+import LegacyRequest from "./pages/LegacyRequest";
 import InfoPage from "./pages/InfoPage";
 import NotFound from "./pages/NotFound";
 export default function App() {
   const location = useLocation();
   useEffect(() => {
-    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Solicitação demonstrativa" : "Conheça a plataforma"} | Re Almeida Kits`;
-    if (!location.hash) window.scrollTo(0, 0);
-    else
+    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Inscrição demonstrativa" : location.pathname === "/conclusao" ? "Pedido finalizado — demonstração" : location.pathname === "/acompanhamento" ? "Acompanhar pedido — demonstração" : "Conheça a plataforma"} | Re Almeida Kits`;
+    if (!location.hash) {
+      window.scrollTo(0, 0);
+      document.getElementById("conteudo")?.focus({ preventScroll: true });
+    } else
       requestAnimationFrame(() =>
         document.getElementById(location.hash.slice(1))?.scrollIntoView(),
       );
@@ -37,7 +42,13 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/corridas" element={<EventsPage />} />
           <Route path="/corridas/:slug" element={<EventsPage />} />
-          <Route path="/solicitacao/:slug/:stage" element={<RequestPage />} />
+          <Route
+            path="/solicitacao/:stage"
+            element={<RequestPage key={location.pathname} />}
+          />
+          <Route path="/solicitacao/:slug/:stage" element={<LegacyRequest />} />
+          <Route path="/conclusao" element={<ConclusionPage />} />
+          <Route path="/acompanhamento" element={<TrackingPage />} />
           <Route path="/orientacoes" element={<InfoPage />} />
           <Route path="/privacidade" element={<InfoPage privacy />} />
           <Route path="*" element={<NotFound />} />

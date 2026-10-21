@@ -1,114 +1,153 @@
-import { useState } from "react";
-import { FileCheck2, Upload } from "lucide-react";
-import { fileError } from "../../state/rules";
+import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
 import { requiredDocuments } from "../../state/requestRules";
-export default function DocumentsStep({
-  authorization,
-}: {
-  authorization: boolean;
-}) {
-  const { draft, setDraft } = useDemo();
-  const [error, setError] = useState("");
-  const required = requiredDocuments(authorization);
+import ParticipantPanels from "../participants/ParticipantPanels";
+import { controlId, missingDocuments } from "../../state/validationRules";
+import DocumentPicker from "./DocumentPicker";
+export default function DocumentsStep() {
+  const { draft, setDraft, updateItem } = useDemo();
+  function personal(id: string, doc: string, value: string) {
+    setDraft((d) => ({
+      ...d,
+      participants: d.participants.map((p) =>
+        p.id === id ? { ...p, documents: { ...p.documents, [doc]: value } } : p,
+      ),
+    }));
+  }
   return (
     <>
-      <h1>Documentos para esta corrida</h1>
+      <h1>Documentos de cada participante</h1>
       <p>
-        Use os exemplos prontos ou selecione arquivos fictícios PDF, JPG ou PNG
-        (até 5 MB). Nada será transmitido; o conteúdo dos arquivos não é lido
-        nem guardado.
+        Somente exemplos. Nenhum conteúdo é lido, enviado ou armazenado.
+        Identificação pessoal pertence à pessoa; comprovantes e autorizações
+        pertencem a cada corrida.
       </p>
-      <button
-        type="button"
-        className="button secondary"
-        onClick={() => {
-          setDraft({
-            ...draft,
-            confirmed: false,
-            documents: Object.fromEntries(
-              required.map((k) => [k, "Documento fictício pronto"]),
-            ),
-          });
-          setError("");
+      <ParticipantPanels
+        participants={draft.participants}
+        describe={(p) => {
+          const count = missingDocuments(p, events);
+          return count
+            ? `! ${count} documento${count === 1 ? "" : "s"} pendente${count === 1 ? "" : "s"}`
+            : "✓ Completo · documentos de exemplo";
         }}
       >
-        Usar documentos de exemplo
-      </button>
-      <div className="upload-list">
-        {required.map((k) => (
-          <div className="upload" key={k}>
-            <label>
-              <span>
-                {draft.documents[k] ? <FileCheck2 /> : <Upload />} {k}
-              </span>
-              <input
-                type="file"
-                accept="application/pdf,image/jpeg,image/png"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  const message = fileError(f);
-                  setError(message);
-                  if (!message)
-                    setDraft({
-                      ...draft,
-                      confirmed: false,
-                      documents: {
-                        ...draft.documents,
-                        [k]: "Arquivo fictício selecionado",
-                      },
-                    });
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            {draft.documents[k] && (
-              <small className="success">
-                ✓ {draft.documents[k]}{" "}
+        {(p, next) => {
+          const docs = Array.from(
+            new Map(
+              p.items.flatMap((item) =>
+                requiredDocuments(
+                  item,
+                  events.find((r) => r.id === item.raceId)!,
+                )
+                  .filter((d) => d.scope === "personal")
+                  .map((d) => [d.id, d] as const),
+              ),
+            ).values(),
+          );
+          return (
+            <>
+              {docs.length > 0 && (
+                <fieldset className="form-section">
+                  <legend>Documentos pessoais · {p.person.name}</legend>
+                  {p.existingDocumentIds.length > 0 && (
+                    <div className="notice">
+                      <p>
+                        Já existe um documento cadastrado para este
+                        participante.
+                      </p>
+                      <p>
+                        Este cenário usa um registro fictício. A pessoa
+                        responsável não pode visualizar nem baixar documentos
+                        privados.
+                      </p>
+                      <label className="radio">
+                        <input
+                          type="checkbox"
+                          checked={p.reuseAuthorized}
+                          onChange={(e) => {
+                            const authorized = e.target.checked;
+                            setDraft((d) => ({
+                              ...d,
+                              participants: d.participants.map((person) =>
+                                person.id === p.id
+                                  ? {
+                                      ...person,
+                                      reuseAuthorized: authorized,
+                                      documents: {
+                                        ...person.documents,
+                                        ...Object.fromEntries(
+                                          person.existingDocumentIds.map(
+                                            (id) => [
+                                              id,
+                                              authorized
+                                                ? "Documento fictício reutilizado com autorização"
+                                                : "",
+                                            ],
+                                          ),
+                                        ),
+                                      },
+                                    }
+                                  : person,
+                              ),
+                            }));
+                          }}
+                        />
+                        Autorizo reutilizar o documento fictício deste
+                        participante
+                      </label>
+                    </div>
+                  )}
+                  {docs.map((d) => (
+                    <DocumentPicker
+                      key={d.id}
+                      controlId={controlId("document", p.id, undefined, d.id)}
+                      label={d.label}
+                      value={p.documents[d.id]}
+                      onChange={(value) => personal(p.id, d.id, value)}
+                    />
+                  ))}
+                </fieldset>
+              )}
+              {p.items.map((item) => {
+                const race = events.find((r) => r.id === item.raceId)!;
+                const specific = requiredDocuments(item, race).filter(
+                  (d) => d.scope === "race",
+                );
+                return (
+                  <fieldset className="form-section" key={race.id}>
+                    <legend>{race.name}</legend>
+                    {specific.map((d) => (
+                      <DocumentPicker
+                        key={d.id}
+                        controlId={controlId("document", p.id, race.id, d.id)}
+                        label={d.label}
+                        value={item.documents[d.id]}
+                        onChange={(value) =>
+                          updateItem(p.id, race.id, {
+                            documents: { ...item.documents, [d.id]: value },
+                          })
+                        }
+                      />
+                    ))}
+                    {!specific.length && (
+                      <p>Sem documento específico neste exemplo.</p>
+                    )}
+                  </fieldset>
+                );
+              })}
+              {next && (
                 <button
                   type="button"
-                  className="text-button"
-                  onClick={() => {
-                    const docs = { ...draft.documents };
-                    delete docs[k];
-                    setDraft({ ...draft, confirmed: false, documents: docs });
-                  }}
+                  className="button secondary"
+                  onClick={next}
                 >
-                  Remover
+                  Próximo participante
                 </button>
-              </small>
-            )}
-          </div>
-        ))}
-      </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {authorization && (
-        <label className="radio">
-          <input
-            type="checkbox"
-            required
-            checked={draft.authorized}
-            onChange={(e) =>
-              setDraft({
-                ...draft,
-                confirmed: false,
-                authorized: e.target.checked,
-              })
-            }
-          />{" "}
-          Entendi que a autorização é específica desta corrida e permite a
-          retirada física pela Re Almeida.
-        </label>
-      )}
-      <p className="caption">
-        Obrigatórios: {required.length} documentos do exemplo. O fluxo só avança
-        quando todos estiverem selecionados.
-      </p>
+              )}
+            </>
+          );
+        }}
+      </ParticipantPanels>
     </>
   );
 }

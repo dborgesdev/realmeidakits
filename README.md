@@ -1,32 +1,48 @@
-# Re Almeida Kits — V1 demonstrativa
+# Re Almeida Kits — V2 demonstrativa refinada
 
-Prévia React + TypeScript + Vite + Tailwind. Site público e jornada de retirada, sem backend, autenticação, cobrança, e-mail ou armazenamento de documentos. Estado em memória, perdido ao recarregar. Use somente dados fictícios.
+React + TypeScript + Vite + Tailwind, pnpm. Evolução preservada na branch `feat/v2-preview`, sem backend ou operações reais. **Não fazer commit, push, PR, merge ou deploy nesta rodada.** Main e V1 publicada permanecem inalteradas.
 
 ## Executar e validar
 
-`pnpm install` e `pnpm dev`. Verificações: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`. Build estático em `dist/`; `pnpm preview` para conferir produção.
+`pnpm install --frozen-lockfile` e `pnpm dev`; abrir http://localhost:5173/ . Validações: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`. Preview estático: `pnpm preview`. Dados somente em memória, apagados ao atualizar a página. Use apenas identidades e documentos fictícios.
 
-## Roteiro
+## Pedido individual
 
-- Home `/`, catálogo `/corridas` e detalhes `/corridas/circuito-rio-antigo`: exemplos rotulados, sem datas ou preços inventados.
-- Solicitar retirada: modalidade, identificação fictícia, dados, documentos, revisão, pagamento simulado e voucher sem validade.
-- Kit oficial: dados individuais e comprovantes, sem campos APPAI. APPAI: matrícula `DEMO-101`, camiseta com tamanho ou somente número de peito sem tamanho.
-- Circuito Rio Antigo exemplifica nascimento/telefone e autorização exigidos; Corrida da Primavera exemplifica ausência dessas exigências. Configurações ilustrativas, não requisitos reais confirmados.
-- Usar documentos de exemplo e concordar com autorização quando exigida; testar pendências, retorno para editar e bloqueio de avanço.
-- `/orientacoes`, `/privacidade` e 404. `/minha-conta` e `/admin-demo` removidas.
+1. No catálogo, selecionar Circuito Rio Antigo; a faixa fixa mostra seleção e estimativa. “Finalizar inscrição →” abre configuração do pedido.
+2. Manter Somente para mim, continuar e conferir responsável demonstrativo.
+3. No participante, opcionalmente usar dados do responsável. Marcar explicitamente Circuito, Kit Oficial, 5 km, Kit tradicional e Ponto A. Manter identificador DEMO de inscrição.
+4. Documentos: autorizar reuso fictício da identidade ou usar exemplo novo, e usar exemplos nos documentos específicos. Aceitar as condições de exemplo.
+5. Revisar e escolher Pix/cartão sem cobrança. Confirmar pagamento e finalizar abre sucesso separado; edição fica bloqueada.
 
-Seções e etapas componentizadas em `src/components`, fixtures em `src/data`, estado e regras em `src/state`. CPF, telefone e e-mail usam identificadores de exemplo, sem dados pessoais reais. Arquivos não são lidos nem enviados; somente marcadores genéricos em memória.
+## Três participantes e duas corridas
 
-## Escopo futuro e referências
+1. Selecionar Circuito Rio Antigo e Corrida da Primavera. Finalizar inscrição → Para mais pessoas → quantidade 3.
+2. Conferir responsável. Abrir um painel por vez; nomes e CPFs são fictícios e distintos.
+3. Pessoa 1: Circuito, Oficial, 5 km, Kit tradicional, Ponto A.
+4. Pessoa 2: Circuito, APPAI, 10 km, somente número, Ponto B; matrícula DEMO própria se desejar alterar.
+5. Pessoa 3: Circuito, APPAI, 5 km, camiseta M, Ponto A; Primavera, Oficial, 10 km. Identificadores DEMO permanecem por item.
+6. Completar documentos de cada pessoa/prova e aceites gerais uma única vez por corrida. Identidade pode ser usada pela mesma titular; autorizações e comprovantes não se propagam a outras inscrições.
+7. Revisar quatro retiradas agrupadas em três pessoas. Neste exemplo, total ilustrativo Pix R$98 / cartão R$114. Alterar antes da confirmação e conferir preservação dos outros dados.
+8. Adicionar/remover pessoas, respeitando limite central em `src/config/preview.ts`. Alterar quantidade não reinicia o restante do pedido; reduzir descarta últimas pessoas.
 
-Administração definitiva no wp-admin WordPress/WooCommerce. Área da corredora prioriza a personalização de Minha Conta em `app.realmeidakits.com.br`, com arquitetura/interface ainda por avaliar. Nenhum contrato de API definido. Ver [escopo](docs/project.md), [integração futura](docs/integration.md) e [validações](docs/qa.md).
+## PDF, conclusão e acompanhamento
 
-O conceito visual define aparência; documentos definem negócio. Fotos são conceituais. Marca original `logo-corredor-original.jpg` preservada no cabeçalho, rodapé e voucher. Eventos, valores, contatos e requisitos definitivos dependem de validação.
+Após finalizar, a conclusão exibe pedido fictício, participantes, corridas e vouchers únicos. Baixar PDF gera e baixa um PDF local do voucher selecionado, com logo, opções, orientações e marca d’água DEMONSTRAÇÃO — SEM VALIDADE. Sem QR/validade operacional. Não há download ou visualização de anexos pessoais.
 
-## Publicação
+O botão de grupo WhatsApp só aparece com URL confirmada. As fixtures não têm URLs; a interface informa a indisponibilidade. Acompanhar pedido mostra status independentes por participante/corrida; primeiro item tem número 001 — EXEMPLO, demais pendentes. Seletor altera somente cenário ilustrativo de retirada.
 
-Cloudflare Workers: `pnpm deploy` (novo build e publicação), saída `dist`, Static Assets e fallback `single-page-application` em `wrangler.jsonc`. Worker `realmeidakits`, inicialmente apenas `workers.dev`, sem domínio personalizado. `pnpm exec wrangler whoami` verifica a sessão; se necessário, autenticar pelo fluxo oficial `pnpm exec wrangler login`, nunca por tokens no chat. `vercel.json` permanece como configuração alternativa de SPA. Configure `VITE_SITE_URL` para canonical conforme `.env.example`. A prévia tem `noindex,nofollow` e robots bloqueado; sitemap omitido por conter exemplos. Rever SEO/indexação na fase funcional. Não é necessário servidor customizado.
+Voltar do navegador ou abrir uma etapa após conclusão não permite editar: retorna ao sucesso. **Nova inscrição** inicia outro rascunho. Selecionar uma corrida aberta na home, catálogo ou detalhe depois de concluir também inicia automaticamente um novo pedido limpo, sem transportar dados/documentos/aceites e sem reset manual. Não há histórico do pedido anterior na prévia. Atualizar apaga a memória e mostra estado vazio, sem recuperar conta ou pedido.
 
-Trabalhar em `feat/v1-site`. Não fazer commit, push, PR ou merge sem pedido explícito.
+## Estrutura e produção preservada
 
-A referência visual fica em `docs/visual-concept.png` e não é publicada como asset. Credenciais Wrangler, `.dev.vars*`, `.env` locais, logs, `dist` e `node_modules` são ignorados pelo Git. Após integrar a PR, atualizar a `main` e executar `pnpm deploy`; alterações de código permanecem na branch de implementação.
+Configuração em `src/config`, tipos em `src/types`, fixtures em `src/data`, regras puras em `src/state`; componentes por seção, etapa, participante e acompanhamento. Sem novas dependências. Logo original e imagens conceituais preservados. Noindex/robots bloqueado e canonical por origem. Footer com crédito Smart Local mantido.
+
+Wrangler mantém Worker `realmeidakits`, Static Assets `dist`, fallback SPA e workers.dev, sem domínio/backend. Script deploy disponível somente para autorização futura. Credenciais, arquivos locais, `.wrangler`, `dist` e `node_modules` ignorados.
+
+[Escopo](docs/project.md), [integração futura](docs/integration.md) e [roteiro/resultados de QA](docs/qa.md). WordPress será administração; WooCommerce consolidará pagamento; futura conta pertence ao responsável. Segurança, documentos privados, permissões, edição controlada após pagamento e WhatsApp opcional exigem avaliação futura. Nenhuma integração ou API foi criada.
+
+## QA final de navegação e validação
+
+“Próximo participante” abre e focaliza o próximo cabeçalho; não aparece no último painel ou pedido de uma pessoa. Adicionar participante abre o novo painel. Ao continuar com erro, o campo pendente é focalizado inclusive em painel fechado, com mensagem específica associada; corrigir o campo não desloca o foco. Documentos indicam quantidade pendente. Aceites estão no pedido por corrida e versão demonstrativa, sem repetir por participante; mudar a condição ou retirar/reinserir a corrida exige novo aceite. Autorizações individuais continuam separadas.
+
+Terminologia: Dados dos participantes → Confira seu pedido → Ir para pagamento → Pedido finalizado! → Acompanhar pedido / Voucher de retirada / Nova inscrição. As regras comerciais continuam sendo exclusivamente de retirada de kits.

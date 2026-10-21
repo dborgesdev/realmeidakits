@@ -1,61 +1,63 @@
-import type { Race } from "../../data/events";
 import { Link } from "react-router-dom";
+import { events } from "../../data/events";
+import { totalPrice, money } from "../../state/pricing";
 import { useDemo } from "../../state/DemoContext";
-export default function ReviewStep({ event }: { event: Race }) {
+import OrderSummary from "./OrderSummary";
+export default function ReviewStep() {
   const { draft } = useDemo();
+  const total = totalPrice(
+    draft.participants.flatMap((p) => p.items),
+    events,
+    draft.method,
+  );
   return (
     <>
-      <h1>Está tudo certo?</h1>
-      <p>Revise os dados antes de conhecer a simulação de pagamento.</p>
-      <dl className="summary">
-        <dt>Corrida</dt>
-        <dd>{event.name} · DEMONSTRAÇÃO</dd>
-        <dt>Modalidade</dt>
-        <dd>
-          {draft.modality === "appai" ? "Associado à APPAI" : "Kit oficial"}
-        </dd>
-        <dt>Participante</dt>
-        <dd>{draft.name} · CPF ***.***.***-**</dd>
-        {draft.modality === "appai" && (
-          <>
-            <dt>Matrícula / opção</dt>
-            <dd>
-              {draft.membership} ·{" "}
-              {draft.kit === "camiseta"
-                ? `Camiseta ${draft.size} com número de peito`
-                : "Somente número de peito"}
-            </dd>
-          </>
-        )}
-        {event.birthDateRequired && (
-          <>
-            <dt>Nascimento do exemplo</dt>
-            <dd>**/**/**** · informado</dd>
-          </>
-        )}
-        {event.phoneRequired && (
-          <>
-            <dt>Telefone do exemplo</dt>
-            <dd>DEMO-TELEFONE</dd>
-          </>
-        )}
-        <dt>Documentos fictícios</dt>
-        <dd>{Object.keys(draft.documents).join(", ")}</dd>
-        <dt>Valor do serviço</dt>
-        <dd>A confirmar · Não há cobrança nesta prévia</dd>
-      </dl>
-      <div className="actions">
-        <Link className="text-link" to={`/solicitacao/${draft.slug}/dados`}>
-          Editar dados
+      <h1>Confira seu pedido</h1>
+      <p className="help-panel">
+        Total demonstrativo do pedido · {draft.method}:{" "}
+        <strong>
+          {money(total.known)}
+          {total.pending ? " + a confirmar" : ""}
+        </strong>
+      </p>
+      <p>
+        Pessoa responsável: {draft.responsible.name} · {draft.responsible.email}
+      </p>
+
+      {draft.participants.map((p) => (
+        <section className="form-section" key={p.id}>
+          <h2>{p.person.name}</h2>
+          <p>
+            {p.person.cpf} · {p.person.birthDate} · {p.person.phone}
+          </p>
+          <OrderSummary items={p.items} method={draft.method} />
+          <p className="success">
+            ✓ Documentos demonstrativos completos e condições aceitas para cada
+            corrida.
+          </p>
+        </section>
+      ))}
+      <nav
+        className="review-actions"
+        aria-label="Editar pedido antes de finalizar"
+      >
+        <Link className="button secondary" to="/solicitacao/responsavel">
+          Editar pessoa responsável
         </Link>
-        <Link
-          className="text-link"
-          to={`/solicitacao/${draft.slug}/documentos`}
-        >
+        <Link className="button secondary" to="/solicitacao/participantes">
+          Editar participantes
+        </Link>
+        <Link className="button secondary" to="/solicitacao/documentos">
           Rever documentos
         </Link>
-      </div>
-      <div className="notice">Prévia: nenhum pagamento será cobrado.</div>
+        <Link className="button secondary" to="/solicitacao/condicoes">
+          Rever condições
+        </Link>
+      </nav>
+      <p className="notice">
+        Após finalizar, este pedido ficará bloqueado. Nenhuma cobrança, reserva
+        ou análise documental será realizada.
+      </p>
     </>
   );
 }

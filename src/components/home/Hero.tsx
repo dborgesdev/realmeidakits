@@ -18,7 +18,7 @@ export default function Hero() {
         </h1>
         <p>
           Escolha sua corrida, confira os documentos necessários e experimente a
-          solicitação de retirada, passo a passo.
+          inscrição para retirada, passo a passo.
         </p>
         <div className="actions">
           <Action to="/corridas">Escolher minha corrida</Action>
@@ -29,7 +29,7 @@ export default function Hero() {
         <div className="hero-benefits">
           <span>
             <ClipboardCheck />
-            Solicitação
+            Inscrição
             <br />
             passo a passo
           </span>

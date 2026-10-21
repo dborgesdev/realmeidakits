@@ -1,37 +1,60 @@
+import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
+import { money, totalPrice } from "../../state/pricing";
+import OrderSummary from "./OrderSummary";
 export default function PaymentStep() {
   const { draft, setDraft } = useDemo();
+  const items = draft.participants.flatMap((p) => p.items);
   return (
     <>
-      <h1>Conheça as opções de pagamento</h1>
+      <h1>Um pagamento para as suas corridas</h1>
       <p>
-        Simulação sem cobrança. Valores serão definidos por evento e modalidade
-        na versão funcional.
+        Valores de demonstração, calculados por corrida e opção. Pix e cartão
+        são apenas alternativas visuais; não há cobrança ou confirmação
+        bancária.
       </p>
-      <fieldset>
-        <legend>Escolha uma opção para visualizar</legend>
-        {["Pix", "Cartão"].map((method) => (
-          <label className="radio payment-option" key={method}>
-            <input
-              type="radio"
-              name="method"
-              checked={draft.method === method}
-              onChange={() => setDraft({ ...draft, method, confirmed: false })}
-            />
-            <strong>{method}</strong>
-          </label>
-        ))}
+      <fieldset className="payment-choices">
+        <legend>Escolha uma alternativa simulada</legend>
+        {(["Pix", "Cartão"] as const).map((method) => {
+          const total = totalPrice(items, events, method);
+          return (
+            <label className="radio payment-option" key={method}>
+              <input
+                type="radio"
+                name="method"
+                checked={draft.method === method}
+                onChange={() => setDraft((d) => ({ ...d, method }))}
+              />
+              <span>
+                <strong>
+                  {method} · {money(total.known)}
+                  {total.pending ? " + a confirmar" : ""}
+                </strong>
+                <span className="field-help">
+                  Total ilustrativo de {items.length}{" "}
+                  {items.length === 1 ? "corrida" : "corridas"}
+                </span>
+              </span>
+            </label>
+          );
+        })}
       </fieldset>
+      {draft.participants.map((p) => (
+        <section key={p.id}>
+          <h2>{p.person.name}</h2>
+          <OrderSummary items={p.items} method={draft.method} />
+        </section>
+      ))}
+      <p className="notice">
+        Confirmar pagamento e finalizar apenas encerra esta demonstração.
+        Nenhuma cobrança será feita.
+      </p>
       <div className="soft inset">
-        <h3>
-          {draft.method === "Pix"
-            ? "Pix demonstrativo"
-            : "Cartão demonstrativo"}
-        </h3>
+        <h3>{draft.method} demonstrativo</h3>
         <p>
           {draft.method === "Pix"
-            ? "Na versão funcional, o checkout exibirá o código Pix do provedor de pagamento. Não há chave ou código copiável aqui."
-            : "O preenchimento dos dados do cartão acontecerá no checkout seguro da versão funcional. Não informe números reais nesta prévia."}
+            ? "Sem chave, QR Pix ou código copiável. Não realize transferência."
+            : "Não informe dados de cartão. Não há formulário bancário ou processamento de crédito."}
         </p>
         <strong>Nenhuma transação será realizada ou confirmada.</strong>
       </div>

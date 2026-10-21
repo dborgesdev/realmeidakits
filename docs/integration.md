@@ -1,21 +1,43 @@
-# WordPress/WooCommerce — decisões e avaliação futura
+# WordPress/WooCommerce — direção futura
 
-## Decisões registradas
+Atualizado em 21/10/2026. Esta revisão **substitui** a restrição anterior de uma participante por pedido e conta restrita a solicitações próprias. A V2 é somente demonstrativa; não define API, tabelas SQL, payloads, endpoints ou interface definitiva.
 
-- Administração definitiva no wp-admin do WordPress, com WooCommerce e funcionalidades personalizadas conforme necessidade.
-- Prioridade para personalização de Minha Conta do WooCommerce em `app.realmeidakits.com.br`.
-- Painel administrativo e área da corredora demonstrativos removidos do React. Não substituir por login fictício ou links que prometam funcionalidades ainda indisponíveis.
-- React V1 valida somente site público e jornada demonstrativa de retirada. Não é backend operacional nem define a arquitetura da aplicação futura.
+## Modelo conceitual aprovado
 
-## Avaliações pendentes
+| Entidade                | Responsabilidade                                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Responsável             | Conta autenticada, pedidos, autorizações e contatos. Titular da transação; pode também ser participante.                                                      |
+| Participante            | Identidade individual, CPF, dados e documentos pessoais próprios. Pode integrar várias corridas.                                                              |
+| Pedido                  | Responsável, participantes vinculados, valores, pagamento consolidado e estado financeiro.                                                                    |
+| Inscrição para retirada | Uma participante + uma corrida; modalidade, kit, distância, tamanho, local, documentos específicos, condições, número de peito, voucher e estado operacional. |
+| Corrida                 | Nome/imagem, modalidades, valores, abertura/encerramento, documentos, condições, locais e grupo WhatsApp opcional confirmado.                                 |
 
-1. Inventariar WordPress/WooCommerce, hospedagem e recursos existentes; avaliar extensões realmente necessárias e possibilidade de personalização de Minha Conta antes de desenhar sua interface.
-2. Definir relação entre site público e aplicação no subdomínio, navegação, sessão, autenticação e conta individual por CPF. Não presumir SSO ou compartilhamento de sessão.
-3. Modelar corridas, modalidades, requisitos por evento, preços, disponibilidade, solicitações e estados operacionais. Conferir formulários e áudios antes de fechar campos.
-4. Definir anexos protegidos, retenção, permissões, validação, acesso e eventual reutilização pela titular; autorização específica não é automaticamente reutilizável.
-5. Avaliar checkout Pix/cartão, confirmação no servidor, falhas, cancelamentos/estornos e condições para emissão de voucher PDF/QR válido.
-6. Definir baixa de retirada, prevenção de duplicidade, número de peito, auditoria, exportação Excel e e-mail após retirada.
-7. Validar grupos WhatsApp, comunicações, consentimentos e política jurídica com a responsável.
-8. Só após essas decisões especificar integrações e contratos, quando necessários. Nenhum endpoint, payload, plugin, webhook ou provedor está contratado/definido por esta V1.
+Pedido pode misturar várias participantes e corridas. Impedir duplicação participante/corrida; limite inicial de 20 participantes configurável. A modelagem final deve considerar a relação entre pessoas, conta responsável e inscrições sem confundir titularidade dos documentos com pagamento.
 
-A decisão por personalização de Minha Conta é prioritária; a arquitetura e a interface dependem dessa avaliação. Não implementar autenticação, upload remoto ou checkout como parte da prévia.
+## Administração, conta e pagamentos
+
+WordPress é fonte e administração das corridas/solicitações. Painel definitivo **wp-admin** com WooCommerce e funções personalizadas necessárias, preferencialmente plugin próprio após avaliação. WooCommerce cuida do checkout/pagamento consolidado; avaliar itens vinculados a inscrições individuais, valores por método, pagamentos verificados no servidor, expiração, cancelamentos parciais, estornos e abandono.
+
+Priorizar personalização de Minha Conta do WooCommerce em app.realmeidakits.com.br para o responsável. Interface, autenticação e integração serão definidas após inspecionar instalação e hospedagem HostGator Plano M. Não há admin/login/conta real React.
+
+Após pagamento confirmado, alterações relevantes exigem procedimento operacional controlado, autorização, registro e eventual ajuste financeiro. Não permitir simples edição livre; procedimento ainda não implementado. Números de peito atribuídos separadamente por prova; pagamento não significa documentos aprovados, número atribuído, kit disponível ou retirada concluída.
+
+## Segurança e documentos
+
+CPF é identificador, **não credencial**. Consultar apenas CPF não pode revelar existência ou conteúdo de documentos de terceiros. Reuso exige autenticação, autorização e validação adequadas, com privacidade e finalidade definidas. Documento pessoal pertence à participante; comprovante/autorização específicos pertencem à inscrição e condições da prova. Não expor download/visualização de anexos privados na interface do responsável sem política específica autorizada. Definir armazenamento privado, retenção, revogação, permissões, auditoria e proteção de exportações.
+
+Aceite geral realizado pela pessoa responsável uma única vez por condição/corrida no contexto do pedido. Preservar identificação e versão da condição, data/momento, vínculo com pedido/corrida e identificação dos participantes aos quais se aplica. Adicionar participante a uma corrida já aceita não exige repetição visual do mesmo aceite, desde que a condição continue aplicável e válida. Alterar a versão aplicável exige novo aceite. Autorizações individuais do atleta ou de responsável legal continuam documentos separados e obrigatórios quando configurados; o aceite geral não as substitui. Na prévia a versão é demonstrativa (ID + conteúdo exato), sem registro jurídico de data.
+
+Validar a minuta de dois meses/não comparecimento/doação. Definir emissão e invalidação de vouchers, QR operacional, prevenção de retirada duplicada e trilha de auditoria. Conta principal da Renata e perfil operacional restrito da filha devem seguir menor privilégio e escopos validados. Não criar usuários reais na prévia.
+
+## Operação e comunicação pendentes
+
+Relatórios e exportações Excel de pedidos concluídos, pendentes e abandonados; filtros e proteção a definir. E-mail histórico com número após retirada depende de provedor e eventos confirmados. Grupo de cada corrida configurado no WordPress somente quando confirmado.
+
+WhatsApp Business Platform oficial permanece **opcional e pendente de aprovação da cliente**, avaliação de custos de configuração, integração e mensagens. Não ativado/contratado na V2. Acompanhamento no site deve funcionar sem notificações. Sem envio automático nesta fase.
+
+Inspecionar infraestrutura real, plugins existentes, domínio/subdomínio, sessões, segurança, checkout e divisão de papéis antes de definir contratos. As fixtures e regras desacopladas da prévia não constituem contrato de integração.
+
+## Novo pedido e limites da prévia
+
+Após concluir, o snapshot permanece imutável. Selecionar uma corrida aberta na home, catálogo ou detalhe inicia automaticamente outro rascunho, sem transportar dados pessoais, documentos ou aceites anteriores. A prévia não mantém histórico e não exige reset manual. Na versão real, a criação de outro pedido deve preservar os pedidos anteriores na conta autenticada da pessoa responsável; arquitetura e permissões ainda dependem da avaliação da instalação WooCommerce. Nenhuma nova API ou persistência foi criada nesta rodada.

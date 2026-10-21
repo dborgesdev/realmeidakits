@@ -8,7 +8,8 @@ export default function Guidance() {
         <h2>Retirada pela Re Almeida</h2>
         <p>
           A autorização permite que a Re Almeida retire fisicamente o kit por
-          você. A solicitação é individual.
+          você. Cada pessoa mantém sua própria identificação e autorização por
+          corrida.
         </p>
         <p>
           As exigências variam por corrida. Consulte os documentos antes de

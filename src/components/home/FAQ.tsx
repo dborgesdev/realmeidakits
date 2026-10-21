@@ -1,3 +1,4 @@
+import { previewConfig } from "../../config/preview";
 export default function FAQ() {
   return (
     <section className="container section faq">
@@ -10,15 +11,15 @@ export default function FAQ() {
         {[
           [
             "Estou comprando uma inscrição?",
-            "Não. O serviço apresentado é a retirada do kit para participantes. Esta V1 é uma demonstração.",
+            "Não. O serviço apresentado é a retirada do kit para participantes. Esta prévia é uma demonstração.",
           ],
           [
-            "Quais documentos preciso apresentar?",
-            "Depende das exigências da corrida e da modalidade. Confira os documentos na página do evento.",
+            "Posso escolher várias corridas?",
+            `Sim. Uma pessoa responsável pode organizar até ${previewConfig.maxParticipants} participantes, cada um com uma ou várias corridas. As opções e os documentos são separados por pessoa e prova.`,
           ],
           [
             "O que significa autorizar a retirada?",
-            "A solicitação é individual. A autorização permite que a Re Almeida retire fisicamente o kit pela participante.",
+            "Cada pessoa mantém sua identidade e corridas. A autorização específica permite que a Re Almeida retire fisicamente o kit pelo participante.",
           ],
           [
             "Vou pagar ou enviar documentos de verdade?",
