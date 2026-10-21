@@ -69,3 +69,11 @@ export function selectForNewOrder(draft: Draft, race: Race): Draft {
   }
   return toggleSelection(draft, race);
 }
+
+// Entry shortcuts affect future assignments only. A completed order starts clean.
+export function preferModality(draft: Draft, modality: Modality): Draft {
+  return {
+    ...(draft.order ? initialDraft() : draft),
+    preferredModality: modality,
+  };
+}

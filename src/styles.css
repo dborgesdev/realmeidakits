@@ -261,6 +261,16 @@ ul {
   gap: 32px;
   margin: 34px 0 22px;
 }
+.hero .actions {
+  max-width: 700px;
+  gap: 12px;
+  align-items: stretch;
+}
+.hero .actions .button {
+  min-height: 52px;
+  white-space: normal;
+  text-align: center;
+}
 .hero-benefits span {
   display: flex;
   gap: 10px;

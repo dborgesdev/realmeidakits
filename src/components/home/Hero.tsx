@@ -17,13 +17,14 @@ export default function Hero() {
           Retirada de kits de corrida <em>com mais praticidade.</em>
         </h1>
         <p>
-          Escolha sua corrida, confira os documentos necessários e experimente a
-          inscrição para retirada, passo a passo.
+          Solicite a retirada como associado à APPAI ou de um kit já comprado
+          com a organização. Aqui você não compra inscrições oficiais nas
+          corridas.
         </p>
         <div className="actions">
-          <Action to="/corridas">Escolher minha corrida</Action>
-          <Action to="/corridas?modalidade=appai" secondary>
-            Sou associado à APPAI
+          <Action to="/corridas?modalidade=appai">Sou associado à APPAI</Action>
+          <Action to="/corridas?modalidade=oficial" secondary>
+            Já comprei meu kit com a organização
           </Action>
         </div>
         <div className="hero-benefits">

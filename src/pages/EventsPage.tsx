@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useSearchParams, useParams } from "react-router-dom";
 import { events, asset } from "../data/events";
 import RaceDetailHero from "../components/RaceDetailHero";
@@ -10,11 +11,25 @@ import { availabilityLabel, isAvailable } from "../state/selectionRules";
 import NotFound from "./NotFound";
 export default function EventsPage() {
   const { slug } = useParams();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const event = events.find((e) => e.slug === slug);
-  const { draft, toggleRace, restart } = useDemo();
+  const { draft, toggleRace, restart, prefer } = useDemo();
+  const entry = params.get("modalidade");
+  useEffect(() => {
+    if (entry !== "appai" && entry !== "oficial") return;
+    prefer(entry);
+    // Consume the shortcut so refreshing or starting another order cannot replay it.
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete("modalidade");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [entry, prefer, setParams]);
   if (slug && !event) return <NotFound />;
-  const preferred = params.get("modalidade") === "appai" ? "appai" : undefined;
+  const preferred = draft.preferredModality;
   return (
     <div className="flow-shell">
       <div className="container page">
@@ -125,13 +140,16 @@ export default function EventsPage() {
             </PageTitle>
             {preferred && (
               <p className="notice">
-                Você veio pelo caminho APPAI. A modalidade estará disponível
-                somente nas corridas que a oferecem.
+                Preferência inicial:{" "}
+                {preferred === "appai" ? "Associado à APPAI" : "Kit Oficial"}.
+                Você pode alterar a modalidade de cada participante e corrida,
+                conforme as opções disponíveis. Configurações já preenchidas são
+                preservadas.
               </p>
             )}
             <div className="grid three">
               {events.map((e) => (
-                <EventCard key={e.id} event={e} preferred={preferred} />
+                <EventCard key={e.id} event={e} />
               ))}
             </div>
           </>

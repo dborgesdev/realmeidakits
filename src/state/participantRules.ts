@@ -42,7 +42,7 @@ export function assignRace(
             items: p.items.some((i) => i.raceId === race.id)
               ? p.items.filter((i) => i.raceId !== race.id)
               : isAvailable(race)
-                ? [...p.items, makeSelection(race)]
+                ? [...p.items, makeSelection(race, draft.preferredModality)]
                 : p.items,
           },
     ),

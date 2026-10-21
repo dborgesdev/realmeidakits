@@ -12,6 +12,14 @@ Branch existente `feat/v2-preview`. O QA foi concluído antes da publicação. E
 
 ## Jornada e páginas
 
+### Ajuste local dos CTAs por modalidade — 21/10/2026
+
+Rodada posterior à publicação da V2, implementada em `feat/v2-preview`. Após avaliação local, o usuário autorizou commit, push, PR, merge na main e deploy no Worker existente em 21/10/2026. Domínio definitivo permanece pendente.
+
+Hero mantém foto, identidade e composição, com os atalhos “Sou associado à APPAI” (primário vermelho) e “Já comprei meu kit com a organização” (secundário branco/outline), nesta ordem. Descrição esclarece que não há venda de inscrições oficiais. Mobile empilha botões com texto flexível e toque de pelo menos 52px.
+
+`Draft.preferredModality` é uma preferência opcional para novas configurações, centralizada nas regras/contexto. Links `?modalidade=appai|oficial` do Hero e da seção Modalidades são consumidos no catálogo e removidos da URL. Novas atribuições participante/corrida usam a preferência se oferecida; caso contrário, usam a primeira modalidade válida. O catálogo direto não define preferência global obrigatória e mantém a seleção normal editável. Cada participante pode alterar sua modalidade sem afetar os demais. Retornar pela home ou escolher outro atalho não sobrescreve campos, documentos ou itens já preenchidos. Nova inscrição, atualização e seleção direta após concluir descartam a preferência anterior; clicar em um atalho após concluir cria rascunho limpo com a nova preferência explícita. Nenhuma nova rota, formulário separado, integração ou regra de elegibilidade.
+
 - Home preserva hero e seções componentizadas, com entrada pelo catálogo ou seleção dos cards.
 - `/corridas` e `/corridas/:slug`: seleção global sem duplicação, faixa fixa contextual somente com seleção e antes da finalização. Desktop exibe quantidade e referência mínima ilustrativa para uma pessoa por corrida, claramente diferente do total definitivo; após configurar todos os participantes, mostra o total real da simulação; mobile prioriza quantidade/CTA e expande detalhes. O total definitivo do exemplo depende das atribuições e opções. Espaço inferior observado dinamicamente e safe area evitam ocultar o fim da página.
 - Detalhe usa imagem original conceitual em destaque com overlay e conteúdo extenso em superfície sólida.
