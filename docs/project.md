@@ -1,91 +1,74 @@
-# Re Almeida Kits — Escopo da V2 demonstrativa
+# Re Almeida Kits — Refinamento da V2 demonstrativa
 
-Atualizado em **20/10/2026**, conforme os apontamentos da Renata e a solicitação de implementação. Evolução da V1 aprovada, sem redesign ou operação real.
+Atualizado em 21/10/2026. As decisões desta revisão **substituem expressamente** as regras anteriores de uma participante por pedido e de conta individual impedindo pedidos para terceiros.
 
 ## Objetivo e limites
 
-Prévia React navegável para uma participante individual selecionar uma ou várias corridas, configurar cada item, preencher os dados uma vez, conferir documentos e condições, simular pagamento consolidado e conhecer o acompanhamento por corrida. Não vende inscrições nem kits.
+Evoluir a V1 e a V2 existentes, preservando identidade, imagens e componentes. Um responsável organiza um pedido individual ou em grupo, com várias participantes e corridas, e um pagamento consolidado apenas simulado. O serviço apresentado é retirada de kits, sem venda de inscrições. O CTA aprovado “Finalizar inscrição →” identifica a continuidade da solicitação.
 
-**Sem autenticação, backend, uploads remotos, armazenamento de arquivos/dados pessoais, pagamentos, comunicações, leitura de QR ou interfaces administrativas.** Estado e cenário de pedido somente em memória; atualizar a página apaga a demonstração. Não existe conta real. A tela de acompanhamento não é uma área da corredora completa nem define a interface final de Minha Conta do WooCommerce.
+Sem backend, autenticação, consulta de CPF, upload remoto, persistência, pagamento, análise de documentos, envio de mensagens, QR operacional ou administração React. Estado apenas na memória; atualizar a página apaga a sessão. Não usar dados, CPFs ou documentos reais. Fatos e regras vêm dos documentos; conceitos visuais não transformam exemplos em fatos reais da Renata.
 
-Repositório: https://github.com/dborgesdev/realmeidakits . V1 publicada: https://realmeidakits.smartlocal.workers.dev/ . Site público existente: https://realmeidakits.com.br/ . Futura aplicação WordPress/WooCommerce: https://app.realmeidakits.com.br/ . Hospedagem futura contratada: HostGator Plano M.
+Branch existente `feat/v2-preview`. Nesta rodada não fazer commit, push, PR, merge ou deploy. Main e V1 publicada em https://realmeidakits.smartlocal.workers.dev/ permanecem inalteradas. Repositório https://github.com/dborgesdev/realmeidakits . Futura aplicação https://app.realmeidakits.com.br/ ; hospedagem prevista HostGator Plano M.
 
-## Referências e decisões
+## Jornada e páginas
 
-Documentos e decisões do usuário definem as regras; conceito visual define aparência. Datas, provas, contatos e preços ilustrativos não são fatos reais da Renata. Preserve as marcas originais, utilizando `logo-corredor-original.jpg`, e as seis imagens WebP aprovadas. Hero, tipografia, composição e direção visual da home preservados; evoluir a entrada na jornada sem splash ou introdução obrigatória.
+- Home preserva hero e seções componentizadas, com entrada pelo catálogo ou seleção dos cards.
+- `/corridas` e `/corridas/:slug`: seleção global sem duplicação, faixa fixa contextual somente com seleção e antes da finalização. Desktop exibe quantidade e estimativa mínima ilustrativa para uma pessoa por corrida; mobile prioriza quantidade/CTA e expande detalhes. O total definitivo do exemplo depende das atribuições e opções. Espaço inferior observado dinamicamente e safe area evitam ocultar o fim da página.
+- Detalhe usa imagem original conceitual em destaque com overlay e conteúdo extenso em superfície sólida.
+- `/solicitacao/:stage`: **pedido → responsavel → participantes → documentos → condicoes → revisao → pagamento**. Quantidade individual ou grupo; responsável separado; atribuição explícita das corridas a cada participante; campos pessoais uma vez por pessoa. Sete etapas com indicador. Links antigos de etapas são redirecionados; links V1 com slug levam à corrida.
+- `/conclusao`: tela distinta de sucesso “Solicitação finalizada!”, identificador fictício, resumo agrupado, vouchers, grupos quando disponíveis, acompanhamento e nova solicitação. Nenhum formulário ou ação comum de edição.
+- `/acompanhamento`: responsável e participantes com status por pessoa/corrida; sem login ou consulta de identidade. Sem snapshot apresenta estado vazio.
+- `/orientacoes`, `/privacidade` e 404. Sem painel administrativo ou área de conta completa em React.
 
-Fontes históricas: proposta e aceite WhatsApp de setembro/2026, esclarecimentos e material de outubro; revisão de escopo V1 em 15/10 e apontamentos da Renata de 20/10. Formulários originais e áudios ainda precisam ser cotejados; não afirmar validação documental inexistente nem publicar dados pessoais desses materiais.
+## Responsável, participantes e inscrições para retirada
 
-## Páginas e jornada
+Limite inicial centralizado em `src/config/preview.ts`: **20 participantes**. Quantidade inicial de 2 até o limite para grupo; inclusão e remoção posteriores preservam as demais pessoas. Reduzir quantidade remove as últimas pessoas e seus itens; adicionar gera identidade fictícia nova, sem recuperar dados descartados. Nenhum nome de equipe.
 
-- `/`: home existente, três eventos ilustrativos, controles de seleção e resumo da seleção em seção própria. CTA principal continua levando ao catálogo.
-- `/corridas`: múltipla seleção, quantidade, estimativa demonstrativa e CTA de configuração. A mesma corrida não ocupa dois itens. Remover e adicionar preserva os dados pessoais; cada corrida removida perde suas opções/documentos específicos ao ser adicionada novamente.
-- `/corridas/:slug`: requisitos por modalidade, orientação, prazo de exemplo, condições ilustrativas e adicionar/remover corrida.
-- `/solicitacao/:stage`: **configuracao → identificacao → dados → documentos → condicoes → revisao → pagamento → confirmacao**. Seleção de corridas precede as oito etapas. Links V1 `/solicitacao/:slug/:stage` levam aos detalhes atuais da corrida.
-- `/acompanhamento`: acessível após confirmação; sem pedido na memória mostra estado vazio e CTA. Sem login, busca por CPF ou recursos de conta.
-- `/orientacoes`, `/privacidade` e 404. `/minha-conta` e `/admin-demo` permanecem ausentes.
+Responsável: nome fictício editável, e-mail `responsavel@example.invalid`, telefone e identificação DEMO fixos. Futuro titular da conta e transação. Participante: nome, CPF fictício único `DEMO-CPF-001` etc., nascimento e telefone de exemplo. A ação explícita “Esta pessoa sou eu” copia nome e contato do responsável somente para a pessoa escolhida, mantendo sua identidade demonstrativa. Não há cópia automática entre pessoas.
 
-## Dados configuráveis por corrida
+Cada combinação participante + corrida aparece uma vez. Selecionar corridas no catálogo não as atribui automaticamente ao grupo. Cada pessoa precisa de pelo menos uma atribuição, que mantém modalidade, distância, kit, tamanho condicional, retirada, valor, documentos, condições e estados próprios. Accordion abre uma pessoa por vez, com progresso, contador e próxima pessoa. Remover uma corrida do catálogo remove apenas seus itens de todas as pessoas, mantendo identidades.
 
-Tipos explícitos em `src/types/domain.ts`; fixtures em `src/data/events.ts`. Cada corrida contém ID/slug, nome, foto, descrição, data opcional, encerramento opcional, status aberta/encerrada/indisponível, modalidades disponíveis, distâncias, tipos de kit, preços em centavos, documentos por modalidade, condições versionadas de exemplo, pontos de retirada e orientações. URL WhatsApp é opcional e só deve existir se confirmada; nenhuma foi criada.
+## Corridas e modalidades
 
-Disponibilidade é calculada pelo status e pelo prazo, incluindo igualdade ao encerramento. Seleção e conclusão são bloqueadas para provas encerradas. Frontend demonstra a regra; a decisão autoritativa futura é do WordPress.
+Fixtures em `src/data/events.ts`; tipos em `src/types/domain.ts`. Preservadas as três provas conceituais e uma edição encerrada. Datas, valores, pontos, condições, tamanhos e eventos são DEMONSTRAÇÃO; não constituem oferta real. Imagens conceituais e `logo-corredor-original.jpg` preservados. Data e prazo opcionais. Disponibilidade depende de status e prazo, incluindo igualdade no encerramento; validação futura autoritativa no WordPress.
 
-As três provas originais continuam ilustrativas e abertas no cenário inicial; quarta fixture é uma edição encerrada do Circuito Rio Antigo, reutilizando seu asset. Todos os prazos, datas, pontos, grades e valores são **DEMONSTRAÇÃO**, não ofertas confirmadas. Campos opcionais permitem que data e prazo não existam.
+- Kit Oficial: número demonstrativo de inscrição/pedido `DEMO-INSCRICAO-001`, distância, tipo de kit e local quando configurados; sem matrícula APPAI.
+- APPAI: matrícula APPAI `DEMO-101` editável por inscrição, não matrícula funcional; camiseta com número exige tamanho da grade da corrida; somente número não exige tamanho. Valores e opções não são globais.
+- Mudar modalidade reinicia documentos, aceites e campos exclusivos daquele item; mantém distância/local se válidos, sem afetar outra pessoa ou prova.
+- Circuito e Primavera têm ambas; Desafio somente APPAI. Requisitos distintos: Circuito Oficial identidade/inscrição/autorização; Circuito APPAI identidade/autorização; Primavera Oficial inscrição, APPAI identidade; Desafio identidade/autorização/declaração.
 
-### Modalidades e campos por item
+## Documentos e condições
 
-- **Kit Oficial:** número de pedido/inscrição fictício obrigatório (`DEMO-INSCRICAO-001`), distância, tipo de kit quando configurado, local de retirada quando aplicável. Nunca exige matrícula APPAI.
-- **APPAI:** matrícula APPAI (`DEMO-101`; não matrícula funcional/de serviço), distância, camiseta com número de peito e tamanho obrigatório, ou somente número sem tamanho. Local de retirada quando aplicável. Tamanhos e opções vêm da configuração de cada corrida.
-- Modalidades não são globais. Circuito e Primavera exemplificam ambas; Desafio exemplifica somente APPAI; edição encerrada exemplifica somente Kit Oficial.
-- Alterar modalidade limpa documentos e aceites específicos daquele item e reinicia os campos exclusivos; conserva distância/local se ainda válidos. Outros itens e dados pessoais permanecem intactos.
+Documento pessoal pertence à participante. A primeira pessoa representa cenário fictício predefinido de documento existente: “Já existe um documento cadastrado para esta participante.” Reuso depende de checkbox explícito de autorização; substituição, atualização e remoção continuam disponíveis. Outras pessoas começam pendentes. Não existe busca de CPF, exposição, visualização ou download de anexos pessoais pelo responsável.
 
-### Dados pessoais, uma vez
+Documentos específicos e autorizações pertencem à inscrição para retirada, sem reaproveitamento automático entre provas ou pessoas. Selecionar exemplo ou arquivo local armazena somente marcador genérico; conteúdo e nome do arquivo não são lidos, enviados ou guardados. PDF/JPG/PNG até 5 MB. Isso não representa validação documental.
 
-Nome completo fictício editável, CPF fixo `DEMO-CPF`, nascimento fictício editável, telefone/WhatsApp `DEMO-TELEFONE` e e-mail `participante@example.invalid`. Marcadores protegem a prévia da coleta desnecessária de identificadores reais. Não exigir CPF/RG/telefone reais. Nome e data são validados; não existe validação de identidade ou cadastro.
+Aceite por inscrição e condição versionada de exemplo; todos devem ser conferidos. Minuta do Circuito sobre até dois meses após não comparecimento e possível doação posterior permanece sujeita à validação jurídica e operacional. A prévia não registra um aceite jurídico real.
 
-### Documentos
+## Revisão, simulação e bloqueio
 
-Não existe lista única rígida. Cada modalidade de cada corrida define seus requisitos. Identificação com foto é geral, reutilizável pela titular; comprovantes, declarações e autorizações são específicos do item. Autorização de uma corrida nunca atende a outra.
+Revisão e pagamento agrupados por participante; um total soma todos os itens em centavos por método Pix/cartão. Referências ilustrativas preservadas: R$26/30 em algumas opções, número R$20/24 e camiseta Desafio R$28/32. Valores ausentes aparecem a confirmar. Edição de participantes, opções, documentos e condições permitida antes da finalização.
 
-Componentes permitem usar exemplos, selecionar arquivo fictício local, substituir e remover, com status claro. Somente marcador genérico fica na memória: conteúdo e nome do arquivo não são guardados ou enviados. PDF/JPG/PNG até 5 MB; validação de tipo/tamanho não constitui análise documental real.
+“Confirmar pagamento e finalizar” informa expressamente ausência de cobrança. Sem QR Pix, chave, cartão ou confirmação bancária. Cria snapshot local profundamente copiado e congelado `DEMO-PEDIDO-001`; todas as mutações comuns são bloqueadas no contexto e nas regras. Acesso às etapas por URL ou voltar do navegador redireciona para conclusão. Iniciar **Nova solicitação** é a única forma comum de liberar um novo rascunho. Recarregar também apaga toda a memória, sem recuperar pedido anterior.
 
-Exemplos: Circuito Oficial requer identidade + inscrição + autorização; Circuito APPAI requer identidade + autorização; Primavera Oficial apenas inscrição, APPAI apenas identidade; Desafio APPAI identidade + autorização + declaração demonstrativa.
+## Vouchers, PDF e acompanhamento
 
-### Condições
+Um voucher por participante/corrida: `DEMO-VOUCHER-<participante>-<corrida>`. Exibe marca original, identidade fictícia, modalidade, kit, tamanho quando aplicável, distância, pedido e orientações. Marca d’água e aviso “DEMONSTRAÇÃO — SEM VALIDADE”; sem QR ou prova operacional.
 
-Aceite obrigatório contextual por corrida e ID de versão de exemplo. O Circuito demonstra a minuta sobre prazo de até dois meses após não comparecimento e possível doação posterior; texto explicitamente sujeito à validação jurídica/operacional. Outras corridas exibem condições diferentes, sem esconder diferenças em checkbox genérico. A prévia não registra momento jurídico do aceite. WordPress deverá preservar versão e momento no futuro.
+Botões Baixar PDF, Entrar no grupo de WhatsApp e Acompanhar pedido. **Baixar PDF gera e baixa um PDF A4 individual diretamente no navegador**, com a marca JPEG original incorporada, fonte padrão WinAnsi, informações da inscrição e marca d’água. Sem biblioteca adicional, backend ou leitura de anexos privados. O documento não é autorização operacional. A geração é separada em `src/state/voucherPdf.ts`, testada estruturalmente e conferida por extração de texto e renderização.
 
-### Pagamento e confirmação
+URL de grupo é opcional e só deve ser configurada quando confirmada; nenhuma URL inventada. Ausência mantém botão desabilitado e explicação. Links HTTPS WhatsApp válidos abrem em nova aba com proteção de opener. Não há envio de mensagem.
 
-Um resumo contém todos os itens e seus próprios valores. Totais calculados em centavos conforme método Pix/cartão e opção. R$ 26 Pix/R$ 30 cartão aparecem como referências ilustrativas em algumas configurações, sem regra universal; opção somente número exemplifica R$ 20/R$ 24 e camiseta do Desafio R$ 28/R$ 32. Valores desconhecidos são mostrados como a confirmar, sem serem tratados como zero definitivo.
+Acompanhamento por pessoa/prova distingue financeiro, documentos, número de peito, kit e retirada. Primeiro item mostra `001 — EXEMPLO`, demais aguardam atribuição. Seletor muda somente cenário ilustrativo de retirada, sem atualizar snapshot ou executar operação. Pagamento não implica número, disponibilidade ou retirada. Documentos do exemplo completos não são documentos analisados/aprovados.
 
-Sem chave, QR Pix, formulário de cartão, transação ou confirmação bancária. Confirmação gera somente snapshot local `DEMO-PEDIDO-001`. Revisar a demonstração invalida esse snapshot; não cria duplicidade operacional ou histórico real de pedidos.
+## Qualidade e implantação preservada
 
-### Acompanhamento, números e vouchers
+React + TypeScript + Vite + Tailwind + pnpm, lockfile preservado; sem novas dependências. Seções e etapas em arquivos próprios; configuração, fixtures e regras separadas da apresentação. Formulários off-white, branco, grafite/ardósia, ajuda areia e conclusão verde discreto; marca vermelha nas ações e erros. Hierarquia título bold, subtítulo semibold, labels medium e ajuda regular. Labels, teclado, foco, erros, estados textuais e reduced motion; responsividade alvo 320–1440px.
 
-Exibe participante fictícia, pedido local, corridas/modalidades, simulação de pagamento único, situação documental, número de peito, disponibilidade do kit, retirada e voucher por item. Estados independentes: pagamento não implica atribuição de número, kit disponível ou retirado.
+Footer mantém “Desenvolvido por Douglas Borges - Smart Local”, https://smartlocal.com.br , nova aba e `noopener noreferrer`.
 
-Cenário inicial: primeiro item mostra número `001 — EXEMPLO`; demais mostram ainda não informado. Seletor de cenário apenas alterna a visualização de uma primeira retirada concluída, sem funções administrativas ou registro real.
+Wrangler preservado: Worker `realmeidakits`, Static Assets `dist`, fallback SPA, workers.dev e nenhum backend/domínio. Preview com noindex, robots bloqueado e canonical por origem/configuração. Typecheck, lint, testes, build e QA registrados em [qa.md](qa.md).
 
-Número de peito identifica participante na corrida; voucher identifica solicitação de retirada por corrida; QR será mecanismo operacional futuro. Cada item tem voucher `DEMO-VOUCHER-<id>`, com marca original, indicação SEM VALIDADE/NÃO É COMPROVANTE e substituto SEM QR CODE. Não há PDF ou QR válido.
+## Pendências funcionais
 
-WhatsApp Business Platform depende de decisão comercial/técnica e custos. A prévia não promete recurso contratado ou ativado; acompanhamento pelo site independe dele.
-
-## Visual, acessibilidade e qualidade
-
-Manter React + TypeScript + Vite + Tailwind, pnpm/lockfile e componentes por seção/etapa. Separar tipos, fixtures, seleção, disponibilidade, validação, preços e cenários de status. Não criar dependências desnecessárias ou contratos de API. Apresentação poderá consumir dados substitutos sem reescrever a interface; o contrato real ainda não foi definido.
-
-Fundo neutro, cards brancos, labels/legends, foco visível, teclado, erros acessíveis, estados vazios/selecionados/indisponíveis. Resumo da seleção em fluxo normal, sem cobrir controles no celular. Microinterações discretas e respeito a prefers-reduced-motion. Verificar 320–1440 px.
-
-Crédito obrigatório em todo footer: **Desenvolvido por Douglas Borges - Smart Local**, link https://smartlocal.com.br, target _blank e rel noopener noreferrer.
-
-Cloudflare Workers Static Assets em `dist`, fallback SPA e Wrangler preservados, sem Worker de servidor ou alteração de domínio. Metadata, canonical pela origem e noindex/robots bloqueado preservados enquanto houver conteúdo fictício.
-
-## Entrega e pendências
-
-Branch **feat/v2-preview**, criada da main sincronizada. **Nesta rodada não fazer commit, push, PR, merge ou deploy sem nova autorização.** Prévia publicada V1 permanece intacta.
-
-Executar typecheck, lint, testes e build; inspecionar fluxos, erros, rotas e responsividade. Roteiro/resultados em [qa.md](qa.md). Arquitetura funcional futura em [integration.md](integration.md).
-
-Renata ainda deve confirmar eventos, distâncias, grades, pontos, datas/prazos, documentos por modalidade, preços/regra Pix-crédito, texto de dois meses/doação, demais condições e custos WhatsApp. Segurança, armazenamento, papéis, checkout, relatórios e modelo funcional definitivo pertencem à fase WordPress.
+Confirmar com Renata eventos reais, preços, distâncias, grades, pontos, datas, documentos, condições e minuta jurídica. WordPress/WooCommerce, conta do responsável, segurança documental, papéis, relatórios, pagamentos e procedimento de edição após pagamento dependem de avaliação futura, conforme [integration.md](integration.md). WhatsApp oficial opcional sujeito à aprovação e custos. Nenhum contrato de API, esquema SQL ou integração criado nesta fase.

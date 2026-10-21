@@ -1,24 +1,30 @@
-import type { Draft, Person, Race, RaceSelection } from "../types/domain";
+import type {
+  Draft,
+  Person,
+  Race,
+  RaceSelection,
+  Participant,
+  Responsible,
+} from "../types/domain";
 import { isAvailable } from "./selectionRules.ts";
+import { previewConfig } from "../config/preview.ts";
 export const stages = [
-  "configuracao",
-  "identificacao",
-  "dados",
+  "pedido",
+  "responsavel",
+  "participantes",
   "documentos",
   "condicoes",
   "revisao",
   "pagamento",
-  "confirmacao",
 ];
 export const stageLabels = [
-  "Opções",
-  "Identificação",
-  "Dados",
+  "Pedido",
+  "Responsável",
+  "Participantes",
   "Documentos",
   "Condições",
   "Revisão",
   "Pagamento",
-  "Confirmação",
 ];
 export function optionsReady(item: RaceSelection, race: Race) {
   const mode = race.modalities.find((m) => m.id === item.modality);
@@ -40,9 +46,9 @@ export function personReady(person: Person) {
   return (
     person.name.trim().length >= 3 &&
     person.name.length <= 80 &&
-    person.cpf === "DEMO-CPF" &&
-    person.phone === "DEMO-TELEFONE" &&
-    person.email === "participante@example.invalid" &&
+    /^DEMO-CPF-[0-9]{3,}$/.test(person.cpf) &&
+    /^DEMO-TELEFONE-/.test(person.phone) &&
+    person.email.endsWith("@example.invalid") &&
     /^\d{4}-\d{2}-\d{2}$/.test(person.birthDate) &&
     Number.isFinite(birth) &&
     new Date(birth).toISOString().slice(0, 10) === person.birthDate &&
@@ -70,32 +76,69 @@ export function documentsReady(
 export function conditionsReady(item: RaceSelection, race: Race) {
   return race.conditions.every((c) => item.acceptedConditions.includes(c.id));
 }
-export function selectionReady(draft: Draft, catalog: Race[]) {
+
+export function responsibleReady(person: Responsible) {
   return (
-    draft.items.length > 0 &&
-    new Set(draft.items.map((i) => i.raceId)).size === draft.items.length &&
-    draft.items.every((item) => {
-      const race = catalog.find((r) => r.id === item.raceId);
-      return race && isAvailable(race) && optionsReady(item, race);
+    person.name.trim().length >= 3 &&
+    person.name.length <= 80 &&
+    person.email === "responsavel@example.invalid" &&
+    person.identifier === "DEMO-RESPONSAVEL" &&
+    person.phone === "DEMO-TELEFONE-RESP"
+  );
+}
+export function participantReady(
+  p: Participant,
+  catalog: Race[],
+  selected: string[],
+) {
+  return (
+    personReady(p.person) &&
+    p.items.length > 0 &&
+    new Set(p.items.map((i) => i.raceId)).size === p.items.length &&
+    p.items.every((i) => {
+      const race = catalog.find((r) => r.id === i.raceId);
+      return (
+        race &&
+        selected.includes(i.raceId) &&
+        isAvailable(race) &&
+        optionsReady(i, race) &&
+        fieldsReady(i)
+      );
     })
   );
 }
+export function participantDocumentsReady(p: Participant, catalog: Race[]) {
+  return p.items.every((i) => {
+    const race = catalog.find((r) => r.id === i.raceId);
+    return !!race && documentsReady(i, race, p.documents);
+  });
+}
 export function pendingStage(draft: Draft, catalog: Race[]): string {
-  if (!selectionReady(draft, catalog)) return "configuracao";
-  if (!draft.identified) return "identificacao";
-  if (!personReady(draft.person)) return "dados";
   if (
-    !draft.items.every((i) => {
-      const race = catalog.find((r) => r.id === i.raceId)!;
-      return fieldsReady(i) && documentsReady(i, race, draft.sharedDocuments);
-    })
+    !draft.prepared ||
+    draft.participants.length < 1 ||
+    draft.participants.length > previewConfig.maxParticipants ||
+    !draft.selectedRaceIds.length
   )
+    return "pedido";
+  if (!responsibleReady(draft.responsible)) return "responsavel";
+  if (
+    new Set(draft.participants.map((p) => p.person.cpf)).size !==
+      draft.participants.length ||
+    !draft.participants.every((p) =>
+      participantReady(p, catalog, draft.selectedRaceIds),
+    )
+  )
+    return "participantes";
+  if (!draft.participants.every((p) => participantDocumentsReady(p, catalog)))
     return "documentos";
   if (
-    !draft.items.every((i) =>
-      conditionsReady(
-        i,
-        catalog.find((r) => r.id === i.raceId)!,
+    !draft.participants.every((p) =>
+      p.items.every((i) =>
+        conditionsReady(
+          i,
+          catalog.find((r) => r.id === i.raceId)!,
+        ),
       ),
     )
   )

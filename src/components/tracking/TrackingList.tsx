@@ -18,10 +18,11 @@ export default function TrackingList({
       {trackingItems(order, scenario).map((status) => {
         const race = findRace(status.item.raceId)!;
         return (
-          <article className="panel tracking-card" key={race.id}>
+          <article className="panel tracking-card" key={status.voucherId}>
             <div className="tracking-heading">
               <span className="badge">CORRIDA ILUSTRATIVA</span>
-              <h2>{race.name}</h2>
+              <h2>{status.participant.person.name}</h2>
+              <h3>{race.name}</h3>
               <p>
                 {modalityLabel(status.item)} · {status.item.distance}
               </p>
@@ -56,7 +57,11 @@ export default function TrackingList({
             </p>
             <details className="voucher-details">
               <summary>Ver voucher ilustrativo de {race.name}</summary>
-              <Voucher order={order} item={status.item} />
+              <Voucher
+                order={order}
+                participant={status.participant}
+                item={status.item}
+              />
             </details>
           </article>
         );

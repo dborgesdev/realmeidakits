@@ -1,61 +1,51 @@
 import { Link } from "react-router-dom";
 import { events } from "../../data/events";
+import { totalPrice, money } from "../../state/pricing";
 import { useDemo } from "../../state/DemoContext";
-import { requiredDocuments } from "../../state/requestRules";
 import OrderSummary from "./OrderSummary";
 export default function ReviewStep() {
   const { draft } = useDemo();
+  const total = totalPrice(
+    draft.participants.flatMap((p) => p.items),
+    events,
+    draft.method,
+  );
   return (
     <>
-      <h1>Todas as corridas, uma solicitação</h1>
-      <p>
-        Confira cada item. O pagamento será apenas uma simulação consolidada.
+      <h1>Confira seu pedido</h1>
+      <p className="help-panel">
+        Total demonstrativo do pedido · {draft.method}:{" "}
+        <strong>
+          {money(total.known)}
+          {total.pending ? " + a confirmar" : ""}
+        </strong>
       </p>
-      <div className="soft inset">
-        <h2>Participante de demonstração</h2>
-        <p>{draft.person.name} · CPF ***.***.***-**</p>
-        <p>
-          Nascimento **/**/**** · Telefone DEMO-TELEFONE · E-mail do perfil
-          fictício
-        </p>
-        <Link className="text-link" to="/solicitacao/dados">
-          Editar dados pessoais
-        </Link>
+      <p>
+        Responsável: {draft.responsible.name} · {draft.responsible.email}
+      </p>
+      <Link to="/solicitacao/responsavel">Editar responsável</Link>
+      {draft.participants.map((p) => (
+        <section className="form-section" key={p.id}>
+          <h2>{p.person.name}</h2>
+          <p>
+            {p.person.cpf} · {p.person.birthDate} · {p.person.phone}
+          </p>
+          <OrderSummary items={p.items} method={draft.method} editable />
+          <p className="success">
+            ✓ Documentos demonstrativos completos e condições aceitas para cada
+            corrida.
+          </p>
+        </section>
+      ))}
+      <div className="actions">
+        <Link to="/solicitacao/participantes">Editar pessoas e corridas</Link>
+        <Link to="/solicitacao/documentos">Rever documentos</Link>
+        <Link to="/solicitacao/condicoes">Rever condições</Link>
       </div>
-      <OrderSummary items={draft.items} method={draft.method} editable />
-      <fieldset className="form-section">
-        <legend>Conferência por corrida</legend>
-        {draft.items.map((item) => {
-          const race = events.find((r) => r.id === item.raceId)!;
-          return (
-            <article className="review-requirements" key={race.id}>
-              <h3>{race.name}</h3>
-              <p>
-                Documentos de exemplo:{" "}
-                {requiredDocuments(item, race)
-                  .map((d) => d.label)
-                  .join(", ") || "nenhum configurado"}
-                .
-              </p>
-              <p className="success">
-                ✓ Requisitos demonstrativos atendidos · {race.conditions.length}{" "}
-                condição(ões) aceita(s)
-              </p>
-            </article>
-          );
-        })}
-        <div className="actions">
-          <Link className="text-link" to="/solicitacao/documentos">
-            Rever documentos
-          </Link>
-          <Link className="text-link" to="/solicitacao/condicoes">
-            Rever condições
-          </Link>
-        </div>
-      </fieldset>
-      <div className="notice">
-        Nenhum documento foi analisado, pagamento cobrado ou pedido criado.
-      </div>
+      <p className="notice">
+        Após finalizar, este pedido ficará bloqueado. Nenhuma cobrança, reserva
+        ou análise documental será realizada.
+      </p>
     </>
   );
 }

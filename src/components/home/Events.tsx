@@ -10,8 +10,8 @@ export default function Events() {
           <span className="eyebrow">O PRIMEIRO PASSO É SEU</span>
           <h2>Encontre sua próxima corrida</h2>
           <p>
-            Selecione uma ou várias corridas. Uma participante, um pagamento
-            demonstrativo.
+            Selecione uma ou várias corridas. Para você ou mais pessoas, um
+            pagamento demonstrativo.
           </p>
         </div>
         <Link className="text-link" to="/corridas">

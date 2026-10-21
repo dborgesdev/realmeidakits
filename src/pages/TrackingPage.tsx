@@ -37,12 +37,18 @@ export default function TrackingPage() {
               <span className="eyebrow">
                 {order.id} · IDENTIFICADOR FICTÍCIO
               </span>
-              <h2>{order.person.name}</h2>
+              <h2>{order.responsible.name}</h2>
               <p>
-                CPF DEMO-CPF · {order.items.length} corrida(s). Nenhum pagamento
-                bancário confirmado.
+                CPF DEMO-CPF ·{" "}
+                {order.participants.reduce((n, p) => n + p.items.length, 0)}{" "}
+                corrida(s). Nenhum pagamento bancário confirmado.
               </p>
-              <OrderSummary items={order.items} method={order.method} />
+              {order.participants.map((p) => (
+                <section key={p.id}>
+                  <h3>{p.person.name}</h3>
+                  <OrderSummary items={p.items} method={order.method} />
+                </section>
+              ))}
               <label>
                 Cenário de acompanhamento
                 <select
@@ -69,11 +75,11 @@ export default function TrackingPage() {
               independente delas.
             </div>
             <div className="actions">
-              <Link className="button secondary" to="/solicitacao/configuracao">
-                Revisar esta demonstração
+              <Link className="button secondary" to="/conclusao">
+                Ver conclusão e vouchers
               </Link>
               <Link className="text-link" to="/corridas" onClick={restart}>
-                Reiniciar demonstração
+                Nova solicitação
               </Link>
             </div>
           </>

@@ -13,12 +13,11 @@ export function availabilityLabel(race: Race, now = Date.now()) {
       : "Solicitações encerradas";
 }
 export function makeSelection(race: Race, preferred?: Modality): RaceSelection {
-  const modality =
-    race.modalities.find((m) => m.id === preferred)?.id ||
-    race.modalities[0].id;
   return {
     raceId: race.id,
-    modality,
+    modality:
+      race.modalities.find((m) => m.id === preferred)?.id ||
+      race.modalities[0].id,
     distance: "",
     kitType: "",
     kit: "camiseta",
@@ -30,36 +29,31 @@ export function makeSelection(race: Race, preferred?: Modality): RaceSelection {
     acceptedConditions: [],
   };
 }
-export function toggleSelection(
-  draft: Draft,
-  race: Race,
-  preferred?: Modality,
-): Draft {
-  if (draft.items.some((i) => i.raceId === race.id))
+export function toggleSelection(draft: Draft, race: Race): Draft {
+  if (draft.order) return draft;
+  if (draft.selectedRaceIds.includes(race.id))
     return {
       ...draft,
-      order: undefined,
-      items: draft.items.filter((i) => i.raceId !== race.id),
+      selectedRaceIds: draft.selectedRaceIds.filter((id) => id !== race.id),
+      participants: draft.participants.map((p) => ({
+        ...p,
+        items: p.items.filter((i) => i.raceId !== race.id),
+      })),
     };
-  if (!isAvailable(race)) return draft;
-  return {
-    ...draft,
-    order: undefined,
-    items: [...draft.items, makeSelection(race, preferred)],
-  };
+  return isAvailable(race)
+    ? { ...draft, selectedRaceIds: [...draft.selectedRaceIds, race.id] }
+    : draft;
 }
 export function changeSelection(
   item: RaceSelection,
   patch: Partial<RaceSelection>,
   race: Race,
 ): RaceSelection {
-  const next = { ...item, ...patch };
-  if (patch.modality && patch.modality !== item.modality) {
+  if (patch.modality && patch.modality !== item.modality)
     return {
       ...makeSelection(race, patch.modality),
       distance: race.distances.includes(item.distance) ? item.distance : "",
       pickup: race.pickupLocations.includes(item.pickup) ? item.pickup : "",
     };
-  }
-  return next;
+  return { ...item, ...patch };
 }

@@ -1,34 +1,42 @@
-# Re Almeida Kits — V2 demonstrativa
+# Re Almeida Kits — V2 demonstrativa refinada
 
-Evolução local da V1 aprovada: React + TypeScript + Vite + Tailwind, pnpm, sem backend ou operações reais. Implementação em `feat/v2-preview`, a partir da main sincronizada. **Sem commit, push, PR, merge ou deploy nesta rodada.** A V1 publicada permanece intacta.
+React + TypeScript + Vite + Tailwind, pnpm. Evolução preservada na branch `feat/v2-preview`, sem backend ou operações reais. **Não fazer commit, push, PR, merge ou deploy nesta rodada.** Main e V1 publicada permanecem inalteradas.
 
-## Executar
+## Executar e validar
 
-`pnpm install --frozen-lockfile`, `pnpm dev`, abrir http://localhost:5173/ . Validação: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`. Preview estático: `pnpm preview`. Estado somente em memória, apagado ao atualizar a página.
+`pnpm install --frozen-lockfile` e `pnpm dev`; abrir http://localhost:5173/ . Validações: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`. Preview estático: `pnpm preview`. Dados somente em memória, apagados ao atualizar a página. Use apenas identidades e documentos fictícios.
 
-## Roteiro de avaliação
+## Pedido individual
 
-1. Home preservada; CTA principal abre `/corridas`. Selecionar uma ou várias provas; edição encerrada deve permanecer desabilitada. Remover e adicionar não duplica itens.
-2. Continuar em **Configurar corridas**. Para o exemplo de três provas:
-   - Circuito Rio Antigo: Kit Oficial, 5 km, Kit tradicional, Ponto A.
-   - Corrida da Primavera: APPAI, 10 km, camiseta M.
-   - Desafio 10K da Cidade: APPAI, 5 km, somente número de peito.
-3. Usar perfil fictício. Conferir dados pessoais uma vez; não informar CPF, telefone ou documentos reais.
-4. Conferir inscrição/matrícula por corrida. APPAI usa `DEMO-101`, não matrícula funcional. Kit Oficial usa `DEMO-INSCRICAO-001`.
-5. Usar documentos de exemplo, remover/substituir e conferir bloqueio de pendências. Identidade é compartilhada pela titular; autorizações e comprovantes são específicos de cada corrida.
-6. Ler e aceitar as condições demonstrativas separadamente. Minuta de dois meses/doação está sujeita à validação.
-7. Revisão consolidada, retornos para edição, Pix/cartão sem cobrança. Exemplo acima: R$ 72 no Pix e R$ 84 no cartão, sem serem preços definitivos.
-8. Após confirmar, clicar **Acompanhar solicitação demonstrativa**. Uma corrida tem número `001 — EXEMPLO`; outras aguardam atribuição. Abrir voucher de cada prova e alternar cenário ilustrativo de retirada. Nenhuma ação operacional ocorre.
-9. Atualizar `/acompanhamento` mostra estado vazio, pois não existe armazenamento ou conta. Links antigos V1 da solicitação levam aos detalhes da corrida. `/minha-conta` e `/admin-demo` continuam ausentes.
+1. No catálogo, selecionar Circuito Rio Antigo; a faixa fixa mostra seleção e estimativa. “Finalizar inscrição →” abre configuração do pedido.
+2. Manter Somente para mim, continuar e conferir responsável demonstrativo.
+3. Na participante, opcionalmente usar dados do responsável. Marcar explicitamente Circuito, Kit Oficial, 5 km, Kit tradicional e Ponto A. Manter identificador DEMO de inscrição.
+4. Documentos: autorizar reuso fictício da identidade ou usar exemplo novo, e usar exemplos nos documentos específicos. Aceitar as condições de exemplo.
+5. Revisar e escolher Pix/cartão sem cobrança. Confirmar pagamento e finalizar abre sucesso separado; edição fica bloqueada.
 
-## Estrutura e limites
+## Três participantes e duas corridas
 
-Tipos em `src/types`, fixtures em `src/data`, regras de seleção/disponibilidade, validação, preços e status em `src/state`. Componentes por seção/etapa, seleção e acompanhamento. Dados pessoais fictícios preenchidos uma vez; campos específicos e documentos por item. Conteúdo e nomes dos arquivos não são lidos/armazenados/enviados. Sem autenticação, pagamento, PDF/QR válido, notificações ou administração React.
+1. Selecionar Circuito Rio Antigo e Corrida da Primavera. Finalizar inscrição → Para mais pessoas → quantidade 3.
+2. Conferir responsável. Abrir um painel por vez; nomes e CPFs são fictícios e distintos.
+3. Pessoa 1: Circuito, Oficial, 5 km, Kit tradicional, Ponto A.
+4. Pessoa 2: Circuito, APPAI, 10 km, somente número, Ponto B; matrícula DEMO própria se desejar alterar.
+5. Pessoa 3: Circuito, APPAI, 5 km, camiseta M, Ponto A; Primavera, Oficial, 10 km. Identificadores DEMO permanecem por item.
+6. Completar documentos e aceites de cada pessoa/prova. Identidade pode ser usada pela mesma titular; autorizações e comprovantes não se propagam a outras inscrições.
+7. Revisar quatro retiradas agrupadas em três pessoas. Neste exemplo, total ilustrativo Pix R$98 / cartão R$114. Alterar antes da confirmação e conferir preservação dos outros dados.
+8. Adicionar/remover pessoas, respeitando limite central em `src/config/preview.ts`. Alterar quantidade não reinicia o restante do pedido; reduzir descarta últimas pessoas.
 
-O conceito visual orienta aparência; os documentos definem regras. Todas as datas, valores, exigências e condições das fixtures são ilustrativas. Fontes e pendências em [escopo](docs/project.md), [integração futura](docs/integration.md) e [QA](docs/qa.md).
+## PDF, conclusão e acompanhamento
 
-## Publicação preservada, não executada
+Após finalizar, a conclusão exibe pedido fictício, participantes, corridas e vouchers únicos. Baixar PDF gera e baixa um PDF local do voucher selecionado, com logo, opções, orientações e marca d’água DEMONSTRAÇÃO — SEM VALIDADE. Sem QR/validade operacional. Não há download ou visualização de anexos pessoais.
 
-Cloudflare Workers Static Assets `dist`, fallback SPA em `wrangler.jsonc`, Worker `realmeidakits`, sem domínio personalizado. Script `pnpm deploy` disponível para etapa posterior autorizada. Credenciais, `.env` locais, `.dev.vars*`, logs, `.wrangler`, `dist` e `node_modules` ignorados. Canonical usa origem atual se VITE_SITE_URL estiver vazio; noindex/robots bloqueado enquanto houver conteúdo fictício.
+Grupo WhatsApp permanece desabilitado com explicação porque não existem URLs confirmadas nas fixtures. Acompanhar pedido mostra status independentes por participante/corrida; primeiro item tem número 001 — EXEMPLO, demais pendentes. Seletor altera somente cenário ilustrativo de retirada.
 
-A implementação futura usará WordPress como fonte das corridas e WooCommerce para um pedido com vários itens. Minha Conta, plugin operacional, armazenamento privado, papéis, vouchers e WhatsApp oficial dependem de avaliação posterior; nenhuma integração ou contrato de API foi criado nesta prévia.
+Voltar do navegador ou abrir uma etapa após conclusão não permite editar: retorna ao sucesso. **Nova solicitação** inicia outro rascunho. Atualizar apaga a memória e mostra estado vazio, sem recuperar conta ou pedido.
+
+## Estrutura e produção preservada
+
+Configuração em `src/config`, tipos em `src/types`, fixtures em `src/data`, regras puras em `src/state`; componentes por seção, etapa, participante e acompanhamento. Sem novas dependências. Logo original e imagens conceituais preservados. Noindex/robots bloqueado e canonical por origem. Footer com crédito Smart Local mantido.
+
+Wrangler mantém Worker `realmeidakits`, Static Assets `dist`, fallback SPA e workers.dev, sem domínio/backend. Script deploy disponível somente para autorização futura. Credenciais, arquivos locais, `.wrangler`, `dist` e `node_modules` ignorados.
+
+[Escopo](docs/project.md), [integração futura](docs/integration.md) e [roteiro/resultados de QA](docs/qa.md). WordPress será administração; WooCommerce consolidará pagamento; futura conta pertence ao responsável. Segurança, documentos privados, permissões, edição controlada após pagamento e WhatsApp opcional exigem avaliação futura. Nenhuma integração ou API foi criada.

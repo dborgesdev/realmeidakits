@@ -58,7 +58,7 @@ export default function OrderSummary({
         </small>
       </div>
       {editable && (
-        <Link className="text-link" to="/solicitacao/configuracao">
+        <Link className="text-link" to="/solicitacao/participantes">
           Alterar corridas, modalidades e opções →
         </Link>
       )}

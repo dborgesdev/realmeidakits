@@ -1,19 +1,37 @@
-import { Ban, Ticket } from "lucide-react";
-import type { DemoOrder, RaceSelection } from "../../types/domain";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import type { DemoOrder, RaceSelection, Participant } from "../../types/domain";
 import { findRace } from "../../data/events";
 import { modalityLabel } from "../../state/pricing";
+import { voucherId } from "../../state/participantRules";
+import { downloadVoucher } from "../../state/voucherPdf";
+import { groupUrl } from "../../state/voucherRules";
 export default function Voucher({
   order,
+  participant,
   item,
 }: {
   order: DemoOrder;
+  participant: Participant;
   item: RaceSelection;
 }) {
   const race = findRace(item.raceId)!;
+  const [error, setError] = useState("");
+  const group = groupUrl(race);
+  async function download() {
+    setError("");
+    try {
+      await downloadVoucher(order, participant, item, race);
+    } catch {
+      setError(
+        "Não foi possível gerar o PDF. Tente novamente quando a marca estiver carregada.",
+      );
+    }
+  }
   return (
     <section
       className="demo-voucher"
-      aria-label={`Voucher ilustrativo de ${race.name}`}
+      aria-label={`Voucher de ${participant.person.name} — ${race.name}`}
     >
       <div className="voucher-top">
         <img
@@ -22,41 +40,80 @@ export default function Voucher({
           width="140"
           height="54"
         />
-        <span className="badge">DEMONSTRAÇÃO · SEM VALIDADE</span>
+        <span className="badge">DEMONSTRAÇÃO — SEM VALIDADE</span>
       </div>
       <div className="voucher-content">
         <div>
-          <span className="eyebrow">
-            <Ticket size={18} />
-            VOUCHER ILUSTRATIVO
-          </span>
-          <h2>{race.name}</h2>
+          <span className="eyebrow">VOUCHER ILUSTRATIVO</span>
+          <h3>{race.name}</h3>
           <dl className="summary">
             <dt>Voucher</dt>
-            <dd>DEMO-VOUCHER-{race.id}</dd>
+            <dd>{voucherId(participant.id, race.id)}</dd>
             <dt>Solicitação</dt>
             <dd>{order.id}</dd>
             <dt>Participante fictícia</dt>
-            <dd>{order.person.name} · DEMO-CPF</dd>
+            <dd>
+              {participant.person.name} · {participant.person.cpf}
+            </dd>
             <dt>Modalidade / distância</dt>
             <dd>
               {modalityLabel(item)} · {item.distance}
             </dd>
+            <dt>Kit / tamanho</dt>
+            <dd>
+              {item.modality === "appai"
+                ? item.kit === "numero"
+                  ? "Somente número de peito"
+                  : `Camiseta ${item.size}`
+                : item.kitType || "Kit oficial"}
+            </dd>
             <dt>Retirada</dt>
-            <dd>{item.pickup || "Local a confirmar"} · Sem agendamento real</dd>
+            <dd>{item.pickup || "Local a confirmar"}</dd>
           </dl>
+          <p>{race.guidance}</p>
         </div>
         <div className="voucher-invalid">
-          <Ban size={48} aria-hidden="true" />
           <strong>SEM QR CODE</strong>
-          <span>Não permite leitura ou retirada</span>
+          <span>Não permite leitura ou retirada.</span>
         </div>
       </div>
       <p className="voucher-warning">
-        NÃO É COMPROVANTE. Voucher identifica a solicitação ilustrativa por
-        corrida; número de peito identifica a participante na prova. Não há PDF,
-        QR ou validação operacional.
+        DEMONSTRAÇÃO — SEM VALIDADE. Não é comprovante de pagamento, inscrição
+        ou retirada. Nenhuma reserva ou operação foi realizada.
       </p>
+      <div className="voucher-actions">
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="actions">
+          <button type="button" className="button secondary" onClick={download}>
+            Baixar PDF
+          </button>
+          {group ? (
+            <a
+              className="button secondary"
+              href={group}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Entrar no grupo de WhatsApp
+            </a>
+          ) : (
+            <button className="button secondary" type="button" disabled>
+              Entrar no grupo de WhatsApp
+            </button>
+          )}
+          <Link className="text-link" to="/acompanhamento">
+            Acompanhar pedido
+          </Link>
+        </div>
+        <p className="field-help">
+          PDF ilustrativo gerado neste navegador, sem validade para retirada.{" "}
+          {!group && "Grupo ainda não disponibilizado para esta corrida."}
+        </p>
+      </div>
     </section>
   );
 }

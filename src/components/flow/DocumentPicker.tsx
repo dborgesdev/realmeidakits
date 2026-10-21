@@ -29,7 +29,11 @@ export default function DocumentPicker({
           type="button"
           className="button secondary small"
           onClick={() => {
-            onChange("Documento de exemplo disponível");
+            onChange(
+              value
+                ? "Documento fictício atualizado"
+                : "Documento de exemplo disponível",
+            );
             setError("");
           }}
         >

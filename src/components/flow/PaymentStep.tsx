@@ -4,6 +4,7 @@ import { money, totalPrice } from "../../state/pricing";
 import OrderSummary from "./OrderSummary";
 export default function PaymentStep() {
   const { draft, setDraft } = useDemo();
+  const items = draft.participants.flatMap((p) => p.items);
   return (
     <>
       <h1>Um pagamento para as suas corridas</h1>
@@ -15,16 +16,14 @@ export default function PaymentStep() {
       <fieldset className="payment-choices">
         <legend>Escolha uma alternativa simulada</legend>
         {(["Pix", "Cartão"] as const).map((method) => {
-          const total = totalPrice(draft.items, events, method);
+          const total = totalPrice(items, events, method);
           return (
             <label className="radio payment-option" key={method}>
               <input
                 type="radio"
                 name="method"
                 checked={draft.method === method}
-                onChange={() =>
-                  setDraft((d) => ({ ...d, order: undefined, method }))
-                }
+                onChange={() => setDraft((d) => ({ ...d, method }))}
               />
               <span>
                 <strong>
@@ -32,15 +31,24 @@ export default function PaymentStep() {
                   {total.pending ? " + a confirmar" : ""}
                 </strong>
                 <span className="field-help">
-                  Total ilustrativo de {draft.items.length}{" "}
-                  {draft.items.length === 1 ? "corrida" : "corridas"}
+                  Total ilustrativo de {items.length}{" "}
+                  {items.length === 1 ? "corrida" : "corridas"}
                 </span>
               </span>
             </label>
           );
         })}
       </fieldset>
-      <OrderSummary items={draft.items} method={draft.method} />
+      {draft.participants.map((p) => (
+        <section key={p.id}>
+          <h2>{p.person.name}</h2>
+          <OrderSummary items={p.items} method={draft.method} />
+        </section>
+      ))}
+      <p className="notice">
+        Confirmar pagamento e finalizar apenas encerra esta demonstração.
+        Nenhuma cobrança será feita.
+      </p>
       <div className="soft inset">
         <h3>{draft.method} demonstrativo</h3>
         <p>

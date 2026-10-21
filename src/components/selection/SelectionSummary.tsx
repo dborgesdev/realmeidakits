@@ -1,35 +1,66 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { selectionEstimate, money } from "../../state/pricing";
 import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
-import { money, totalPrice } from "../../state/pricing";
 export default function SelectionSummary() {
   const { draft } = useDemo();
-  const total = totalPrice(draft.items, events, draft.method);
+  const estimate = selectionEstimate(
+    events.filter((r) => draft.selectedRaceIds.includes(r.id)),
+    draft.method,
+  );
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () =>
+      document.body.style.setProperty(
+        "--selection-space",
+        `${el.offsetHeight + 24}px`,
+      );
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    measure();
+    return () => {
+      observer.disconnect();
+      document.body.style.removeProperty("--selection-space");
+    };
+  }, [draft.selectedRaceIds.length, draft.order]);
+  if (!draft.selectedRaceIds.length || draft.order) return null;
   return (
     <aside
+      ref={ref}
       className="selection-summary"
-      aria-label="Resumo das corridas selecionadas"
+      aria-label="Corridas selecionadas"
     >
-      <div aria-live="polite">
-        <strong>
-          {draft.items.length}{" "}
-          {draft.items.length === 1
-            ? "corrida selecionada"
-            : "corridas selecionadas"}
+      <div>
+        <strong aria-live="polite">
+          {draft.selectedRaceIds.length} corrida(s) selecionada(s)
         </strong>
-        <p>
-          {draft.items.length
-            ? `${money(total.known)}${total.pending ? " + valores a confirmar" : ""} · estimativa demonstrativa no ${draft.method}`
-            : "Escolha uma ou várias corridas para a mesma participante."}
-        </p>
+        <small className="selection-estimate">
+          A partir de {money(estimate.known)}
+          {estimate.pending ? " + a confirmar" : ""} · demonstração
+        </small>
+        <details>
+          <summary>Ver seleção e estimativa</summary>
+          <p>
+            A partir de {money(estimate.known)}
+            {estimate.pending ? " + valores a confirmar" : ""} · exemplo no{" "}
+            {draft.method}, uma pessoa por corrida. O total depende das pessoas
+            e opções atribuídas.
+          </p>
+          <ul>
+            {events
+              .filter((r) => draft.selectedRaceIds.includes(r.id))
+              .map((r) => (
+                <li key={r.id}>{r.name}</li>
+              ))}
+          </ul>
+        </details>
       </div>
-      {draft.items.length ? (
-        <Link className="button" to="/solicitacao/configuracao">
-          Configurar corridas →
-        </Link>
-      ) : (
-        <span className="caption">Selecione uma corrida para continuar</span>
-      )}
+      <Link className="button" to="/solicitacao/pedido">
+        Finalizar inscrição →
+      </Link>
     </aside>
   );
 }

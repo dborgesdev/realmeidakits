@@ -1,17 +1,25 @@
 import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
 import { money, itemPrice } from "../../state/pricing";
-import type { Modality } from "../../types/domain";
-export default function OptionsStep() {
-  const { draft, updateItem, toggleRace } = useDemo();
+import type { Modality, RaceSelection } from "../../types/domain";
+export default function OptionsStep({
+  participantId,
+  items,
+}: {
+  participantId: string;
+  items: RaceSelection[];
+}) {
+  const { draft, updateItem: editItem, assign } = useDemo();
+  const updateItem = (id: string, patch: Partial<RaceSelection>) =>
+    editItem(participantId, id, patch);
   return (
     <>
-      <h1>Uma configuração para cada corrida</h1>
+      <h3 className="subsection-title">Opções de cada corrida</h3>
       <p>
         Você pode combinar modalidades e distâncias. Os dados pessoais serão
         preenchidos uma única vez.
       </p>
-      {draft.items.map((item) => {
+      {items.map((item) => {
         const race = events.find((r) => r.id === item.raceId)!;
         const mode = race.modalities.find((m) => m.id === item.modality)!;
         const price = itemPrice(item, race, draft.method);
@@ -22,7 +30,7 @@ export default function OptionsStep() {
             <button
               className="text-button remove-race"
               type="button"
-              onClick={() => toggleRace(race)}
+              onClick={() => assign(participantId, race)}
               aria-label={`Remover ${race.name}`}
             >
               Remover corrida
@@ -83,7 +91,7 @@ export default function OptionsStep() {
                   <label className="radio">
                     <input
                       type="radio"
-                      name={`kit-${race.id}`}
+                      name={`kit-${participantId}-${race.id}`}
                       checked={item.kit === "camiseta"}
                       onChange={() => updateItem(race.id, { kit: "camiseta" })}
                     />
@@ -92,7 +100,7 @@ export default function OptionsStep() {
                   <label className="radio">
                     <input
                       type="radio"
-                      name={`kit-${race.id}`}
+                      name={`kit-${participantId}-${race.id}`}
                       checked={item.kit === "numero"}
                       onChange={() => updateItem(race.id, { kit: "numero" })}
                     />

@@ -52,18 +52,32 @@ export type Person = {
   phone: string;
   email: string;
 };
-export type DemoOrder = {
+export type Responsible = {
+  name: string;
+  email: string;
+  phone: string;
+  identifier: string;
+};
+export type Participant = {
   id: string;
   person: Person;
   items: RaceSelection[];
-  sharedDocuments: Record<string, string>;
+  documents: Record<string, string>;
+  existingDocumentIds: string[];
+  reuseAuthorized: boolean;
+};
+export type DemoOrder = {
+  id: string;
+  responsible: Responsible;
+  participants: Participant[];
   method: PaymentMethod;
 };
 export type Draft = {
-  items: RaceSelection[];
-  person: Person;
-  identified: boolean;
-  sharedDocuments: Record<string, string>;
+  selectedRaceIds: string[];
+  participants: Participant[];
+  responsible: Responsible;
+  prepared: boolean;
+  nextParticipantNumber: number;
   method: PaymentMethod;
   order?: DemoOrder;
 };

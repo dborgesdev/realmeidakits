@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/home/Header";
 import Footer from "./components/home/Footer";
+import ConclusionPage from "./pages/ConclusionPage";
 import Home from "./pages/Home";
 import EventsPage from "./pages/EventsPage";
 import RequestPage from "./pages/RequestPage";
@@ -12,7 +13,7 @@ import NotFound from "./pages/NotFound";
 export default function App() {
   const location = useLocation();
   useEffect(() => {
-    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Solicitação demonstrativa" : location.pathname === "/acompanhamento" ? "Acompanhamento demonstrativo" : "Conheça a plataforma"} | Re Almeida Kits`;
+    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Solicitação demonstrativa" : location.pathname === "/conclusao" ? "Solicitação finalizada — demonstração" : location.pathname === "/acompanhamento" ? "Acompanhamento demonstrativo" : "Conheça a plataforma"} | Re Almeida Kits`;
     if (!location.hash) {
       window.scrollTo(0, 0);
       document.getElementById("conteudo")?.focus({ preventScroll: true });
@@ -46,6 +47,7 @@ export default function App() {
             element={<RequestPage key={location.pathname} />}
           />
           <Route path="/solicitacao/:slug/:stage" element={<LegacyRequest />} />
+          <Route path="/conclusao" element={<ConclusionPage />} />
           <Route path="/acompanhamento" element={<TrackingPage />} />
           <Route path="/orientacoes" element={<InfoPage />} />
           <Route path="/privacidade" element={<InfoPage privacy />} />

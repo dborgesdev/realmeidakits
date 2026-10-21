@@ -41,3 +41,21 @@ export function modalityLabel(item: RaceSelection) {
       ? "APPAI · Somente número de peito"
       : `APPAI · Camiseta ${item.size || "a escolher"} com número de peito`;
 }
+
+export function selectionEstimate(races: Race[], method: PaymentMethod) {
+  let known = 0,
+    pending = 0;
+  for (const race of races) {
+    const key = method === "Pix" ? "pix" : "card";
+    const values = race.modalities
+      .flatMap((mode) =>
+        [mode.prices, mode.shirtPrices, mode.numberPrices]
+          .filter((value) => value !== undefined)
+          .map((value) => value![key]),
+      )
+      .filter((value): value is number => value !== null);
+    if (values.length) known += Math.min(...values);
+    else pending++;
+  }
+  return { known, pending };
+}

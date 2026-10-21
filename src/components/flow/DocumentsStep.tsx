@@ -1,108 +1,145 @@
 import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
-import { requiredDocuments } from "../../state/requestRules";
-import { modalityLabel } from "../../state/pricing";
+import {
+  requiredDocuments,
+  participantDocumentsReady,
+} from "../../state/requestRules";
+import ParticipantPanels from "../participants/ParticipantPanels";
 import DocumentPicker from "./DocumentPicker";
-import RaceFields from "./RaceFields";
 export default function DocumentsStep() {
   const { draft, setDraft, updateItem } = useDemo();
-  const personal = Array.from(
-    new Map(
-      draft.items.flatMap((item) =>
-        requiredDocuments(
-          item,
-          events.find((r) => r.id === item.raceId)!,
-        )
-          .filter((doc) => doc.scope === "personal")
-          .map((doc) => [doc.id, doc] as const),
-      ),
-    ).values(),
-  );
-  function fillExamples() {
+  function personal(id: string, doc: string, value: string) {
     setDraft((d) => ({
       ...d,
-      order: undefined,
-      sharedDocuments: {
-        ...d.sharedDocuments,
-        ...Object.fromEntries(
-          personal.map((doc) => [doc.id, "Documento pessoal de exemplo"]),
-        ),
-      },
-      items: d.items.map((item) => ({
-        ...item,
-        documents: Object.fromEntries(
-          requiredDocuments(
-            item,
-            events.find((r) => r.id === item.raceId)!,
-          )
-            .filter((doc) => doc.scope === "race")
-            .map((doc) => [doc.id, "Documento específico de exemplo"]),
-        ),
-      })),
+      participants: d.participants.map((p) =>
+        p.id === id ? { ...p, documents: { ...p.documents, [doc]: value } } : p,
+      ),
     }));
   }
   return (
     <>
-      <h1>Dados e documentos por corrida</h1>
+      <h1>Documentos de cada participante</h1>
       <p>
-        Identificação geral pode ser reutilizada pela mesma participante.
-        Autorizações e comprovantes ficam vinculados a cada prova, sem
-        reaproveitamento automático entre corridas.
+        Somente exemplos. Nenhum conteúdo é lido, enviado ou armazenado.
+        Identificação pessoal pertence à pessoa; comprovantes e autorizações
+        pertencem a cada corrida.
       </p>
-      <button type="button" className="button secondary" onClick={fillExamples}>
-        Usar todos os documentos de exemplo
-      </button>
-      {personal.length > 0 && (
-        <fieldset className="form-section">
-          <legend>Documentos pessoais</legend>
-          <p>Selecione uma vez para as corridas que exigem este documento.</p>
-          {personal.map((doc) => (
-            <DocumentPicker
-              key={doc.id}
-              label={doc.label}
-              value={draft.sharedDocuments[doc.id]}
-              onChange={(value) =>
-                setDraft((d) => ({
-                  ...d,
-                  order: undefined,
-                  sharedDocuments: { ...d.sharedDocuments, [doc.id]: value },
-                }))
-              }
-            />
-          ))}
-        </fieldset>
-      )}
-      {draft.items.map((item) => {
-        const race = events.find((r) => r.id === item.raceId)!;
-        const docs = requiredDocuments(item, race).filter(
-          (doc) => doc.scope === "race",
-        );
-        return (
-          <fieldset className="form-section" key={race.id}>
-            <legend>{race.name}</legend>
-            <span className="badge">{modalityLabel(item)} · DEMONSTRAÇÃO</span>
-            <RaceFields race={race} item={item} />
-            {docs.map((doc) => (
-              <DocumentPicker
-                key={doc.id}
-                label={`${doc.label} — ${race.name}`}
-                value={item.documents[doc.id]}
-                onChange={(value) =>
-                  updateItem(race.id, {
-                    documents: { ...item.documents, [doc.id]: value },
-                  })
-                }
-              />
-            ))}
-            {!docs.length && (
-              <p className="success">
-                Esta modalidade não exige documentos específicos no exemplo.
-              </p>
-            )}
-            <p className="caption">{race.guidance}</p>
-          </fieldset>
-        );
-      })}
+      <ParticipantPanels
+        participants={draft.participants}
+        describe={(p) =>
+          participantDocumentsReady(p, events)
+            ? "Documentos completos"
+            : "Documentos pendentes"
+        }
+      >
+        {(p, next) => {
+          const docs = Array.from(
+            new Map(
+              p.items.flatMap((item) =>
+                requiredDocuments(
+                  item,
+                  events.find((r) => r.id === item.raceId)!,
+                )
+                  .filter((d) => d.scope === "personal")
+                  .map((d) => [d.id, d] as const),
+              ),
+            ).values(),
+          );
+          return (
+            <>
+              {docs.length > 0 && (
+                <fieldset className="form-section">
+                  <legend>Documentos pessoais · {p.person.name}</legend>
+                  {p.existingDocumentIds.length > 0 && (
+                    <div className="notice">
+                      <p>
+                        Já existe um documento cadastrado para esta
+                        participante.
+                      </p>
+                      <p>
+                        Este cenário usa um registro fictício. O responsável não
+                        pode visualizar nem baixar documentos privados.
+                      </p>
+                      <label className="radio">
+                        <input
+                          type="checkbox"
+                          checked={p.reuseAuthorized}
+                          onChange={(e) => {
+                            const authorized = e.target.checked;
+                            setDraft((d) => ({
+                              ...d,
+                              participants: d.participants.map((person) =>
+                                person.id === p.id
+                                  ? {
+                                      ...person,
+                                      reuseAuthorized: authorized,
+                                      documents: {
+                                        ...person.documents,
+                                        ...Object.fromEntries(
+                                          person.existingDocumentIds.map(
+                                            (id) => [
+                                              id,
+                                              authorized
+                                                ? "Documento fictício reutilizado com autorização"
+                                                : "",
+                                            ],
+                                          ),
+                                        ),
+                                      },
+                                    }
+                                  : person,
+                              ),
+                            }));
+                          }}
+                        />
+                        Autorizo reutilizar o documento fictício desta
+                        participante
+                      </label>
+                    </div>
+                  )}
+                  {docs.map((d) => (
+                    <DocumentPicker
+                      key={d.id}
+                      label={d.label}
+                      value={p.documents[d.id]}
+                      onChange={(value) => personal(p.id, d.id, value)}
+                    />
+                  ))}
+                </fieldset>
+              )}
+              {p.items.map((item) => {
+                const race = events.find((r) => r.id === item.raceId)!;
+                const specific = requiredDocuments(item, race).filter(
+                  (d) => d.scope === "race",
+                );
+                return (
+                  <fieldset className="form-section" key={race.id}>
+                    <legend>{race.name}</legend>
+                    {specific.map((d) => (
+                      <DocumentPicker
+                        key={d.id}
+                        label={`${d.label} — ${race.name}`}
+                        value={item.documents[d.id]}
+                        onChange={(value) =>
+                          updateItem(p.id, race.id, {
+                            documents: { ...item.documents, [d.id]: value },
+                          })
+                        }
+                      />
+                    ))}
+                    {!specific.length && (
+                      <p>Sem documento específico neste exemplo.</p>
+                    )}
+                  </fieldset>
+                );
+              })}
+              <button type="button" className="button secondary" onClick={next}>
+                Próxima pessoa →
+              </button>
+            </>
+          );
+        }}
+      </ParticipantPanels>
     </>
   );
 }

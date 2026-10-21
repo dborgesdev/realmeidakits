@@ -1,5 +1,7 @@
-import { useSearchParams, useParams } from "react-router-dom";
+import { Link, useSearchParams, useParams } from "react-router-dom";
 import { events, asset } from "../data/events";
+import RaceDetailHero from "../components/RaceDetailHero";
+import { groupUrl } from "../state/voucherRules";
 import EventCard from "../components/EventCard";
 import { DemoNotice, PageTitle } from "../components/UI";
 import SelectionSummary from "../components/selection/SelectionSummary";
@@ -10,18 +12,26 @@ export default function EventsPage() {
   const { slug } = useParams();
   const [params] = useSearchParams();
   const event = events.find((e) => e.slug === slug);
-  const { draft, toggleRace } = useDemo();
+  const { draft, toggleRace, restart } = useDemo();
   if (slug && !event) return <NotFound />;
   const preferred = params.get("modalidade") === "appai" ? "appai" : undefined;
   return (
     <div className="flow-shell">
       <div className="container page">
         <DemoNotice />
+        {draft.order && (
+          <div className="notice">
+            Seu pedido demonstrativo foi finalizado.{" "}
+            <Link to="/conclusao">Ver conclusão</Link> ou{" "}
+            <Link to="/corridas" onClick={restart}>
+              Nova solicitação
+            </Link>
+            .
+          </div>
+        )}
         {event ? (
           <>
-            <PageTitle eyebrow="EVENTO DE DEMONSTRAÇÃO" title={event.name}>
-              {event.description}
-            </PageTitle>
+            <RaceDetailHero race={event} />
             <div className="detail-grid">
               <img
                 className="detail-image"
@@ -72,9 +82,9 @@ export default function EventsPage() {
                     Condição demonstrativa: {c.text}
                   </p>
                 ))}
-                {event.whatsappUrl && (
+                {groupUrl(event) && (
                   <a
-                    href={event.whatsappUrl}
+                    href={groupUrl(event)!}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -84,12 +94,13 @@ export default function EventsPage() {
                 <button
                   className="button"
                   disabled={
-                    !isAvailable(event) &&
-                    !draft.items.some((i) => i.raceId === event.id)
+                    Boolean(draft.order) ||
+                    (!isAvailable(event) &&
+                      !draft.selectedRaceIds.includes(event.id))
                   }
-                  onClick={() => toggleRace(event, preferred)}
+                  onClick={() => toggleRace(event)}
                 >
-                  {draft.items.some((i) => i.raceId === event.id)
+                  {draft.selectedRaceIds.includes(event.id)
                     ? "Remover da seleção"
                     : isAvailable(event)
                       ? "Adicionar à minha seleção"
@@ -101,7 +112,7 @@ export default function EventsPage() {
         ) : (
           <>
             <PageTitle
-              eyebrow="UMA PARTICIPANTE · VÁRIAS CORRIDAS"
+              eyebrow="PARA VOCÊ OU MAIS PESSOAS"
               title="Escolha suas corridas"
             >
               Selecione uma ou várias provas e configure cada uma antes de
