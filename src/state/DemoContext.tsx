@@ -2,20 +2,25 @@ import {
   createContext,
   useContext,
   useState,
+  useCallback,
   type ReactNode,
   type Dispatch,
   type SetStateAction,
 } from "react";
 import { initialDraft } from "../data/demo";
 import { events, findRace } from "../data/events";
-import { changeSelection, selectForNewOrder } from "./selectionRules";
+import {
+  changeSelection,
+  selectForNewOrder,
+  preferModality,
+} from "./selectionRules";
 import {
   assignRace,
   resizeParticipants,
   removeParticipant,
 } from "./participantRules";
 import { editableUpdate, finalizeOrder } from "./orderRules";
-import type { Draft, Race, RaceSelection } from "../types/domain";
+import type { Draft, Race, RaceSelection, Modality } from "../types/domain";
 export type { Draft } from "../types/domain";
 const Context = createContext<{
   draft: Draft;
@@ -31,9 +36,13 @@ const Context = createContext<{
   remove: (id: string) => void;
   complete: () => void;
   restart: () => void;
+  prefer: (modality: Modality) => void;
 } | null>(null);
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [draft, storeDraft] = useState(initialDraft);
+  const prefer = useCallback((modality: Modality) => {
+    storeDraft((d) => preferModality(d, modality));
+  }, []);
   const setDraft: Dispatch<SetStateAction<Draft>> = (update) =>
     storeDraft((d) =>
       editableUpdate(d, (current) =>
@@ -44,6 +53,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     <Context.Provider
       value={{
         draft,
+        prefer,
         setDraft,
         toggleRace: (race) => storeDraft((d) => selectForNewOrder(d, race)),
         assign: (id, race) => setDraft((d) => assignRace(d, id, race)),

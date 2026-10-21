@@ -1,5 +1,16 @@
 # QA final — Re Almeida Kits V2
 
+## Ajuste dos CTAs por modalidade — 21/10/2026
+
+Rodada local sobre `56c1d3a149bbad1e6337737a6ac9925cfed65d64`, em `feat/v2-preview`, sem commit, push, PR, merge ou deploy. Os registros abaixo desta seção correspondem ao QA anterior à publicação.
+
+- Typecheck, lint, **26 testes** e build aprovados. Dois testes novos cobrem preferência APPAI/Oficial, atribuições independentes, troca manual, preservação de itens/documentos, modalidade indisponível e reinício sem herança. Mantida a cobertura de múltiplas corridas e participantes.
+- Navegador local: CTA APPAI → catálogo → Primavera atribuída com APPAI; preenchimento 5km/M; retorno pela home → CTA Oficial → mesma configuração preservada; novo participante recebe Oficial, permite troca manual para APPAI/somente número/10km. Desafio oferece somente APPAI mesmo com preferência Oficial.
+- Documentos fictícios, condições, revisão e finalização do grupo concluídos; Nova inscrição remove a preferência anterior. Entrada direta não impõe preferência global. Os parâmetros dos atalhos são removidos da URL após uso.
+- Hero conferido em 320, 375, 768, 1024 e 1440px, sem overflow horizontal. Botões empilhados no mobile, altura mínima 52px; texto longo quebra sem corte. Foto, marca e composição preservadas.
+- Console da sessão local sem erros/avisos. Build: JS 341,98kB (106,36kB gzip), CSS 31,50kB (7,94kB gzip). Sem novas dependências ou alteração do Wrangler.
+- Limitação preservada: preferência e dados só existem na memória; atualizar apaga a sessão. Verificação por navegador assistido e viewport simulado, sem nova suíte E2E ou dispositivos físicos.
+
 Validação local em **21/10/2026**, branch `feat/v2-preview`, baseline `e43a57e8f0614a377e6a569778f4ac34c55a63bd`. Sem nova branch, commit, push, PR, merge ou deploy. Main e V1 pública preservadas.
 
 ## Resultado

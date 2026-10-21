@@ -74,6 +74,7 @@ export type DemoOrder = {
   method: PaymentMethod;
 };
 export type Draft = {
+  preferredModality?: Modality;
   acceptedConditions: ConditionAcceptances;
   selectedRaceIds: string[];
   participants: Participant[];

@@ -1,6 +1,12 @@
 # Re Almeida Kits — V2 demonstrativa refinada
 
-React + TypeScript + Vite + Tailwind, pnpm. Evolução preservada na branch `feat/v2-preview`, sem backend ou operações reais. **Não fazer commit, push, PR, merge ou deploy nesta rodada.** Main e V1 publicada permanecem inalteradas.
+React + TypeScript + Vite + Tailwind, pnpm. Ajuste local sobre a V2 publicada, na branch `feat/v2-preview`, sem backend ou operações reais. Após avaliação local, o usuário autorizou commit, push, PR, merge e deploy deste ajuste em 21/10/2026.
+
+## Atalhos por modalidade
+
+Hero: **Sou associado à APPAI** (primário vermelho) e **Já comprei meu kit com a organização** (secundário branco). Ambos abrem o catálogo e registram uma preferência opcional no rascunho. Os links existentes da seção Modalidades usam a mesma regra. O parâmetro `modalidade` é consumido e removido da URL, evitando reaplicação em uma nova sessão.
+
+A preferência só orienta novas atribuições de corrida a participantes; não altera itens existentes nem restringe a troca individual de modalidade. Quando indisponível, usa a primeira modalidade realmente oferecida (a única, nas fixtures atuais). Entrada direta pelo catálogo não define preferência global; mantém a escolha normal editável de cada corrida. Nova inscrição, seleção após conclusão e atualização descartam a preferência anterior; um novo clique no Hero após conclusão inicia rascunho limpo com a preferência recém-escolhida.
 
 ## Executar e validar
 

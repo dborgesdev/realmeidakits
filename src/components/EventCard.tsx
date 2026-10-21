@@ -3,13 +3,7 @@ import { Link } from "react-router-dom";
 import { asset, type Race } from "../data/events";
 import { useDemo } from "../state/DemoContext";
 import { availabilityLabel, isAvailable } from "../state/selectionRules";
-import type { Modality } from "../types/domain";
-export default function EventCard({
-  event,
-}: {
-  event: Race;
-  preferred?: Modality;
-}) {
+export default function EventCard({ event }: { event: Race }) {
   const { draft, toggleRace } = useDemo();
   const selected = !draft.order && draft.selectedRaceIds.includes(event.id);
   const available = isAvailable(event);

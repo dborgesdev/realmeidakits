@@ -9,6 +9,7 @@ import {
   makeSelection,
   changeSelection,
   isAvailable,
+  preferModality,
 } from "../src/state/selectionRules.ts";
 import {
   optionsReady,
@@ -47,6 +48,49 @@ const events = fixtures.map((race) => ({
     race.status === "open" ? "2099-11-20T18:00:00-03:00" : race.closesAt,
 }));
 const [rio, primavera, cidade, closed] = events;
+test("entry preferences apply only to new assignments and permit mixed participants and races", () => {
+  let d = preferModality(resizeParticipants(initialDraft(), 2), "appai");
+  d.selectedRaceIds = [rio.id, primavera.id, cidade.id];
+  d = assignRace(d, "p1", rio);
+  assert.equal(d.participants[0].items[0].modality, "appai");
+  const explicit = changeSelection(
+    d.participants[0].items[0],
+    { modality: "oficial" },
+    rio,
+  );
+  explicit.distance = "10 km";
+  explicit.documents = { registration: "demo" };
+  d.participants[0].items[0] = explicit;
+  d = preferModality(d, "oficial");
+  assert.equal(d.participants[0].items[0], explicit);
+  d = assignRace(d, "p2", rio);
+  assert.equal(d.participants[1].items[0].modality, "oficial");
+  d = assignRace(d, "p2", cidade);
+  assert.equal(d.participants[1].items[1].modality, "appai");
+  d = preferModality(d, "appai");
+  d = assignRace(d, "p1", primavera);
+  assert.equal(d.participants[0].items[1].modality, "appai");
+  assert.deepEqual(d.participants[0].items[0], explicit);
+  assert.equal(d.participants[1].items[0].modality, "oficial");
+});
+test("direct catalog and new orders do not inherit a previous preference", () => {
+  assert.equal(initialDraft().preferredModality, undefined);
+  const finished = finalizeOrder(
+    preferModality(completeDraft(), "appai"),
+    events,
+  );
+  assert.ok(finished.order);
+  const direct = selectForNewOrder(finished, primavera);
+  assert.equal(direct.preferredModality, undefined);
+  assert.equal(direct.participants[0].items.length, 0);
+  const shortcut = preferModality(finished, "oficial");
+  assert.equal(shortcut.order, undefined);
+  assert.equal(shortcut.preferredModality, "oficial");
+  assert.equal(shortcut.selectedRaceIds.length, 0);
+  assert.equal(shortcut.participants.length, 1);
+  assert.equal(shortcut.participants[0].items.length, 0);
+  assert.equal(finished.preferredModality, "appai");
+});
 function configured(race, mode = "oficial") {
   const item = makeSelection(race, mode);
   return {
