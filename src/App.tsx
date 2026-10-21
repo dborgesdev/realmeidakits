@@ -5,14 +5,18 @@ import Footer from "./components/home/Footer";
 import Home from "./pages/Home";
 import EventsPage from "./pages/EventsPage";
 import RequestPage from "./pages/RequestPage";
+import TrackingPage from "./pages/TrackingPage";
+import LegacyRequest from "./pages/LegacyRequest";
 import InfoPage from "./pages/InfoPage";
 import NotFound from "./pages/NotFound";
 export default function App() {
   const location = useLocation();
   useEffect(() => {
-    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Solicitação demonstrativa" : "Conheça a plataforma"} | Re Almeida Kits`;
-    if (!location.hash) window.scrollTo(0, 0);
-    else
+    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Solicitação demonstrativa" : location.pathname === "/acompanhamento" ? "Acompanhamento demonstrativo" : "Conheça a plataforma"} | Re Almeida Kits`;
+    if (!location.hash) {
+      window.scrollTo(0, 0);
+      document.getElementById("conteudo")?.focus({ preventScroll: true });
+    } else
       requestAnimationFrame(() =>
         document.getElementById(location.hash.slice(1))?.scrollIntoView(),
       );
@@ -37,7 +41,12 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/corridas" element={<EventsPage />} />
           <Route path="/corridas/:slug" element={<EventsPage />} />
-          <Route path="/solicitacao/:slug/:stage" element={<RequestPage />} />
+          <Route
+            path="/solicitacao/:stage"
+            element={<RequestPage key={location.pathname} />}
+          />
+          <Route path="/solicitacao/:slug/:stage" element={<LegacyRequest />} />
+          <Route path="/acompanhamento" element={<TrackingPage />} />
           <Route path="/orientacoes" element={<InfoPage />} />
           <Route path="/privacidade" element={<InfoPage privacy />} />
           <Route path="*" element={<NotFound />} />

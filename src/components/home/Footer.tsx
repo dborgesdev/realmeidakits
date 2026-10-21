@@ -28,8 +28,16 @@ export default function Footer() {
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>Re Almeida Kits · Prévia V1</span>
+        <span>Re Almeida Kits · Prévia V2</span>
         <span>DEMONSTRAÇÃO · Sem operações reais</span>
+        <a
+          className="developer-credit"
+          href="https://smartlocal.com.br"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Desenvolvido por Douglas Borges - Smart Local
+        </a>
       </div>
     </footer>
   );

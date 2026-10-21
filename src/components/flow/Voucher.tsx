@@ -1,15 +1,20 @@
 import { Ban, Ticket } from "lucide-react";
-import type { Race } from "../../data/events";
-import type { Draft } from "../../state/DemoContext";
+import type { DemoOrder, RaceSelection } from "../../types/domain";
+import { findRace } from "../../data/events";
+import { modalityLabel } from "../../state/pricing";
 export default function Voucher({
-  event,
-  draft,
+  order,
+  item,
 }: {
-  event: Race;
-  draft: Draft;
+  order: DemoOrder;
+  item: RaceSelection;
 }) {
+  const race = findRace(item.raceId)!;
   return (
-    <section className="demo-voucher" aria-labelledby="voucher-title">
+    <section
+      className="demo-voucher"
+      aria-label={`Voucher ilustrativo de ${race.name}`}
+    >
       <div className="voucher-top">
         <img
           src="/brand/logo-corredor-original.jpg"
@@ -22,24 +27,23 @@ export default function Voucher({
       <div className="voucher-content">
         <div>
           <span className="eyebrow">
-            <Ticket size={18} /> VOUCHER ILUSTRATIVO
+            <Ticket size={18} />
+            VOUCHER ILUSTRATIVO
           </span>
-          <h2 id="voucher-title">Resumo da experiência</h2>
+          <h2>{race.name}</h2>
           <dl className="summary">
-            <dt>Corrida de exemplo</dt>
-            <dd>{event.name}</dd>
+            <dt>Voucher</dt>
+            <dd>DEMO-VOUCHER-{race.id}</dd>
+            <dt>Solicitação</dt>
+            <dd>{order.id}</dd>
             <dt>Participante fictícia</dt>
-            <dd>{draft.name} · DEMO-CPF</dd>
-            <dt>Modalidade</dt>
+            <dd>{order.person.name} · DEMO-CPF</dd>
+            <dt>Modalidade / distância</dt>
             <dd>
-              {draft.modality === "appai"
-                ? `APPAI · ${draft.kit === "camiseta" ? `Camiseta ${draft.size} com número de peito` : "Somente número de peito"}`
-                : "Kit oficial"}
+              {modalityLabel(item)} · {item.distance}
             </dd>
-            <dt>Pagamento</dt>
-            <dd>{draft.method} apenas simulado · Nenhuma cobrança</dd>
             <dt>Retirada</dt>
-            <dd>Local, data e horário a confirmar na versão funcional</dd>
+            <dd>{item.pickup || "Local a confirmar"} · Sem agendamento real</dd>
           </dl>
         </div>
         <div className="voucher-invalid">
@@ -49,8 +53,9 @@ export default function Voucher({
         </div>
       </div>
       <p className="voucher-warning">
-        NÃO É COMPROVANTE. Nenhum pedido ou reserva foi criado. PDF, QR válido e
-        orientações operacionais dependem da implementação futura.
+        NÃO É COMPROVANTE. Voucher identifica a solicitação ilustrativa por
+        corrida; número de peito identifica a participante na prova. Não há PDF,
+        QR ou validação operacional.
       </p>
     </section>
   );

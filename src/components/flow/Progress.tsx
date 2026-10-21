@@ -1,17 +1,9 @@
-const labels = [
-  "Modalidade",
-  "Identificação",
-  "Dados",
-  "Documentos",
-  "Revisão",
-  "Pagamento",
-  "Confirmação",
-];
+import { stageLabels } from "../../state/requestRules";
 export default function Progress({ step }: { step: number }) {
   return (
     <nav className="progress" aria-label="Etapas da solicitação">
       <ol>
-        {labels.map((label, i) => (
+        {stageLabels.map((label, i) => (
           <li
             key={label}
             aria-label={`${i + 1}. ${label}${i < step ? ", concluída" : ""}`}
@@ -24,7 +16,7 @@ export default function Progress({ step }: { step: number }) {
         ))}
       </ol>
       <p>
-        Etapa {step + 1} de 7 · {labels[step]}
+        Etapa {step + 1} de {stageLabels.length} · {stageLabels[step]}
       </p>
     </nav>
   );

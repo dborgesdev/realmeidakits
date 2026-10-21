@@ -10,11 +10,11 @@ export default function FAQ() {
         {[
           [
             "Estou comprando uma inscrição?",
-            "Não. O serviço apresentado é a retirada do kit para participantes. Esta V1 é uma demonstração.",
+            "Não. O serviço apresentado é a retirada do kit para participantes. Esta prévia é uma demonstração.",
           ],
           [
-            "Quais documentos preciso apresentar?",
-            "Depende das exigências da corrida e da modalidade. Confira os documentos na página do evento.",
+            "Posso escolher várias corridas?",
+            "Sim. Uma participante pode escolher várias provas no mesmo exemplo, com modalidades, documentos e condições próprios. Os dados pessoais são preenchidos uma única vez.",
           ],
           [
             "O que significa autorizar a retirada?",

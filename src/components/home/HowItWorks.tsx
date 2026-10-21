@@ -2,8 +2,8 @@ import { CalendarCheck, Files, CreditCard, Ticket } from "lucide-react";
 const steps = [
   {
     Icon: CalendarCheck,
-    title: "Escolha sua corrida",
-    text: "Encontre o evento e selecione sua modalidade.",
+    title: "Escolha suas corridas",
+    text: "Selecione uma ou várias provas e configure cada modalidade.",
   },
   {
     Icon: Files,
@@ -17,8 +17,8 @@ const steps = [
   },
   {
     Icon: Ticket,
-    title: "Veja o voucher ilustrativo",
-    text: "Conclua a experiência e confira um exemplo sem validade para retirada.",
+    title: "Acompanhe cada corrida",
+    text: "Veja números de peito, retirada e vouchers ilustrativos por prova.",
   },
 ];
 export default function HowItWorks() {

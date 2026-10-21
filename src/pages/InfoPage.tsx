@@ -32,9 +32,10 @@ export default function InfoPage({ privacy = false }: { privacy?: boolean }) {
           <>
             <h2>Cada corrida pode ter exigências diferentes</h2>
             <p>
-              O exemplo apresenta comprovante de inscrição e documento com foto.
-              Quando necessário, uma autorização específica também será
-              solicitada.
+              Cada corrida e modalidade define os documentos do exemplo. A
+              identificação pessoal pode ser reutilizada; comprovantes e
+              autorizações permanecem específicos da prova. Quando necessário,
+              uma autorização específica também será solicitada.
             </p>
             <p>
               A autorização permite à Re Almeida retirar fisicamente o kit da

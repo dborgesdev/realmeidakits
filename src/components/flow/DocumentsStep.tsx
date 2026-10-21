@@ -1,114 +1,108 @@
-import { useState } from "react";
-import { FileCheck2, Upload } from "lucide-react";
-import { fileError } from "../../state/rules";
+import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
 import { requiredDocuments } from "../../state/requestRules";
-export default function DocumentsStep({
-  authorization,
-}: {
-  authorization: boolean;
-}) {
-  const { draft, setDraft } = useDemo();
-  const [error, setError] = useState("");
-  const required = requiredDocuments(authorization);
+import { modalityLabel } from "../../state/pricing";
+import DocumentPicker from "./DocumentPicker";
+import RaceFields from "./RaceFields";
+export default function DocumentsStep() {
+  const { draft, setDraft, updateItem } = useDemo();
+  const personal = Array.from(
+    new Map(
+      draft.items.flatMap((item) =>
+        requiredDocuments(
+          item,
+          events.find((r) => r.id === item.raceId)!,
+        )
+          .filter((doc) => doc.scope === "personal")
+          .map((doc) => [doc.id, doc] as const),
+      ),
+    ).values(),
+  );
+  function fillExamples() {
+    setDraft((d) => ({
+      ...d,
+      order: undefined,
+      sharedDocuments: {
+        ...d.sharedDocuments,
+        ...Object.fromEntries(
+          personal.map((doc) => [doc.id, "Documento pessoal de exemplo"]),
+        ),
+      },
+      items: d.items.map((item) => ({
+        ...item,
+        documents: Object.fromEntries(
+          requiredDocuments(
+            item,
+            events.find((r) => r.id === item.raceId)!,
+          )
+            .filter((doc) => doc.scope === "race")
+            .map((doc) => [doc.id, "Documento específico de exemplo"]),
+        ),
+      })),
+    }));
+  }
   return (
     <>
-      <h1>Documentos para esta corrida</h1>
+      <h1>Dados e documentos por corrida</h1>
       <p>
-        Use os exemplos prontos ou selecione arquivos fictícios PDF, JPG ou PNG
-        (até 5 MB). Nada será transmitido; o conteúdo dos arquivos não é lido
-        nem guardado.
+        Identificação geral pode ser reutilizada pela mesma participante.
+        Autorizações e comprovantes ficam vinculados a cada prova, sem
+        reaproveitamento automático entre corridas.
       </p>
-      <button
-        type="button"
-        className="button secondary"
-        onClick={() => {
-          setDraft({
-            ...draft,
-            confirmed: false,
-            documents: Object.fromEntries(
-              required.map((k) => [k, "Documento fictício pronto"]),
-            ),
-          });
-          setError("");
-        }}
-      >
-        Usar documentos de exemplo
+      <button type="button" className="button secondary" onClick={fillExamples}>
+        Usar todos os documentos de exemplo
       </button>
-      <div className="upload-list">
-        {required.map((k) => (
-          <div className="upload" key={k}>
-            <label>
-              <span>
-                {draft.documents[k] ? <FileCheck2 /> : <Upload />} {k}
-              </span>
-              <input
-                type="file"
-                accept="application/pdf,image/jpeg,image/png"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  const message = fileError(f);
-                  setError(message);
-                  if (!message)
-                    setDraft({
-                      ...draft,
-                      confirmed: false,
-                      documents: {
-                        ...draft.documents,
-                        [k]: "Arquivo fictício selecionado",
-                      },
-                    });
-                  e.target.value = "";
-                }}
+      {personal.length > 0 && (
+        <fieldset className="form-section">
+          <legend>Documentos pessoais</legend>
+          <p>Selecione uma vez para as corridas que exigem este documento.</p>
+          {personal.map((doc) => (
+            <DocumentPicker
+              key={doc.id}
+              label={doc.label}
+              value={draft.sharedDocuments[doc.id]}
+              onChange={(value) =>
+                setDraft((d) => ({
+                  ...d,
+                  order: undefined,
+                  sharedDocuments: { ...d.sharedDocuments, [doc.id]: value },
+                }))
+              }
+            />
+          ))}
+        </fieldset>
+      )}
+      {draft.items.map((item) => {
+        const race = events.find((r) => r.id === item.raceId)!;
+        const docs = requiredDocuments(item, race).filter(
+          (doc) => doc.scope === "race",
+        );
+        return (
+          <fieldset className="form-section" key={race.id}>
+            <legend>{race.name}</legend>
+            <span className="badge">{modalityLabel(item)} · DEMONSTRAÇÃO</span>
+            <RaceFields race={race} item={item} />
+            {docs.map((doc) => (
+              <DocumentPicker
+                key={doc.id}
+                label={`${doc.label} — ${race.name}`}
+                value={item.documents[doc.id]}
+                onChange={(value) =>
+                  updateItem(race.id, {
+                    documents: { ...item.documents, [doc.id]: value },
+                  })
+                }
               />
-            </label>
-            {draft.documents[k] && (
-              <small className="success">
-                ✓ {draft.documents[k]}{" "}
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => {
-                    const docs = { ...draft.documents };
-                    delete docs[k];
-                    setDraft({ ...draft, confirmed: false, documents: docs });
-                  }}
-                >
-                  Remover
-                </button>
-              </small>
+            ))}
+            {!docs.length && (
+              <p className="success">
+                Esta modalidade não exige documentos específicos no exemplo.
+              </p>
             )}
-          </div>
-        ))}
-      </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {authorization && (
-        <label className="radio">
-          <input
-            type="checkbox"
-            required
-            checked={draft.authorized}
-            onChange={(e) =>
-              setDraft({
-                ...draft,
-                confirmed: false,
-                authorized: e.target.checked,
-              })
-            }
-          />{" "}
-          Entendi que a autorização é específica desta corrida e permite a
-          retirada física pela Re Almeida.
-        </label>
-      )}
-      <p className="caption">
-        Obrigatórios: {required.length} documentos do exemplo. O fluxo só avança
-        quando todos estiverem selecionados.
-      </p>
+            <p className="caption">{race.guidance}</p>
+          </fieldset>
+        );
+      })}
     </>
   );
 }

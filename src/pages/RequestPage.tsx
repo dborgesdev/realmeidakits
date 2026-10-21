@@ -1,142 +1,110 @@
 import { useState } from "react";
-import {
-  Link,
-  Navigate,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
-import { Shirt, UsersRound } from "lucide-react";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { events } from "../data/events";
 import { useDemo } from "../state/DemoContext";
-import { Action, DemoNotice } from "../components/UI";
-import Voucher from "../components/flow/Voucher";
+import { DemoNotice } from "../components/UI";
+import { pendingStage, stages, stageLabels } from "../state/requestRules";
+import { isAvailable } from "../state/selectionRules";
 import Progress from "../components/flow/Progress";
+import OptionsStep from "../components/flow/OptionsStep";
 import IdentityStep from "../components/flow/IdentityStep";
 import DataStep from "../components/flow/DataStep";
 import DocumentsStep from "../components/flow/DocumentsStep";
+import ConditionsStep from "../components/flow/ConditionsStep";
 import ReviewStep from "../components/flow/ReviewStep";
 import PaymentStep from "../components/flow/PaymentStep";
+import ConfirmationStep from "../components/flow/ConfirmationStep";
 import NotFound from "./NotFound";
-import { stages, documentsReady, dataReady } from "../state/requestRules";
 export default function RequestPage() {
-  const { slug, stage = "modalidade" } = useParams();
-  const [search] = useSearchParams();
+  const { stage = "configuracao" } = useParams();
   const navigate = useNavigate();
-  const { draft, setDraft, reset } = useDemo();
+  const { draft, setDraft } = useDemo();
   const [error, setError] = useState("");
-  const event = events.find((e) => e.slug === slug);
   const step = stages.indexOf(stage);
-  if (!event || step < 0) return <NotFound />;
-  if (step > 0 && draft.slug !== slug)
-    return <Navigate replace to={`/solicitacao/${slug}/modalidade`} />;
-  if (step > 1 && !draft.identified)
-    return <Navigate replace to={`/solicitacao/${slug}/identificacao`} />;
-  if (step > 2 && !dataReady(draft, event))
-    return <Navigate replace to={`/solicitacao/${slug}/dados`} />;
-  const docsReady = documentsReady(
-    draft.documents,
-    event.authorization,
-    draft.authorized,
-  );
-  if (step >= 4 && !docsReady)
-    return <Navigate replace to={`/solicitacao/${slug}/documentos`} />;
-  if (step === 6 && !draft.confirmed)
-    return <Navigate replace to={`/solicitacao/${slug}/revisao`} />;
+  if (step < 0) return <NotFound />;
+  if (!draft.items.length)
+    return (
+      <div className="flow-shell">
+        <div className="container page narrow">
+          <DemoNotice />
+          <div className="panel empty-state">
+            <h1>Escolha a sua primeira corrida</h1>
+            <p>
+              Selecione uma ou várias provas para a mesma participante. Se você
+              atualizou a página, os dados de demonstração foram apagados.
+            </p>
+            <Link to="/corridas" className="button">
+              Selecionar corridas →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  const blocked = stages.indexOf(pendingStage(draft, events));
+  if (step > blocked && step !== 1 && blocked < 5)
+    return <Navigate replace to={`/solicitacao/${stages[blocked]}`} />;
+  if (step === 1 && blocked === 0)
+    return <Navigate replace to="/solicitacao/configuracao" />;
+  if (step === 7 && !draft.order)
+    return <Navigate replace to="/solicitacao/revisao" />;
+  const expired = draft.items.some((item) => {
+    const race = events.find((r) => r.id === item.raceId);
+    return !race || !isAvailable(race);
+  });
   function next() {
     setError("");
-    if (step === 1) setDraft({ ...draft, identified: true });
-    if (step === 2 && !dataReady(draft, event!)) {
+    const pending = pendingStage(draft, events);
+    const pendingIndex = stages.indexOf(pending);
+    if (step === 0 && pendingIndex === 0) {
       setError(
-        "Confira os campos obrigatórios e use apenas os identificadores de demonstração.",
+        "Confira as opções de todas as corridas e remova provas encerradas.",
       );
       return;
     }
-    if (step === 3 && !docsReady) {
+    if (step === 1)
+      setDraft((d) => ({ ...d, identified: true, order: undefined }));
+    if (step > 1 && pendingIndex <= step && pendingIndex < 5) {
       setError(
-        "Selecione todos os documentos obrigatórios e confira a autorização.",
+        step === 3
+          ? "Confira os dados específicos e todos os documentos exigidos por corrida."
+          : "Confira os campos e aceites obrigatórios antes de continuar.",
       );
       return;
     }
-    if (step === 5) setDraft({ ...draft, confirmed: true });
-    navigate(`/solicitacao/${slug}/${stages[step + 1]}`);
-  }
-  function choose(modality: "oficial" | "appai") {
-    if (draft.slug !== slug) reset(slug!, modality);
-    else setDraft({ ...draft, modality, confirmed: false });
-    navigate(`/solicitacao/${slug}/identificacao`);
+    if (step === 6) {
+      if (pending !== "revisao") {
+        navigate(`/solicitacao/${pending}`);
+        return;
+      }
+      setDraft((d) => ({
+        ...d,
+        order: {
+          id: "DEMO-PEDIDO-001",
+          person: { ...d.person },
+          items: structuredClone(d.items),
+          sharedDocuments: { ...d.sharedDocuments },
+          method: d.method,
+        },
+      }));
+    }
+    navigate(`/solicitacao/${stages[step + 1]}`);
   }
   return (
     <div className="flow-shell">
       <div className="container page flow">
         <DemoNotice />
         <div className="flow-heading">
-          <Link to={`/corridas/${slug}`} className="text-link">
-            ← {event.name}
+          <Link className="text-link" to="/corridas">
+            ← Adicionar ou remover corridas
           </Link>
-          <span className="badge">EVENTO ILUSTRATIVO</span>
+          <span className="badge">
+            {draft.items.length} CORRIDA(S) · UMA PARTICIPANTE
+          </span>
         </div>
         <Progress step={step} />
         <div className="flow-panel">
-          {step === 0 ? (
-            <>
-              <span className="eyebrow">VAMOS COMEÇAR</span>
-              <h1>Qual é a sua modalidade?</h1>
-              <p>Escolha o caminho que corresponde ao seu perfil.</p>
-              <div className="grid two choices">
-                {[
-                  {
-                    id: "oficial" as const,
-                    title: "Kit oficial",
-                    Icon: Shirt,
-                    text: "Já tenho inscrição na corrida.",
-                  },
-                  {
-                    id: "appai" as const,
-                    title: "Associado à APPAI",
-                    Icon: UsersRound,
-                    text: "Vou informar minha matrícula APPAI.",
-                  },
-                ]
-                  .sort((a, b) =>
-                    search.get("modalidade") === a.id
-                      ? -1
-                      : search.get("modalidade") === b.id
-                        ? 1
-                        : 0,
-                  )
-                  .map(({ id, title, Icon, text }) => (
-                    <button
-                      key={id}
-                      className="choice"
-                      onClick={() => choose(id)}
-                    >
-                      <Icon size={36} />
-                      <h2>{title}</h2>
-                      <p>{text}</p>
-                      <span>Continuar →</span>
-                    </button>
-                  ))}
-              </div>
-            </>
-          ) : step === 6 ? (
-            <>
-              <span className="eyebrow">EXPERIÊNCIA CONCLUÍDA</span>
-              <h1>Sua solicitação de exemplo está pronta.</h1>
-              <p>
-                Nenhum pedido real foi criado. Nenhum pagamento foi confirmado,
-                documento enviado ou e-mail disparado.
-              </p>
-              <Voucher event={event} draft={draft} />
-              <div className="actions">
-                <Action to="/orientacoes">
-                  Conferir orientações de retirada
-                </Action>
-                <Action secondary to="/corridas">
-                  Explorar outras corridas
-                </Action>
-              </div>
-            </>
+          {step === 7 && draft.order ? (
+            <ConfirmationStep order={draft.order} />
           ) : (
             <form
               onSubmit={(e) => {
@@ -144,14 +112,22 @@ export default function RequestPage() {
                 next();
               }}
             >
-              <span className="eyebrow">{event.name} · DEMONSTRAÇÃO</span>
+              <span className="eyebrow">
+                {stageLabels[step]} · DEMONSTRAÇÃO
+              </span>
+              {step === 0 && <OptionsStep />}
               {step === 1 && <IdentityStep />}
-              {step === 2 && <DataStep event={event} />}
-              {step === 3 && (
-                <DocumentsStep authorization={event.authorization} />
+              {step === 2 && <DataStep />}
+              {step === 3 && <DocumentsStep />}
+              {step === 4 && <ConditionsStep />}
+              {step === 5 && <ReviewStep />}
+              {step === 6 && <PaymentStep />}
+              {expired && (
+                <p className="error" role="alert">
+                  Uma corrida encerrou as solicitações. Remova-a da seleção para
+                  continuar.
+                </p>
               )}
-              {step === 4 && <ReviewStep event={event} />}
-              {step === 5 && <PaymentStep />}
               {error && (
                 <p className="error" role="alert">
                   {error}
@@ -160,15 +136,19 @@ export default function RequestPage() {
               <div className="flow-actions">
                 <Link
                   className="button secondary"
-                  to={`/solicitacao/${slug}/${stages[step - 1]}`}
+                  to={
+                    step === 0
+                      ? "/corridas"
+                      : `/solicitacao/${stages[step - 1]}`
+                  }
                 >
                   ← Voltar
                 </Link>
                 <button className="button" type="submit">
-                  {step === 5
+                  {step === 6
                     ? "Concluir demonstração"
-                    : step === 4
-                      ? "Ver pagamento simulado"
+                    : step === 5
+                      ? "Ver pagamento consolidado"
                       : step === 1
                         ? "Usar perfil de demonstração"
                         : "Continuar"}{" "}

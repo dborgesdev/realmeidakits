@@ -1,15 +1,21 @@
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays, MapPin, Check, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
 import { asset, type Race } from "../data/events";
-import { Action } from "./UI";
+import { useDemo } from "../state/DemoContext";
+import { availabilityLabel, isAvailable } from "../state/selectionRules";
+import type { Modality } from "../types/domain";
 export default function EventCard({
   event,
-  query = "",
+  preferred,
 }: {
   event: Race;
-  query?: string;
+  preferred?: Modality;
 }) {
+  const { draft, toggleRace } = useDemo();
+  const selected = draft.items.some((i) => i.raceId === event.id);
+  const available = isAvailable(event);
   return (
-    <article className="event-card">
+    <article className={`event-card ${selected ? "is-selected" : ""}`}>
       <div className="event-image">
         <img
           src={asset(event.image)}
@@ -22,15 +28,52 @@ export default function EventCard({
       </div>
       <div className="card-body">
         <h3>{event.name}</h3>
+        <span className={`availability ${available ? "available" : "closed"}`}>
+          {availabilityLabel(event)}
+        </span>
         <p className="icon-line">
-          <CalendarDays size={17} /> Data a confirmar
+          <CalendarDays size={17} />
+          {event.raceDate
+            ? `${new Date(event.raceDate + "T12:00:00").toLocaleDateString("pt-BR")} · exemplo`
+            : "Data a confirmar"}
         </p>
+        {event.closesAt && (
+          <p className="caption">
+            Prazo do exemplo:{" "}
+            {new Date(event.closesAt).toLocaleString("pt-BR", {
+              timeZone: "America/Sao_Paulo",
+              dateStyle: "short",
+              timeStyle: "short",
+            })}{" "}
+            (Brasília)
+          </p>
+        )}
         <p className="icon-line">
-          <MapPin size={17} /> Local a confirmar
+          <MapPin size={17} />
+          Local a confirmar
         </p>
-        <div className="card-bottom">
-          <small>Evento ilustrativo</small>
-          <Action to={`/corridas/${event.slug}${query}`}>Selecionar</Action>
+        <p className="caption">
+          {event.modalities.map((m) => m.label).join(" · ")}
+        </p>
+        <div className="card-selection">
+          <button
+            type="button"
+            className={`button ${selected ? "secondary" : ""}`}
+            disabled={!available && !selected}
+            aria-pressed={selected}
+            aria-label={`${selected ? "Remover" : "Selecionar"} ${event.name}`}
+            onClick={() => toggleRace(event, preferred)}
+          >
+            {selected ? <Check size={18} /> : <Plus size={18} />}{" "}
+            {selected
+              ? "Selecionada · remover"
+              : available
+                ? "Selecionar corrida"
+                : "Seleção encerrada"}
+          </button>
+          <Link className="text-link" to={`/corridas/${event.slug}`}>
+            Conhecer corrida →
+          </Link>
         </div>
       </div>
     </article>

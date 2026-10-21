@@ -1,61 +1,61 @@
-import type { Race } from "../../data/events";
 import { Link } from "react-router-dom";
+import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
-export default function ReviewStep({ event }: { event: Race }) {
+import { requiredDocuments } from "../../state/requestRules";
+import OrderSummary from "./OrderSummary";
+export default function ReviewStep() {
   const { draft } = useDemo();
   return (
     <>
-      <h1>Está tudo certo?</h1>
-      <p>Revise os dados antes de conhecer a simulação de pagamento.</p>
-      <dl className="summary">
-        <dt>Corrida</dt>
-        <dd>{event.name} · DEMONSTRAÇÃO</dd>
-        <dt>Modalidade</dt>
-        <dd>
-          {draft.modality === "appai" ? "Associado à APPAI" : "Kit oficial"}
-        </dd>
-        <dt>Participante</dt>
-        <dd>{draft.name} · CPF ***.***.***-**</dd>
-        {draft.modality === "appai" && (
-          <>
-            <dt>Matrícula / opção</dt>
-            <dd>
-              {draft.membership} ·{" "}
-              {draft.kit === "camiseta"
-                ? `Camiseta ${draft.size} com número de peito`
-                : "Somente número de peito"}
-            </dd>
-          </>
-        )}
-        {event.birthDateRequired && (
-          <>
-            <dt>Nascimento do exemplo</dt>
-            <dd>**/**/**** · informado</dd>
-          </>
-        )}
-        {event.phoneRequired && (
-          <>
-            <dt>Telefone do exemplo</dt>
-            <dd>DEMO-TELEFONE</dd>
-          </>
-        )}
-        <dt>Documentos fictícios</dt>
-        <dd>{Object.keys(draft.documents).join(", ")}</dd>
-        <dt>Valor do serviço</dt>
-        <dd>A confirmar · Não há cobrança nesta prévia</dd>
-      </dl>
-      <div className="actions">
-        <Link className="text-link" to={`/solicitacao/${draft.slug}/dados`}>
-          Editar dados
-        </Link>
-        <Link
-          className="text-link"
-          to={`/solicitacao/${draft.slug}/documentos`}
-        >
-          Rever documentos
+      <h1>Todas as corridas, uma solicitação</h1>
+      <p>
+        Confira cada item. O pagamento será apenas uma simulação consolidada.
+      </p>
+      <div className="soft inset">
+        <h2>Participante de demonstração</h2>
+        <p>{draft.person.name} · CPF ***.***.***-**</p>
+        <p>
+          Nascimento **/**/**** · Telefone DEMO-TELEFONE · E-mail do perfil
+          fictício
+        </p>
+        <Link className="text-link" to="/solicitacao/dados">
+          Editar dados pessoais
         </Link>
       </div>
-      <div className="notice">Prévia: nenhum pagamento será cobrado.</div>
+      <OrderSummary items={draft.items} method={draft.method} editable />
+      <fieldset className="form-section">
+        <legend>Conferência por corrida</legend>
+        {draft.items.map((item) => {
+          const race = events.find((r) => r.id === item.raceId)!;
+          return (
+            <article className="review-requirements" key={race.id}>
+              <h3>{race.name}</h3>
+              <p>
+                Documentos de exemplo:{" "}
+                {requiredDocuments(item, race)
+                  .map((d) => d.label)
+                  .join(", ") || "nenhum configurado"}
+                .
+              </p>
+              <p className="success">
+                ✓ Requisitos demonstrativos atendidos · {race.conditions.length}{" "}
+                condição(ões) aceita(s)
+              </p>
+            </article>
+          );
+        })}
+        <div className="actions">
+          <Link className="text-link" to="/solicitacao/documentos">
+            Rever documentos
+          </Link>
+          <Link className="text-link" to="/solicitacao/condicoes">
+            Rever condições
+          </Link>
+        </div>
+      </fieldset>
+      <div className="notice">
+        Nenhum documento foi analisado, pagamento cobrado ou pedido criado.
+      </div>
     </>
   );
 }

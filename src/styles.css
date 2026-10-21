@@ -1349,3 +1349,254 @@ main {
     padding: 16px;
   }
 }
+/* V2: seleção e configuração independente, sobre o design system aprovado. */
+.event-card.is-selected {
+  border: 2px solid #c5091d;
+  box-shadow: 0 6px 22px #c5091d12;
+}
+.event-card {
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
+}
+.card-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+.card-selection .button {
+  width: 100%;
+}
+.availability {
+  display: inline-block;
+  margin: 4px 0 8px;
+  padding: 5px 9px;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.availability.available {
+  background: #e9f4ec;
+  color: #215732;
+}
+.availability.closed {
+  background: #eeeef1;
+  color: #51515b;
+}
+.selection-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid #d7b8bd;
+  border-left: 5px solid #c5091d;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px #17253408;
+}
+.selection-summary p {
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+.selection-summary strong {
+  font-size: 1.15rem;
+}
+.empty-state {
+  margin-block: 36px;
+  padding: 36px;
+}
+.empty-state .button {
+  margin-top: 24px;
+}
+.race-section {
+  position: relative;
+}
+.remove-race {
+  display: block;
+  margin-left: auto;
+}
+.item-price {
+  font-weight: 750;
+  color: #202b37;
+}
+.order-summary {
+  margin: 24px 0;
+}
+.order-item {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid #dde0e5;
+}
+.order-item > div {
+  min-width: 0;
+}
+.order-item p {
+  font-size: 0.88rem;
+  margin-top: 6px;
+}
+.order-item strong {
+  flex-shrink: 0;
+  color: #9f1020;
+}
+.order-total {
+  padding: 22px;
+  margin: 22px 0;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+.order-total > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.order-total strong {
+  font-size: 1.5rem;
+}
+.order-total small {
+  display: block;
+  margin-top: 10px;
+}
+.condition-copy {
+  border-left: 3px solid #d70922;
+  background: #f7f7f9;
+  padding: 18px;
+  line-height: 1.65;
+}
+.document-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.document-actions > input {
+  min-width: 0;
+  flex: 1 1 200px;
+}
+.review-requirements {
+  margin: 20px 0;
+}
+.tracking-list {
+  display: grid;
+  gap: 24px;
+  margin: 24px 0;
+}
+.tracking-heading h2 {
+  font-size: 1.65rem;
+  margin-top: 10px;
+}
+.tracking-status {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+.tracking-status > div {
+  padding: 16px;
+  border: 1px solid #dde0e5;
+  border-radius: 8px;
+  background: #fafafb;
+}
+.tracking-status dt {
+  font-size: 0.78rem;
+  color: #5d6470;
+  margin-bottom: 8px;
+}
+.tracking-status dd {
+  margin: 0;
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+.bib-example {
+  font-size: 1.35rem !important;
+  color: #ad0c21;
+}
+.voucher-details {
+  border-top: 1px solid #dde0e5;
+  padding-top: 20px;
+}
+.voucher-details summary {
+  font-weight: 700;
+  color: #ad0c21;
+  cursor: pointer;
+  padding: 8px 0;
+}
+.footer-bottom {
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+footer .developer-credit {
+  margin: 0 !important;
+  font-size: 0.7rem !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.progress li {
+  min-width: 0;
+}
+.progress small {
+  text-align: center;
+}
+.flow-panel h2 {
+  font-size: 1.5rem;
+}
+@media (max-width: 600px) {
+  .selection-summary {
+    padding: 20px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .selection-summary .button {
+    width: 100%;
+  }
+  .tracking-status {
+    grid-template-columns: 1fr;
+  }
+  .order-item {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .document-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .document-actions > input {
+    flex: auto;
+  }
+  .order-total {
+    padding: 16px;
+  }
+  .flow-panel .form-section legend {
+    max-width: 100%;
+  }
+  .progress ol {
+    gap: 2px;
+  }
+  .progress li > span {
+    width: 27px;
+    height: 27px;
+  }
+  .empty-state {
+    padding: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .event-card {
+    transition: none;
+  }
+}
+@media (max-width: 380px) {
+  .page-title h1 {
+    font-size: 1.75rem;
+    overflow-wrap: anywhere;
+  }
+}
