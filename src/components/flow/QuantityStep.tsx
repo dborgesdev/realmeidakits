@@ -20,7 +20,8 @@ export default function QuantityStep() {
             onChange={() => resize(1)}
           />
           <span>
-            Somente para mim<small>Um responsável e uma participante</small>
+            Somente para mim
+            <small>Uma pessoa responsável e um participante</small>
           </span>
         </label>
         <label className="radio">

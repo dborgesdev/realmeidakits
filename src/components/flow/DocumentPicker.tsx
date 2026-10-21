@@ -1,17 +1,21 @@
 import { useId, useState } from "react";
 import { FileCheck2, Upload } from "lucide-react";
+import { FieldError, useFlowFeedback } from "./FlowFeedback";
 import { fileError } from "../../state/rules";
 export default function DocumentPicker({
   label,
+  controlId,
   value,
   onChange,
 }: {
   label: string;
+  controlId: string;
   value?: string;
   onChange: (value: string) => void;
 }) {
   const [error, setError] = useState("");
   const id = useId();
+  const { field, issue } = useFlowFeedback();
   return (
     <div className="upload">
       <label htmlFor={id}>
@@ -26,6 +30,7 @@ export default function DocumentPicker({
       </p>
       <div className="document-actions">
         <button
+          {...field(controlId, `${id}-help`)}
           type="button"
           className="button secondary small"
           onClick={() => {
@@ -41,8 +46,8 @@ export default function DocumentPicker({
         </button>
         <input
           id={id}
-          aria-describedby={`${id}-help${error ? ` ${id}-error` : ""}`}
-          aria-invalid={Boolean(error)}
+          aria-describedby={`${id}-help${error ? ` ${id}-error` : ""}${issue?.target === controlId ? ` ${controlId}-error` : ""}`}
+          aria-invalid={Boolean(error) || issue?.target === controlId}
           type="file"
           accept="application/pdf,image/jpeg,image/png"
           onChange={(e) => {
@@ -55,6 +60,7 @@ export default function DocumentPicker({
           }}
         />
       </div>
+      <FieldError id={controlId} />
       {value ? (
         <p className="success" aria-live="polite">
           ✓ {value}{" "}

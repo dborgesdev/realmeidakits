@@ -7,6 +7,8 @@ import type {
   Responsible,
 } from "../types/domain";
 import { isAvailable } from "./selectionRules.ts";
+import { conditionsReady } from "./conditionRules.ts";
+export { conditionsReady } from "./conditionRules.ts";
 import { previewConfig } from "../config/preview.ts";
 export const stages = [
   "pedido",
@@ -73,10 +75,6 @@ export function documentsReady(
     Boolean((doc.scope === "personal" ? shared : item.documents)[doc.id]),
   );
 }
-export function conditionsReady(item: RaceSelection, race: Race) {
-  return race.conditions.every((c) => item.acceptedConditions.includes(c.id));
-}
-
 export function responsibleReady(person: Responsible) {
   return (
     person.name.trim().length >= 3 &&
@@ -133,14 +131,10 @@ export function pendingStage(draft: Draft, catalog: Race[]): string {
   if (!draft.participants.every((p) => participantDocumentsReady(p, catalog)))
     return "documentos";
   if (
-    !draft.participants.every((p) =>
-      p.items.every((i) =>
-        conditionsReady(
-          i,
-          catalog.find((r) => r.id === i.raceId)!,
-        ),
-      ),
-    )
+    !draft.selectedRaceIds.every((id) => {
+      const race = catalog.find((r) => r.id === id);
+      return !!race && conditionsReady(draft.acceptedConditions, race);
+    })
   )
     return "condicoes";
   return "revisao";

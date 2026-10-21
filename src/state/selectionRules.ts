@@ -1,3 +1,4 @@
+import { initialDraft } from "../data/demo.ts";
 import type { Draft, Modality, Race, RaceSelection } from "../types/domain";
 export function isAvailable(race: Race, now = Date.now()) {
   return (
@@ -7,10 +8,10 @@ export function isAvailable(race: Race, now = Date.now()) {
 }
 export function availabilityLabel(race: Race, now = Date.now()) {
   return isAvailable(race, now)
-    ? "Solicitações abertas"
+    ? "Inscrições abertas"
     : race.status === "unavailable"
       ? "Indisponível"
-      : "Solicitações encerradas";
+      : "Inscrições encerradas";
 }
 export function makeSelection(race: Race, preferred?: Modality): RaceSelection {
   return {
@@ -26,7 +27,6 @@ export function makeSelection(race: Race, preferred?: Modality): RaceSelection {
     registration: "DEMO-INSCRICAO-001",
     pickup: race.pickupLocations.length === 1 ? race.pickupLocations[0] : "",
     documents: {},
-    acceptedConditions: [],
   };
 }
 export function toggleSelection(draft: Draft, race: Race): Draft {
@@ -34,6 +34,11 @@ export function toggleSelection(draft: Draft, race: Race): Draft {
   if (draft.selectedRaceIds.includes(race.id))
     return {
       ...draft,
+      acceptedConditions: Object.fromEntries(
+        Object.entries(draft.acceptedConditions).filter(
+          ([id]) => id !== race.id,
+        ),
+      ),
       selectedRaceIds: draft.selectedRaceIds.filter((id) => id !== race.id),
       participants: draft.participants.map((p) => ({
         ...p,
@@ -56,4 +61,11 @@ export function changeSelection(
       pickup: race.pickupLocations.includes(item.pickup) ? item.pickup : "",
     };
   return { ...item, ...patch };
+}
+
+export function selectForNewOrder(draft: Draft, race: Race): Draft {
+  if (draft.order) {
+    return isAvailable(race) ? toggleSelection(initialDraft(), race) : draft;
+  }
+  return toggleSelection(draft, race);
 }

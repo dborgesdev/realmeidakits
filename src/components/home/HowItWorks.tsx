@@ -12,7 +12,7 @@ const steps = [
   },
   {
     Icon: CreditCard,
-    title: "Revise sua solicitação",
+    title: "Revise seu pedido",
     text: "Confira as informações e conheça o pagamento simulado.",
   },
   {

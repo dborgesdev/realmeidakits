@@ -23,8 +23,12 @@ export default function EventsPage() {
           <div className="notice">
             Seu pedido demonstrativo foi finalizado.{" "}
             <Link to="/conclusao">Ver conclusão</Link> ou{" "}
-            <Link to="/corridas" onClick={restart}>
-              Nova solicitação
+            <Link
+              className="button secondary small"
+              to="/corridas"
+              onClick={restart}
+            >
+              Nova inscrição
             </Link>
             .
           </div>
@@ -69,7 +73,7 @@ export default function EventsPage() {
                         <li key={doc.id}>
                           {doc.label}
                           {doc.scope === "personal"
-                            ? " · reutilizável pela participante"
+                            ? " · reutilizável pelo participante"
                             : " · específica desta corrida"}
                         </li>
                       ))}
@@ -94,13 +98,13 @@ export default function EventsPage() {
                 <button
                   className="button"
                   disabled={
-                    Boolean(draft.order) ||
-                    (!isAvailable(event) &&
-                      !draft.selectedRaceIds.includes(event.id))
+                    !isAvailable(event) &&
+                    (!draft.selectedRaceIds.includes(event.id) ||
+                      Boolean(draft.order))
                   }
                   onClick={() => toggleRace(event)}
                 >
-                  {draft.selectedRaceIds.includes(event.id)
+                  {!draft.order && draft.selectedRaceIds.includes(event.id)
                     ? "Remover da seleção"
                     : isAvailable(event)
                       ? "Adicionar à minha seleção"

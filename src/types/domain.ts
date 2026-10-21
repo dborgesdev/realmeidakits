@@ -43,7 +43,6 @@ export type RaceSelection = {
   registration: string;
   pickup: string;
   documents: Record<string, string>;
-  acceptedConditions: string[];
 };
 export type Person = {
   name: string;
@@ -66,13 +65,16 @@ export type Participant = {
   existingDocumentIds: string[];
   reuseAuthorized: boolean;
 };
+export type ConditionAcceptances = Record<string, string[]>;
 export type DemoOrder = {
+  acceptedConditions: ConditionAcceptances;
   id: string;
   responsible: Responsible;
   participants: Participant[];
   method: PaymentMethod;
 };
 export type Draft = {
+  acceptedConditions: ConditionAcceptances;
   selectedRaceIds: string[];
   participants: Participant[];
   responsible: Responsible;

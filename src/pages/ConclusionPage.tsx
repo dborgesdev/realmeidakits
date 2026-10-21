@@ -15,17 +15,18 @@ export default function ConclusionPage() {
         <header className="conclusion-heading">
           <CheckCircle2 size={48} aria-hidden="true" />
           <span className="eyebrow">JORNADA DEMONSTRATIVA CONCLUÍDA</span>
-          <h1>Solicitação finalizada!</h1>
+          <h1>Pedido finalizado!</h1>
           <p>{order.id} · Identificador fictício</p>
           <p>
             {order.participants.length} participante(s) ·{" "}
             {order.participants.reduce((n, p) => n + p.items.length, 0)}{" "}
             retirada(s) demonstrativa(s)
           </p>
-          <p>Responsável: {order.responsible.name}</p>
+          <p>Pessoa responsável: {order.responsible.name}</p>
           <p>
-            Nenhuma cobrança ou solicitação real foi realizada. O pedido
-            demonstrativo está encerrado e bloqueado para edição.
+            Esta é uma demonstração. Nenhuma cobrança ou pedido real foi
+            realizado. O pedido demonstrativo está encerrado e bloqueado para
+            edição.
           </p>
           <div className="actions">
             <Link className="button" to="/acompanhamento">
@@ -34,8 +35,8 @@ export default function ConclusionPage() {
             <a className="button secondary" href="#vouchers">
               Ver vouchers e grupos
             </a>
-            <Link className="text-link" to="/corridas" onClick={restart}>
-              Nova solicitação
+            <Link className="button secondary" to="/corridas" onClick={restart}>
+              Nova inscrição
             </Link>
           </div>
         </header>

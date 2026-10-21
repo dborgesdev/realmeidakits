@@ -1,18 +1,21 @@
+import { FieldError, useFlowFeedback } from "./FlowFeedback";
 import { useDemo } from "../../state/DemoContext";
 export default function ResponsibleStep() {
   const { draft, setDraft } = useDemo();
+  const { field } = useFlowFeedback();
   return (
     <>
       <h1>Quem será responsável pelo pedido?</h1>
       <p>
-        O responsável reúne as solicitações e, na versão real, será titular da
+        A pessoa responsável reúne os pedidos e, na versão real, será titular da
         conta e do pagamento. Também poderá participar.
       </p>
       <fieldset className="form-section">
-        <legend>Contato do responsável</legend>
+        <legend>Contato da pessoa responsável</legend>
         <label>
-          Nome do responsável (demonstração)
+          Nome da pessoa responsável (demonstração)
           <input
+            {...field("responsible-name")}
             required
             minLength={3}
             maxLength={80}
@@ -26,13 +29,14 @@ export default function ResponsibleStep() {
             }
           />
         </label>
+        <FieldError id="responsible-name" />
         <div className="form-grid">
           <label>
-            E-mail do responsável
+            E-mail da pessoa responsável
             <input readOnly value={draft.responsible.email} />
           </label>
           <label>
-            Telefone / WhatsApp do responsável
+            Telefone / WhatsApp da pessoa responsável
             <input readOnly value={draft.responsible.phone} />
           </label>
         </div>

@@ -11,7 +11,7 @@ export default function EventCard({
   preferred?: Modality;
 }) {
   const { draft, toggleRace } = useDemo();
-  const selected = draft.selectedRaceIds.includes(event.id);
+  const selected = !draft.order && draft.selectedRaceIds.includes(event.id);
   const available = isAvailable(event);
   return (
     <article className={`event-card ${selected ? "is-selected" : ""}`}>
@@ -58,19 +58,17 @@ export default function EventCard({
           <button
             type="button"
             className={`button ${selected ? "secondary" : ""}`}
-            disabled={Boolean(draft.order) || (!available && !selected)}
+            disabled={!available && !selected}
             aria-pressed={selected}
             aria-label={`${selected ? "Remover" : "Selecionar"} ${event.name}`}
             onClick={() => toggleRace(event)}
           >
             {selected ? <Check size={18} /> : <Plus size={18} />}{" "}
-            {draft.order
-              ? "Pedido finalizado"
-              : selected
-                ? "Selecionada · remover"
-                : available
-                  ? "Selecionar corrida"
-                  : "Seleção encerrada"}
+            {selected
+              ? "Selecionada · remover"
+              : available
+                ? "Selecionar corrida"
+                : "Seleção encerrada"}
           </button>
           <Link className="text-link" to={`/corridas/${event.slug}`}>
             Conhecer corrida →

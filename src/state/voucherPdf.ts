@@ -13,9 +13,9 @@ export function voucherLines(
   race: Race,
 ) {
   return [
-    "VOUCHER ILUSTRATIVO",
+    "VOUCHER DE RETIRADA",
     race.name,
-    `Solicitação: ${order.id}`,
+    `Pedido: ${order.id}`,
     `Voucher: ${voucherId(participant.id, race.id)}`,
     `Participante: ${participant.person.name}`,
     `Identificação fictícia: ${participant.person.cpf}`,

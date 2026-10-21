@@ -26,7 +26,9 @@ Após pagamento confirmado, alterações relevantes exigem procedimento operacio
 
 CPF é identificador, **não credencial**. Consultar apenas CPF não pode revelar existência ou conteúdo de documentos de terceiros. Reuso exige autenticação, autorização e validação adequadas, com privacidade e finalidade definidas. Documento pessoal pertence à participante; comprovante/autorização específicos pertencem à inscrição e condições da prova. Não expor download/visualização de anexos privados na interface do responsável sem política específica autorizada. Definir armazenamento privado, retenção, revogação, permissões, auditoria e proteção de exportações.
 
-Condições por inscrição com versão e momento de aceite; validar minuta de dois meses/não comparecimento/doação. Definir emissão e invalidação de vouchers, QR operacional, prevenção de retirada duplicada e trilha de auditoria. Conta principal da Renata e perfil operacional restrito da filha devem seguir menor privilégio e escopos validados. Não criar usuários reais na prévia.
+Aceite geral realizado pela pessoa responsável uma única vez por condição/corrida no contexto do pedido. Preservar identificação e versão da condição, data/momento, vínculo com pedido/corrida e identificação dos participantes aos quais se aplica. Adicionar participante a uma corrida já aceita não exige repetição visual do mesmo aceite, desde que a condição continue aplicável e válida. Alterar a versão aplicável exige novo aceite. Autorizações individuais do atleta ou de responsável legal continuam documentos separados e obrigatórios quando configurados; o aceite geral não as substitui. Na prévia a versão é demonstrativa (ID + conteúdo exato), sem registro jurídico de data.
+
+Validar a minuta de dois meses/não comparecimento/doação. Definir emissão e invalidação de vouchers, QR operacional, prevenção de retirada duplicada e trilha de auditoria. Conta principal da Renata e perfil operacional restrito da filha devem seguir menor privilégio e escopos validados. Não criar usuários reais na prévia.
 
 ## Operação e comunicação pendentes
 
@@ -35,3 +37,7 @@ Relatórios e exportações Excel de pedidos concluídos, pendentes e abandonado
 WhatsApp Business Platform oficial permanece **opcional e pendente de aprovação da cliente**, avaliação de custos de configuração, integração e mensagens. Não ativado/contratado na V2. Acompanhamento no site deve funcionar sem notificações. Sem envio automático nesta fase.
 
 Inspecionar infraestrutura real, plugins existentes, domínio/subdomínio, sessões, segurança, checkout e divisão de papéis antes de definir contratos. As fixtures e regras desacopladas da prévia não constituem contrato de integração.
+
+## Novo pedido e limites da prévia
+
+Após concluir, o snapshot permanece imutável. Selecionar uma corrida aberta na home, catálogo ou detalhe inicia automaticamente outro rascunho, sem transportar dados pessoais, documentos ou aceites anteriores. A prévia não mantém histórico e não exige reset manual. Na versão real, a criação de outro pedido deve preservar os pedidos anteriores na conta autenticada da pessoa responsável; arquitetura e permissões ainda dependem da avaliação da instalação WooCommerce. Nenhuma nova API ou persistência foi criada nesta rodada.

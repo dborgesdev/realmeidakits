@@ -2,10 +2,9 @@ import { Link } from "react-router-dom";
 import { events } from "../../data/events";
 import { previewConfig } from "../../config/preview";
 import { useDemo } from "../../state/DemoContext";
-import {
-  participantReady,
-  participantDocumentsReady,
-} from "../../state/requestRules";
+import { participantReady } from "../../state/requestRules";
+import { controlId } from "../../state/validationRules";
+import { FieldError, useFlowFeedback } from "./FlowFeedback";
 import { isAvailable } from "../../state/selectionRules";
 import ParticipantPanels from "../participants/ParticipantPanels";
 import DataStep from "./DataStep";
@@ -13,12 +12,13 @@ import OptionsStep from "./OptionsStep";
 import RaceFields from "./RaceFields";
 export default function ParticipantsStep() {
   const { draft, resize, remove, assign } = useDemo();
+  const { field, navigatePanel } = useFlowFeedback();
   const complete = draft.participants.filter((p) =>
     participantReady(p, events, draft.selectedRaceIds),
   ).length;
   return (
     <>
-      <h1>Cada participante, suas escolhas</h1>
+      <h1>Dados dos participantes</h1>
       <p>
         Abra uma pessoa por vez. Atribua somente as corridas em que ela
         participa.
@@ -31,7 +31,10 @@ export default function ParticipantsStep() {
           type="button"
           className="button secondary small"
           disabled={draft.participants.length >= previewConfig.maxParticipants}
-          onClick={() => resize(draft.participants.length + 1)}
+          onClick={() => {
+            resize(draft.participants.length + 1);
+            navigatePanel(`p${draft.nextParticipantNumber}`);
+          }}
         >
           Adicionar participante
         </button>
@@ -44,14 +47,21 @@ export default function ParticipantsStep() {
       <ParticipantPanels
         participants={draft.participants}
         describe={(p) =>
-          `${participantReady(p, events, draft.selectedRaceIds) ? "✓ Dados e opções completos" : "Dados ou opções pendentes"} · ${p.items.length} corrida(s) · ${participantDocumentsReady(p, events) && p.items.length ? "documentos prontos" : "documentos pendentes"}`
+          participantReady(p, events, draft.selectedRaceIds)
+            ? `✓ Completo · ${p.items.length} corrida(s) configurada(s)`
+            : `! Dados ou opções pendentes · ${p.items.length} corrida(s)`
         }
       >
         {(p, next) => (
           <>
             <DataStep participant={p} />
-            <fieldset className="form-section">
-              <legend>Corridas desta pessoa</legend>
+            <fieldset
+              className="form-section"
+              {...field(controlId("races", p.id))}
+              tabIndex={-1}
+            >
+              <legend>Corridas deste participante</legend>
+              <FieldError id={controlId("races", p.id)} />
               {events
                 .filter((r) => draft.selectedRaceIds.includes(r.id))
                 .map((r) => (
@@ -87,13 +97,15 @@ export default function ParticipantsStep() {
               </fieldset>
             ))}
             <div className="participant-toolbar">
-              <button
-                type="button"
-                className="button secondary small"
-                onClick={next}
-              >
-                Próxima participante
-              </button>
+              {next && (
+                <button
+                  type="button"
+                  className="button secondary small"
+                  onClick={next}
+                >
+                  Próximo participante
+                </button>
+              )}
               <button
                 type="button"
                 className="text-button"

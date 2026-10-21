@@ -1,14 +1,26 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { selectionEstimate, money } from "../../state/pricing";
+import { selectionEstimate, money, totalPrice } from "../../state/pricing";
+import { participantReady } from "../../state/requestRules";
 import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
 export default function SelectionSummary() {
   const { draft } = useDemo();
-  const estimate = selectionEstimate(
-    events.filter((r) => draft.selectedRaceIds.includes(r.id)),
-    draft.method,
-  );
+  const configured =
+    draft.prepared &&
+    draft.participants.every((p) =>
+      participantReady(p, events, draft.selectedRaceIds),
+    );
+  const estimate = configured
+    ? totalPrice(
+        draft.participants.flatMap((p) => p.items),
+        events,
+        draft.method,
+      )
+    : selectionEstimate(
+        events.filter((r) => draft.selectedRaceIds.includes(r.id)),
+        draft.method,
+      );
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -38,16 +50,20 @@ export default function SelectionSummary() {
           {draft.selectedRaceIds.length} corrida(s) selecionada(s)
         </strong>
         <small className="selection-estimate">
-          A partir de {money(estimate.known)}
+          {configured ? "Total simulado" : "Referência a partir de"}{" "}
+          {money(estimate.known)}
           {estimate.pending ? " + a confirmar" : ""} · demonstração
         </small>
         <details>
           <summary>Ver seleção e estimativa</summary>
           <p>
-            A partir de {money(estimate.known)}
+            {configured ? "Total simulado" : "Referência a partir de"}{" "}
+            {money(estimate.known)}
             {estimate.pending ? " + valores a confirmar" : ""} · exemplo no{" "}
-            {draft.method}, uma pessoa por corrida. O total depende das pessoas
-            e opções atribuídas.
+            {draft.method}.{" "}
+            {configured
+              ? "Calculado com os participantes e opções deste pedido."
+              : "Referência de uma pessoa por corrida. O total será calculado conforme participantes e opções."}
           </p>
           <ul>
             {events

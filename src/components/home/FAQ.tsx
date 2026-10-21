@@ -15,11 +15,11 @@ export default function FAQ() {
           ],
           [
             "Posso escolher várias corridas?",
-            `Sim. Um responsável pode organizar até ${previewConfig.maxParticipants} participantes, cada um com uma ou várias corridas. As opções e os documentos são separados por pessoa e prova.`,
+            `Sim. Uma pessoa responsável pode organizar até ${previewConfig.maxParticipants} participantes, cada um com uma ou várias corridas. As opções e os documentos são separados por pessoa e prova.`,
           ],
           [
             "O que significa autorizar a retirada?",
-            "Cada pessoa mantém sua identidade e corridas. A autorização específica permite que a Re Almeida retire fisicamente o kit pela participante.",
+            "Cada pessoa mantém sua identidade e corridas. A autorização específica permite que a Re Almeida retire fisicamente o kit pelo participante.",
           ],
           [
             "Vou pagar ou enviar documentos de verdade?",

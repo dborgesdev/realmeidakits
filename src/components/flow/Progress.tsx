@@ -1,7 +1,7 @@
 import { stageLabels } from "../../state/requestRules";
 export default function Progress({ step }: { step: number }) {
   return (
-    <nav className="progress" aria-label="Etapas da solicitação">
+    <nav className="progress" aria-label="Etapas da inscrição">
       <ol>
         {stageLabels.map((label, i) => (
           <li

@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { events as fixtures } from "../src/data/events.ts";
 import { initialDraft } from "../src/data/demo.ts";
 import {
+  selectForNewOrder,
   toggleSelection,
   makeSelection,
   changeSelection,
@@ -30,6 +31,15 @@ import { previewConfig } from "../src/config/preview.ts";
 import { finalizeOrder, editableUpdate } from "../src/state/orderRules.ts";
 import { groupUrl } from "../src/state/voucherRules.ts";
 import { selectionEstimate } from "../src/state/pricing.ts";
+import {
+  acceptCondition,
+  conditionVersion,
+} from "../src/state/conditionRules.ts";
+import {
+  firstIssue,
+  controlId,
+  missingDocuments,
+} from "../src/state/validationRules.ts";
 import { fileError } from "../src/state/rules.ts";
 const events = fixtures.map((race) => ({
   ...race,
@@ -70,10 +80,12 @@ function completeDraft(count = 1) {
             .filter((doc) => doc.scope === "race")
             .map((doc) => [doc.id, "demo"]),
         ),
-        acceptedConditions: race.conditions.map((c) => c.id),
       };
     }),
   }));
+  for (const race of events.filter((r) => d.selectedRaceIds.includes(r.id)))
+    for (const condition of race.conditions)
+      d = acceptCondition(d, race, condition.id, true);
   return d;
 }
 test("individual order keeps responsible and participant separate", () => {
@@ -142,7 +154,8 @@ test("mode change resets only its registration and preserves other people", () =
     rio,
   );
   assert.deepEqual(changed.documents, {});
-  assert.deepEqual(changed.acceptedConditions, []);
+  assert.equal(changed.acceptedConditions, undefined);
+  assert.ok(conditionsReady(d.acceptedConditions, rio));
   assert.equal(changed.distance, "5 km");
   assert.deepEqual(d.participants[1], before);
 });
@@ -178,7 +191,7 @@ test("guards catch unfinished persons, duplicate identity, specific documents an
   x.participants[1].items[0].documents = {};
   assert.equal(pendingStage(x, events), "documentos");
   x = globalThis.structuredClone(d);
-  x.participants[1].items[0].acceptedConditions = [];
+  x.acceptedConditions[rio.id] = [];
   assert.equal(pendingStage(x, events), "condicoes");
 });
 test("totals sum all participants in cents with different payment methods", () => {
@@ -312,24 +325,118 @@ test("documents depend on race and modality; only personal documents are reusabl
   assert.equal(requiredDocuments(a, rio).length, 3);
   assert.equal(requiredDocuments(b, primavera).length, 1);
 });
-test("terms require the specific race and version", () => {
-  const a = configured(rio);
-  assert.equal(conditionsReady(a, rio), false);
+test("one acceptance per race and condition covers the whole group", () => {
+  let d = completeDraft(3);
+  const expected = events
+    .filter((r) => d.selectedRaceIds.includes(r.id))
+    .reduce((n, r) => n + r.conditions.length, 0);
+  assert.equal(Object.values(d.acceptedConditions).flat().length, expected);
+  assert.equal(conditionsReady(d.acceptedConditions, rio), true);
+  assert.ok(
+    d.acceptedConditions[rio.id].includes(conditionVersion(rio.conditions[0])),
+  );
   assert.equal(
     conditionsReady(
-      { ...a, acceptedConditions: primavera.conditions.map((c) => c.id) },
+      { [primavera.id]: d.acceptedConditions[primavera.id] },
       rio,
     ),
     false,
   );
+  const before = globalThis.structuredClone(d.acceptedConditions);
+  d = resizeParticipants(d, 4);
+  d = assignRace(d, d.participants[3].id, rio);
+  assert.deepEqual(d.acceptedConditions, before);
+  d = acceptCondition(d, rio, rio.conditions[0].id, true);
+  assert.deepEqual(d.acceptedConditions, before);
+});
+test("modified version or condition content invalidates old acceptance", () => {
+  const d = completeDraft(3);
+  for (const change of [
+    { id: "new-version", text: rio.conditions[0].text },
+    { ...rio.conditions[0], text: "Minuta alterada" },
+  ]) {
+    const race = { ...rio, conditions: [change, ...rio.conditions.slice(1)] };
+    assert.equal(conditionsReady(d.acceptedConditions, race), false);
+    const catalog = events.map((r) => (r.id === rio.id ? race : r));
+    assert.equal(pendingStage(d, catalog), "condicoes");
+    assert.equal(finalizeOrder(d, catalog).order, undefined);
+  }
+  assert.equal(conditionsReady({}, { ...rio, conditions: [] }), true);
+});
+test("removal and reinsertion clear only that race's general acceptances", () => {
+  const d = completeDraft(3);
+  const removed = toggleSelection(d, rio);
+  assert.equal(removed.acceptedConditions[rio.id], undefined);
+  assert.deepEqual(
+    removed.acceptedConditions[primavera.id],
+    d.acceptedConditions[primavera.id],
+  );
+  const again = toggleSelection(removed, rio);
+  assert.equal(conditionsReady(again.acceptedConditions, rio), false);
+  assert.equal(again.participants[0].documents.identity, "demo");
+});
+test("new selection after finalization creates a clean draft without changing snapshot", () => {
+  const final = finalizeOrder(completeDraft(3), events);
+  const snapshot = final.order;
+  assert.equal(selectForNewOrder(final, closed), final);
+  let next = selectForNewOrder(final, rio);
+  assert.equal(next.order, undefined);
+  assert.deepEqual(next.selectedRaceIds, [rio.id]);
+  assert.deepEqual(next.acceptedConditions, {});
+  assert.equal(next.participants.length, 1);
+  assert.deepEqual(next.participants[0].documents, {});
+  assert.equal(next.participants[0].reuseAuthorized, false);
+  assert.equal(next.participants[0].items.length, 0);
+  next = selectForNewOrder(next, primavera);
+  assert.deepEqual(next.selectedRaceIds, [rio.id, primavera.id]);
+  assert.equal(snapshot.participants.length, 3);
+  assert.ok(Object.isFrozen(snapshot.acceptedConditions));
+  assert.deepEqual(final.order, snapshot);
+});
+test("directed validation identifies first field inside any participant panel", () => {
+  const d = completeDraft(3);
+  assert.equal(firstIssue("participantes", d, events), null);
+  d.participants[1].items[0].distance = "";
+  assert.deepEqual(firstIssue("participantes", d, events), {
+    target: controlId("distance", "p2", rio.id),
+    message: `Selecione a distância para ${rio.name}.`,
+    participantId: "p2",
+  });
+  d.participants[0].person.name = "";
   assert.equal(
-    conditionsReady(
-      { ...a, acceptedConditions: rio.conditions.map((c) => c.id) },
-      rio,
-    ),
-    true,
+    firstIssue("participantes", d, events).target,
+    controlId("name", "p1"),
+  );
+  d.participants[0].person.name = "Pessoa fictícia";
+  d.participants[1].items = [];
+  assert.equal(
+    firstIssue("participantes", d, events).target,
+    controlId("races", "p2"),
   );
 });
+test("conditional fields, document counts and race conditions have specific targets", () => {
+  const d = completeDraft(3);
+  d.participants[1].items[0].size = "";
+  assert.equal(
+    firstIssue("participantes", d, events).target,
+    controlId("size", "p2", rio.id),
+  );
+  d.participants[1].items[0].kit = "numero";
+  assert.equal(firstIssue("participantes", d, events), null);
+  d.participants[1].documents = {};
+  d.participants[1].items[0].documents = {};
+  assert.equal(missingDocuments(d.participants[1], events), 2);
+  assert.equal(
+    firstIssue("documentos", d, events).target,
+    controlId("document", "p2", undefined, "identity"),
+  );
+  d.acceptedConditions[rio.id] = [];
+  assert.equal(
+    firstIssue("condicoes", d, events).target,
+    controlId("condition", undefined, rio.id, rio.conditions[0].id),
+  );
+});
+
 test("file validation rejects unsupported and oversized files", () => {
   assert.ok(fileError({ type: "text/html", size: 10 }));
   assert.ok(fileError({ type: "application/pdf", size: 6 * 1024 * 1024 }));
@@ -365,4 +472,29 @@ test("individual PDF contains correct person-race and valid cross-reference offs
       true,
     ),
   );
+});
+
+test("different conditions of the same race need separate versioned consent", () => {
+  const race = {
+    ...rio,
+    conditions: [
+      ...rio.conditions,
+      {
+        id: "qa-extra-v1",
+        text: "Condição fictícia adicional somente para teste",
+      },
+    ],
+  };
+  let d = toggleSelection(initialDraft(), race);
+  d = acceptCondition(d, race, race.conditions[0].id, true);
+  assert.equal(conditionsReady(d.acceptedConditions, race), false);
+  assert.equal(
+    firstIssue("condicoes", d, [race]).target,
+    controlId("condition", undefined, race.id, "qa-extra-v1"),
+  );
+  d = acceptCondition(d, race, "qa-extra-v1", true);
+  assert.equal(conditionsReady(d.acceptedConditions, race), true);
+  assert.equal(d.acceptedConditions[race.id].length, 2);
+  d = acceptCondition(d, race, race.conditions[0].id, false);
+  assert.equal(conditionsReady(d.acceptedConditions, race), false);
 });

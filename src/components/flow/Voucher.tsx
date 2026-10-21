@@ -44,14 +44,14 @@ export default function Voucher({
       </div>
       <div className="voucher-content">
         <div>
-          <span className="eyebrow">VOUCHER ILUSTRATIVO</span>
+          <span className="eyebrow">VOUCHER DE RETIRADA</span>
           <h3>{race.name}</h3>
           <dl className="summary">
             <dt>Voucher</dt>
             <dd>{voucherId(participant.id, race.id)}</dd>
-            <dt>Solicitação</dt>
+            <dt>Pedido</dt>
             <dd>{order.id}</dd>
-            <dt>Participante fictícia</dt>
+            <dt>Participante fictício</dt>
             <dd>
               {participant.person.name} · {participant.person.cpf}
             </dd>
@@ -91,7 +91,7 @@ export default function Voucher({
           <button type="button" className="button secondary" onClick={download}>
             Baixar PDF
           </button>
-          {group ? (
+          {group && (
             <a
               className="button secondary"
               href={group}
@@ -100,10 +100,6 @@ export default function Voucher({
             >
               Entrar no grupo de WhatsApp
             </a>
-          ) : (
-            <button className="button secondary" type="button" disabled>
-              Entrar no grupo de WhatsApp
-            </button>
           )}
           <Link className="text-link" to="/acompanhamento">
             Acompanhar pedido

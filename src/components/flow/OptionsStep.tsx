@@ -1,3 +1,5 @@
+import { controlId } from "../../state/validationRules";
+import { FieldError, useFlowFeedback } from "./FlowFeedback";
 import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
 import { money, itemPrice } from "../../state/pricing";
@@ -10,6 +12,7 @@ export default function OptionsStep({
   items: RaceSelection[];
 }) {
   const { draft, updateItem: editItem, assign } = useDemo();
+  const { field } = useFlowFeedback();
   const updateItem = (id: string, patch: Partial<RaceSelection>) =>
     editItem(participantId, id, patch);
   return (
@@ -36,8 +39,10 @@ export default function OptionsStep({
               Remover corrida
             </button>
             <label>
-              Modalidade — {race.name}
+              Modalidade
               <select
+                {...field(controlId("modality", participantId, race.id))}
+                aria-label={`Modalidade — ${race.name}`}
                 value={item.modality}
                 onChange={(e) =>
                   updateItem(race.id, { modality: e.target.value as Modality })
@@ -49,12 +54,15 @@ export default function OptionsStep({
                   </option>
                 ))}
               </select>
+              <FieldError id={controlId("modality", participantId, race.id)} />
             </label>
             <div className="form-grid">
               <label>
-                Distância — {race.name}
+                Distância
                 <select
                   required
+                  {...field(controlId("distance", participantId, race.id))}
+                  aria-label={`Distância — ${race.name}`}
                   value={item.distance}
                   onChange={(e) =>
                     updateItem(race.id, { distance: e.target.value })
@@ -65,12 +73,17 @@ export default function OptionsStep({
                     <option key={d}>{d}</option>
                   ))}
                 </select>
+                <FieldError
+                  id={controlId("distance", participantId, race.id)}
+                />
               </label>
               {item.modality === "oficial" && race.kitTypes.length > 0 && (
                 <label>
-                  Kit adquirido — {race.name}
+                  Tipo de kit
                   <select
                     required
+                    {...field(controlId("kitType", participantId, race.id))}
+                    aria-label={`Tipo de kit — ${race.name}`}
                     value={item.kitType}
                     onChange={(e) =>
                       updateItem(race.id, { kitType: e.target.value })
@@ -81,13 +94,16 @@ export default function OptionsStep({
                       <option key={k}>{k}</option>
                     ))}
                   </select>
+                  <FieldError
+                    id={controlId("kitType", participantId, race.id)}
+                  />
                 </label>
               )}
             </div>
             {item.modality === "appai" && (
               <>
                 <fieldset>
-                  <legend>Opção APPAI — {race.name}</legend>
+                  <legend>Opção APPAI</legend>
                   <label className="radio">
                     <input
                       type="radio"
@@ -109,9 +125,11 @@ export default function OptionsStep({
                 </fieldset>
                 {item.kit === "camiseta" && (
                   <label>
-                    Tamanho da camiseta — {race.name}
+                    Tamanho da camiseta
                     <select
                       required
+                      {...field(controlId("size", participantId, race.id))}
+                      aria-label={`Tamanho da camiseta — ${race.name}`}
                       value={item.size}
                       onChange={(e) =>
                         updateItem(race.id, { size: e.target.value })
@@ -122,6 +140,9 @@ export default function OptionsStep({
                         <option key={s}>{s}</option>
                       ))}
                     </select>
+                    <FieldError
+                      id={controlId("size", participantId, race.id)}
+                    />
                     <span className="field-help">
                       Grade ilustrativa específica desta corrida.
                     </span>
@@ -131,9 +152,11 @@ export default function OptionsStep({
             )}
             {race.pickupLocations.length > 0 && (
               <label>
-                Local de retirada — {race.name}
+                Local de retirada
                 <select
                   required
+                  {...field(controlId("pickup", participantId, race.id))}
+                  aria-label={`Local de retirada — ${race.name}`}
                   value={item.pickup}
                   onChange={(e) =>
                     updateItem(race.id, { pickup: e.target.value })
@@ -144,6 +167,7 @@ export default function OptionsStep({
                     <option key={p}>{p}</option>
                   ))}
                 </select>
+                <FieldError id={controlId("pickup", participantId, race.id)} />
               </label>
             )}
             <p className="item-price">

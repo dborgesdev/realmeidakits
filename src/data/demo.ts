@@ -20,6 +20,7 @@ export function makeParticipant(number: number): Participant {
 export function initialDraft(): Draft {
   return {
     selectedRaceIds: [],
+    acceptedConditions: {},
     participants: [makeParticipant(1)],
     responsible: {
       name: "Responsável de demonstração",

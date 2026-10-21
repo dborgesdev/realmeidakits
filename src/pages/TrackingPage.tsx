@@ -15,14 +15,14 @@ export default function TrackingPage() {
         <DemoNotice />
         <PageTitle
           eyebrow="SEM LOGIN · SEM OPERAÇÃO REAL"
-          title="Acompanhamento demonstrativo"
+          title="Acompanhar pedido"
         >
           Uma prévia de como consultar suas corridas. Esta tela não define a
           futura interface de Minha Conta do WooCommerce.
         </PageTitle>
         {!order ? (
           <div className="panel empty-state">
-            <h2>Ainda não há solicitação nesta sessão</h2>
+            <h2>Ainda não há pedido nesta sessão</h2>
             <p>
               Conclua a jornada demonstrativa para conhecer os status por
               corrida. Recarregar a página apaga os exemplos preenchidos.
@@ -39,9 +39,9 @@ export default function TrackingPage() {
               </span>
               <h2>{order.responsible.name}</h2>
               <p>
-                CPF DEMO-CPF ·{" "}
+                {order.participants.length} participante(s) ·{" "}
                 {order.participants.reduce((n, p) => n + p.items.length, 0)}{" "}
-                corrida(s). Nenhum pagamento bancário confirmado.
+                retirada(s). Nenhum pagamento bancário confirmado.
               </p>
               {order.participants.map((p) => (
                 <section key={p.id}>
@@ -78,8 +78,12 @@ export default function TrackingPage() {
               <Link className="button secondary" to="/conclusao">
                 Ver conclusão e vouchers
               </Link>
-              <Link className="text-link" to="/corridas" onClick={restart}>
-                Nova solicitação
+              <Link
+                className="button secondary"
+                to="/corridas"
+                onClick={restart}
+              >
+                Nova inscrição
               </Link>
             </div>
           </>

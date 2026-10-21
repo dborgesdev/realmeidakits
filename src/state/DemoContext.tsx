@@ -8,7 +8,7 @@ import {
 } from "react";
 import { initialDraft } from "../data/demo";
 import { events, findRace } from "../data/events";
-import { changeSelection, toggleSelection } from "./selectionRules";
+import { changeSelection, selectForNewOrder } from "./selectionRules";
 import {
   assignRace,
   resizeParticipants,
@@ -45,7 +45,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       value={{
         draft,
         setDraft,
-        toggleRace: (race) => setDraft((d) => toggleSelection(d, race)),
+        toggleRace: (race) => storeDraft((d) => selectForNewOrder(d, race)),
         assign: (id, race) => setDraft((d) => assignRace(d, id, race)),
         resize: (count) => setDraft((d) => resizeParticipants(d, count)),
         remove: (id) => setDraft((d) => removeParticipant(d, id)),

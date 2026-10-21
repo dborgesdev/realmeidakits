@@ -11,6 +11,7 @@ export function finalizeOrder(draft: Draft, catalog: Race[]): Draft {
   if (draft.order || pendingStage(draft, catalog) !== "revisao") return draft;
   const order: DemoOrder = {
     id: "DEMO-PEDIDO-001",
+    acceptedConditions: structuredClone(draft.acceptedConditions),
     responsible: structuredClone(draft.responsible),
     participants: structuredClone(draft.participants),
     method: draft.method,

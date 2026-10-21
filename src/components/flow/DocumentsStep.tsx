@@ -1,10 +1,8 @@
 import { events } from "../../data/events";
 import { useDemo } from "../../state/DemoContext";
-import {
-  requiredDocuments,
-  participantDocumentsReady,
-} from "../../state/requestRules";
+import { requiredDocuments } from "../../state/requestRules";
 import ParticipantPanels from "../participants/ParticipantPanels";
+import { controlId, missingDocuments } from "../../state/validationRules";
 import DocumentPicker from "./DocumentPicker";
 export default function DocumentsStep() {
   const { draft, setDraft, updateItem } = useDemo();
@@ -26,11 +24,12 @@ export default function DocumentsStep() {
       </p>
       <ParticipantPanels
         participants={draft.participants}
-        describe={(p) =>
-          participantDocumentsReady(p, events)
-            ? "Documentos completos"
-            : "Documentos pendentes"
-        }
+        describe={(p) => {
+          const count = missingDocuments(p, events);
+          return count
+            ? `! ${count} documento${count === 1 ? "" : "s"} pendente${count === 1 ? "" : "s"}`
+            : "✓ Completo · documentos de exemplo";
+        }}
       >
         {(p, next) => {
           const docs = Array.from(
@@ -53,12 +52,13 @@ export default function DocumentsStep() {
                   {p.existingDocumentIds.length > 0 && (
                     <div className="notice">
                       <p>
-                        Já existe um documento cadastrado para esta
+                        Já existe um documento cadastrado para este
                         participante.
                       </p>
                       <p>
-                        Este cenário usa um registro fictício. O responsável não
-                        pode visualizar nem baixar documentos privados.
+                        Este cenário usa um registro fictício. A pessoa
+                        responsável não pode visualizar nem baixar documentos
+                        privados.
                       </p>
                       <label className="radio">
                         <input
@@ -92,7 +92,7 @@ export default function DocumentsStep() {
                             }));
                           }}
                         />
-                        Autorizo reutilizar o documento fictício desta
+                        Autorizo reutilizar o documento fictício deste
                         participante
                       </label>
                     </div>
@@ -100,6 +100,7 @@ export default function DocumentsStep() {
                   {docs.map((d) => (
                     <DocumentPicker
                       key={d.id}
+                      controlId={controlId("document", p.id, undefined, d.id)}
                       label={d.label}
                       value={p.documents[d.id]}
                       onChange={(value) => personal(p.id, d.id, value)}
@@ -118,7 +119,8 @@ export default function DocumentsStep() {
                     {specific.map((d) => (
                       <DocumentPicker
                         key={d.id}
-                        label={`${d.label} — ${race.name}`}
+                        controlId={controlId("document", p.id, race.id, d.id)}
+                        label={d.label}
                         value={item.documents[d.id]}
                         onChange={(value) =>
                           updateItem(p.id, race.id, {
@@ -133,9 +135,15 @@ export default function DocumentsStep() {
                   </fieldset>
                 );
               })}
-              <button type="button" className="button secondary" onClick={next}>
-                Próxima pessoa →
-              </button>
+              {next && (
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={next}
+                >
+                  Próximo participante
+                </button>
+              )}
             </>
           );
         }}

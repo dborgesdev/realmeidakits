@@ -56,7 +56,7 @@ export default function TrackingList({
               independentes. Este cenário não registra operações reais.
             </p>
             <details className="voucher-details">
-              <summary>Ver voucher ilustrativo de {race.name}</summary>
+              <summary>Ver voucher de retirada de {race.name}</summary>
               <Voucher
                 order={order}
                 participant={status.participant}

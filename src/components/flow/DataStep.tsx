@@ -1,3 +1,5 @@
+import { controlId } from "../../state/validationRules";
+import { FieldError, useFlowFeedback } from "./FlowFeedback";
 import { useDemo } from "../../state/DemoContext";
 import type { Participant } from "../../types/domain";
 export default function DataStep({
@@ -6,6 +8,9 @@ export default function DataStep({
   participant: Participant;
 }) {
   const { setDraft, draft } = useDemo();
+  const { field } = useFlowFeedback();
+  const nameId = controlId("name", participant.id),
+    birthId = controlId("birthDate", participant.id);
   const person = participant.person;
   return (
     <fieldset className="form-section">
@@ -35,7 +40,7 @@ export default function DataStep({
           }))
         }
       >
-        Esta pessoa sou eu — usar dados do responsável
+        Esta pessoa sou eu — usar dados da pessoa responsável
       </button>
       <p className="field-help">
         Copia somente para este participante: {draft.responsible.name}.
@@ -43,6 +48,7 @@ export default function DataStep({
       <label>
         Nome completo de demonstração
         <input
+          {...field(nameId)}
           required
           minLength={3}
           maxLength={80}
@@ -60,6 +66,7 @@ export default function DataStep({
           }
         />
       </label>
+      <FieldError id={nameId} />
       <div className="form-grid">
         <label>
           CPF demonstrativo
@@ -68,6 +75,7 @@ export default function DataStep({
         <label>
           Nascimento de exemplo
           <input
+            {...field(birthId)}
             type="date"
             required
             min="1900-01-01"
@@ -88,6 +96,7 @@ export default function DataStep({
             }
           />
         </label>
+        <FieldError id={birthId} />
         <label>
           Telefone demonstrativo
           <input readOnly value={person.phone} />
