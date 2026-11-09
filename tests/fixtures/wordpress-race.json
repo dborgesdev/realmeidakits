@@ -1,0 +1,100 @@
+{
+    "id": "4",
+    "slug": "demonstracao-teste-automatizado",
+    "name": "DEMONSTRAÇÃO — teste automatizado",
+    "description": "",
+    "image": null,
+    "raceDate": "",
+    "raceTime": "",
+    "location": "",
+    "opensAt": "",
+    "closesAt": "",
+    "status": "closed",
+    "modalities": [
+        {
+            "id": "oficial",
+            "label": "Kit Oficial",
+            "requireRegistration": false,
+            "requireMembership": false,
+            "distances": [
+                "5 km — DEMONSTRAÇÃO"
+            ],
+            "pickups": [],
+            "kitTypes": [],
+            "prices": {
+                "pix": null,
+                "card": null
+            },
+            "shirtPrices": {
+                "pix": null,
+                "card": null
+            },
+            "numberPrices": {
+                "pix": null,
+                "card": null
+            },
+            "shirtEnabled": false,
+            "numberEnabled": false,
+            "sizes": [],
+            "shirtImage": null,
+            "documents": [
+                {
+                    "id": "doc-demo",
+                    "label": "Documento DEMONSTRAÇÃO",
+                    "modality": "both",
+                    "scope": "personal",
+                    "required": true,
+                    "guidance": "Não envie documentos reais."
+                }
+            ]
+        },
+        {
+            "id": "appai",
+            "label": "Associado à APPAI",
+            "requireRegistration": false,
+            "requireMembership": false,
+            "distances": [
+                "5 km — DEMONSTRAÇÃO"
+            ],
+            "pickups": [],
+            "kitTypes": [],
+            "prices": {
+                "pix": null,
+                "card": null
+            },
+            "shirtPrices": {
+                "pix": null,
+                "card": null
+            },
+            "numberPrices": {
+                "pix": null,
+                "card": null
+            },
+            "shirtEnabled": false,
+            "numberEnabled": true,
+            "sizes": [],
+            "shirtImage": null,
+            "documents": [
+                {
+                    "id": "doc-demo",
+                    "label": "Documento DEMONSTRAÇÃO",
+                    "modality": "both",
+                    "scope": "personal",
+                    "required": true,
+                    "guidance": "Não envie documentos reais."
+                }
+            ]
+        }
+    ],
+    "conditions": [
+        {
+            "id": "condition-demo",
+            "text": "DEMONSTRAÇÃO — texto \\ preservado.",
+            "active": true,
+            "version": 3
+        }
+    ],
+    "guidance": "",
+    "contact": "",
+    "whatsappUrl": ""
+}

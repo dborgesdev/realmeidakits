@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { events } from "../../data/events";
+import { useCatalog } from "../../state/CatalogContext";
 import { previewConfig } from "../../config/preview";
-import { useDemo } from "../../state/DemoContext";
+import { useRequest } from "../../state/RequestContext";
 import { participantReady } from "../../state/requestRules";
 import { controlId } from "../../state/validationRules";
 import { FieldError, useFlowFeedback } from "./FlowFeedback";
@@ -11,7 +11,8 @@ import DataStep from "./DataStep";
 import OptionsStep from "./OptionsStep";
 import RaceFields from "./RaceFields";
 export default function ParticipantsStep() {
-  const { draft, resize, remove, assign } = useDemo();
+  const { events } = useCatalog();
+  const { draft, resize, remove, assign } = useRequest();
   const { field, navigatePanel } = useFlowFeedback();
   const complete = draft.participants.filter((p) =>
     participantReady(p, events, draft.selectedRaceIds),

@@ -1,19 +1,25 @@
-import { initialDraft } from "../data/demo.ts";
+import { initialDraft } from "./draft.ts";
 import type { Draft, Modality, Race, RaceSelection } from "../types/domain";
+import { raceOptions } from "./catalogRules.ts";
 export function isAvailable(race: Race, now = Date.now()) {
   return (
     race.status === "open" &&
+    (!race.opensAt || Date.parse(race.opensAt) <= now) &&
     (!race.closesAt || Date.parse(race.closesAt) > now)
   );
 }
 export function availabilityLabel(race: Race, now = Date.now()) {
   return isAvailable(race, now)
     ? "Inscrições abertas"
-    : race.status === "unavailable"
+    : race.status === "unavailable" ||
+        (race.opensAt && Date.parse(race.opensAt) > now)
       ? "Indisponível"
       : "Inscrições encerradas";
 }
 export function makeSelection(race: Race, preferred?: Modality): RaceSelection {
+  const mode =
+    race.modalities.find((m) => m.id === preferred) || race.modalities[0];
+  const options = raceOptions(race, mode.id);
   return {
     raceId: race.id,
     modality:
@@ -21,11 +27,12 @@ export function makeSelection(race: Race, preferred?: Modality): RaceSelection {
       race.modalities[0].id,
     distance: "",
     kitType: "",
-    kit: "camiseta",
+    kit: mode.shirtEnabled === false ? "numero" : "camiseta",
     size: "",
-    membership: "DEMO-101",
-    registration: "DEMO-INSCRICAO-001",
-    pickup: race.pickupLocations.length === 1 ? race.pickupLocations[0] : "",
+    membership: "",
+    registration: "",
+    pickup:
+      options.pickupLocations.length === 1 ? options.pickupLocations[0] : "",
     documents: {},
   };
 }
@@ -57,8 +64,16 @@ export function changeSelection(
   if (patch.modality && patch.modality !== item.modality)
     return {
       ...makeSelection(race, patch.modality),
-      distance: race.distances.includes(item.distance) ? item.distance : "",
-      pickup: race.pickupLocations.includes(item.pickup) ? item.pickup : "",
+      distance: raceOptions(race, patch.modality).distances.includes(
+        item.distance,
+      )
+        ? item.distance
+        : "",
+      pickup: raceOptions(race, patch.modality).pickupLocations.includes(
+        item.pickup,
+      )
+        ? item.pickup
+        : "",
     };
   return { ...item, ...patch };
 }

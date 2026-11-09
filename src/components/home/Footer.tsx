@@ -23,13 +23,12 @@ export default function Footer() {
         <div>
           <h3>Informações</h3>
           <Link to="/orientacoes">Documentos e retirada</Link>
-          <Link to="/privacidade">Privacidade da prévia</Link>
+          <Link to="/privacidade">Privacidade</Link>
           <a href="https://realmeidakits.com.br/">Site principal ↗</a>
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>Re Almeida Kits · Prévia V2</span>
-        <span>DEMONSTRAÇÃO · Sem operações reais</span>
+        <span>Re Almeida Kits</span>
         <a
           className="developer-credit"
           href="https://smartlocal.com.br"

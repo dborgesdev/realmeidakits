@@ -13,7 +13,7 @@ const steps = [
   {
     Icon: CreditCard,
     title: "Revise seu pedido",
-    text: "Confira as informações e conheça o pagamento simulado.",
+    text: "Confira os dados e os valores do serviço de retirada.",
   },
   {
     Icon: Ticket,

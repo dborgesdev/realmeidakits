@@ -1,6 +1,6 @@
 # Instruções para implementação — Re Almeida Kits
 
-1. Leia `docs/project.md` integralmente. A V2 é demonstrativa, mas deve estar visualmente completa e navegável; não é backend operacional.
+1. Leia `docs/project.md` integralmente. O escopo vigente de 05/11/2026 inclui contas e participantes reais persistidos no WordPress, com pnpm dev e autenticação por código PKCE. Não usar fixtures ou avisos de demonstração no aplicativo. Upload privado, pedidos e pagamentos ainda não estão implementados.
 2. Preserve fatos reais e marcas originais. Não invente eventos, preços, depoimentos, equipe, pagamentos, cadastros ou imagens factuais; exemplos devem estar rotulados DEMONSTRAÇÃO.
 3. Use React + TypeScript + Vite + Tailwind CSS + pnpm; mantenha `pnpm-lock.yaml`; bibliotecas apenas quando efetivamente necessárias.
 4. Componentize **cada seção principal** em arquivo `.tsx` próprio, inclusive na home. Páginas e `App.tsx` compõem componentes. Separe dados/fixtures, regras de fluxo e apresentação.

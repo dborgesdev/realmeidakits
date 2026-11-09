@@ -1,23 +1,28 @@
 import { CalendarDays, MapPin, Check, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { asset, type Race } from "../data/events";
-import { useDemo } from "../state/DemoContext";
+import { asset } from "../data/assets";
+import type { Race } from "../types/domain";
+import { useRequest } from "../state/RequestContext";
 import { availabilityLabel, isAvailable } from "../state/selectionRules";
+import RaceImage from "./RaceImage";
 export default function EventCard({ event }: { event: Race }) {
-  const { draft, toggleRace } = useDemo();
+  const { draft, toggleRace } = useRequest();
   const selected = !draft.order && draft.selectedRaceIds.includes(event.id);
   const available = isAvailable(event);
   return (
     <article className={`event-card ${selected ? "is-selected" : ""}`}>
       <div className="event-image">
-        <img
-          src={asset(event.image)}
-          width="640"
-          height="480"
-          alt={`Imagem conceitual: ${event.name}`}
-          loading="lazy"
-        />
-        <span className="badge">DEMONSTRAÇÃO</span>
+        {event.image ? (
+          <RaceImage
+            src={asset(event.image)}
+            width="640"
+            height="480"
+            alt={`Imagem: ${event.name}`}
+            loading="lazy"
+          />
+        ) : (
+          <div className="event-image-missing">Imagem ainda não cadastrada</div>
+        )}
       </div>
       <div className="card-body">
         <h3>{event.name}</h3>
@@ -27,12 +32,12 @@ export default function EventCard({ event }: { event: Race }) {
         <p className="icon-line">
           <CalendarDays size={17} />
           {event.raceDate
-            ? `${new Date(event.raceDate + "T12:00:00").toLocaleDateString("pt-BR")} · exemplo`
+            ? `${new Date(event.raceDate + "T12:00:00").toLocaleDateString("pt-BR")}`
             : "Data a confirmar"}
         </p>
         {event.closesAt && (
           <p className="caption">
-            Prazo do exemplo:{" "}
+            Prazo:{" "}
             {new Date(event.closesAt).toLocaleString("pt-BR", {
               timeZone: "America/Sao_Paulo",
               dateStyle: "short",
@@ -43,7 +48,7 @@ export default function EventCard({ event }: { event: Race }) {
         )}
         <p className="icon-line">
           <MapPin size={17} />
-          Local a confirmar
+          {event.location || "Local a confirmar"}
         </p>
         <p className="caption">
           {event.modalities.map((m) => m.label).join(" · ")}

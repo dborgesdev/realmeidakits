@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Info } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 export function Action({
   to,
@@ -15,17 +15,6 @@ export function Action({
       {children}
       <ArrowRight size={18} />
     </Link>
-  );
-}
-export function DemoNotice() {
-  return (
-    <div className="notice">
-      <Info size={17} />
-      <span>
-        <strong>DEMONSTRAÇÃO</strong> · Explore com dados fictícios. Sem
-        cadastro, cobrança ou envio de documentos.
-      </span>
-    </div>
   );
 }
 export function PageTitle({

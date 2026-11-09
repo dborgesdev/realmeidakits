@@ -1,8 +1,8 @@
 import { Buffer } from "node:buffer";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { events as fixtures } from "../src/data/events.ts";
-import { initialDraft } from "../src/data/demo.ts";
+import { events as fixtures } from "./fixtures/events.ts";
+import { initialDraft, makeParticipant } from "./fixtures/draft.ts";
 import {
   selectForNewOrder,
   toggleSelection,
@@ -22,7 +22,7 @@ import {
 import { itemPrice, totalPrice } from "../src/state/pricing.ts";
 import { trackingItems } from "../src/state/trackingRules.ts";
 import {
-  resizeParticipants,
+  resizeParticipants as resizeEmptyParticipants,
   removeParticipant,
   assignRace,
   voucherId,
@@ -42,6 +42,22 @@ import {
   missingDocuments,
 } from "../src/state/validationRules.ts";
 import { fileError } from "../src/state/rules.ts";
+function resizeParticipants(draft, count) {
+  const next = resizeEmptyParticipants(draft, count);
+  if (next === draft) return draft;
+  return {
+    ...next,
+    participants: next.participants.map((p, i) =>
+      p.person.name
+        ? p
+        : {
+            ...makeParticipant(i + 1),
+            ...p,
+            person: makeParticipant(i + 1).person,
+          },
+    ),
+  };
+}
 const events = fixtures.map((race) => ({
   ...race,
   closesAt:
@@ -95,6 +111,8 @@ function configured(race, mode = "oficial") {
   const item = makeSelection(race, mode);
   return {
     ...item,
+    registration: "TEST-INSCRICAO",
+    membership: "101",
     distance: race.distances[0],
     kitType: race.kitTypes[0] || "",
     pickup: race.pickupLocations[0] || "",
@@ -138,10 +156,7 @@ test("individual order keeps responsible and participant separate", () => {
   assert.equal(pendingStage(d, events), "revisao");
   assert.notEqual(d.responsible.name, d.participants[0].person.name);
   assert.equal(personReady(d.participants[0].person), true);
-  assert.equal(
-    personReady({ ...d.participants[0].person, cpf: "12345678900" }),
-    false,
-  );
+  assert.equal(personReady({ ...d.participants[0].person, cpf: "123" }), false);
 });
 test("group of three has explicit independent race assignments", () => {
   let d = resizeParticipants(initialDraft(), 3);
@@ -493,9 +508,9 @@ test("individual PDF contains correct person-race and valid cross-reference offs
   const d = finalizeOrder(completeDraft(3), events);
   const p = d.order.participants[1];
   const lines = voucherLines(d.order, p, p.items[0], rio);
-  assert.ok(lines.includes("Identificação fictícia: DEMO-CPF-002"));
+  assert.ok(lines.includes(`Identificação fictícia: ${p.person.cpf}`));
   assert.ok(lines.includes("Voucher: DEMO-VOUCHER-p2-rio"));
-  assert.ok(!lines.some((l) => l.includes("DEMO-CPF-001")));
+  assert.ok(!lines.some((l) => l.includes(d.order.participants[0].person.cpf)));
   assert.ok(lines.includes("DEMONSTRAÇÃO — SEM VALIDADE"));
   const pdf = createVoucherPdf(
     lines,

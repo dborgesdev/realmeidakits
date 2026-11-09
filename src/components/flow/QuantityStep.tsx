@@ -1,7 +1,7 @@
-import { useDemo } from "../../state/DemoContext";
+import { useRequest } from "../../state/RequestContext";
 import { previewConfig } from "../../config/preview";
 export default function QuantityStep() {
-  const { draft, resize } = useDemo();
+  const { draft, resize } = useRequest();
   const count = draft.participants.length;
   return (
     <>
@@ -56,10 +56,10 @@ export default function QuantityStep() {
         </label>
       )}
       <div className="help-panel">
-        Até {previewConfig.maxParticipants} participantes por pedido
-        demonstrativo. As corridas serão atribuídas a cada pessoa
-        explicitamente, sem incluir todas as provas automaticamente. Reduzir a
-        quantidade remove as últimas pessoas e suas configurações.
+        Até {previewConfig.maxParticipants} participantes por pedido do serviço.
+        As corridas serão atribuídas a cada pessoa explicitamente, sem incluir
+        todas as provas automaticamente. Reduzir a quantidade remove as últimas
+        pessoas e suas configurações.
       </div>
     </>
   );

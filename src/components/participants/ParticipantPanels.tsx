@@ -53,7 +53,7 @@ export default function ParticipantPanels({
               >
                 <span className="person-number">{index + 1}</span>
                 <span>
-                  {p.person.name}
+                  {p.person.name || `Participante ${index + 1}`}
                   <small>{describe(p)}</small>
                 </span>
                 <span aria-hidden="true">{open ? "−" : "+"}</span>

@@ -1,4 +1,12 @@
-# WordPress/WooCommerce — direção futura
+# WordPress/WooCommerce — integração e histórico
+
+> **Escopo vigente — 05/11/2026, Bloco C:** contas customer, autenticação, CPF único e até 20 participantes por titular persistidos no WordPress. Acesso entre domínios por código PKCE de uso único; senhas ficam no fluxo WordPress e o bearer somente na memória do React. Catálogo real com pnpm dev. Checkout, pedidos e uploads privados permanecem futuros. Plugin **1.2.0 / esquema 3**, sem deploy nesta rodada. As notas abaixo preservam o histórico.
+
+> **Escopo vigente — 30/10/2026:** V2 de desenvolvimento consome exclusivamente a API pública https://app.realmeidakits.com.br/wp-json/re-almeida/v1 com `pnpm dev`, sem modos/env de integração, fixtures no aplicativo ou avisos de demonstração. Formulários vazios; sem upload privado, envio de pedido ou pagamento implementado. Plugin **1.1.1** libera leitura local em loopback/portas 5173–5199; atualização no servidor é necessária. Worker publicado e main preservados. Os registros abaixo descrevem etapas históricas e não substituem esta orientação. [Setup](wordpress-setup.md) e [QA atual](qa-block-b.md).
+
+> Atualização de 29/10/2026: refinamento entregue no plugin **1.1.0 / esquema 2**, com oito abas, bibliotecas versionadas de documentos/condições, PDFs públicos em branco e duplicação revisada. API e React integrados, mantendo demo padrão e bloqueio de pedidos/pagamentos operacionais. Consulte [implementação](wordpress-implementation.md), [operação](wordpress-setup.md) e [QA](qa-block-b.md). A descrição histórica da V2 abaixo não limita o backend expressamente solicitado nesta evolução.
+
+> Atualização de 27/10/2026: cadastro de corridas, API de consulta e seleção de fonte React implementados no [Bloco B](wordpress-block-b.md). Este documento mantém o histórico e a direção dos módulos operacionais ainda futuros; afirmações abaixo de inexistência de API dizem respeito à rodada demonstrativa de 21/10.
 
 Atualizado em 21/10/2026. Esta revisão **substitui** a restrição anterior de uma participante por pedido e conta restrita a solicitações próprias. A V2 é somente demonstrativa; não define API, tabelas SQL, payloads, endpoints ou interface definitiva.
 

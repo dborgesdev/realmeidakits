@@ -10,7 +10,7 @@ export function itemPrice(
     item.modality === "appai"
       ? (item.kit === "numero" ? mode.numberPrices : mode.shirtPrices) ||
         mode.prices
-      : mode.prices;
+      : (mode.kitPrices?.[item.kitType] ?? mode.prices);
   return method === "Pix" ? prices.pix : prices.card;
 }
 export function totalPrice(
@@ -49,7 +49,12 @@ export function selectionEstimate(races: Race[], method: PaymentMethod) {
     const key = method === "Pix" ? "pix" : "card";
     const values = race.modalities
       .flatMap((mode) =>
-        [mode.prices, mode.shirtPrices, mode.numberPrices]
+        [
+          mode.prices,
+          ...(mode.kitPrices ? Object.values(mode.kitPrices) : []),
+          ...(mode.shirtEnabled === false ? [] : [mode.shirtPrices]),
+          ...(mode.numberEnabled === false ? [] : [mode.numberPrices]),
+        ]
           .filter((value) => value !== undefined)
           .map((value) => value![key]),
       )

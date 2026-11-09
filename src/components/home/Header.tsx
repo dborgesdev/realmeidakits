@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useAccount } from "../../state/AccountContext";
 import { Menu, X } from "lucide-react";
 export default function Header() {
+  const { profile } = useAccount();
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -36,6 +38,7 @@ export default function Header() {
             <NavLink to="/corridas">Corridas</NavLink>
             <a href="/#como-funciona">Como funciona</a>
             <a href="/#modalidades">Modalidades</a>
+            <NavLink to="/conta">{profile ? "Minha conta" : "Entrar"}</NavLink>
             <Link to="/orientacoes">Orientações</Link>
             <Link className="button small" to="/corridas">
               Ver corridas <span aria-hidden="true">↗</span>

@@ -1,9 +1,14 @@
+import { useAccount } from "../state/AccountContext";
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { events } from "../data/events";
-import { useDemo } from "../state/DemoContext";
-import { DemoNotice } from "../components/UI";
-import { pendingStage, stages, stageLabels } from "../state/requestRules";
+import { useCatalog } from "../state/CatalogContext";
+import { useRequest } from "../state/RequestContext";
+import {
+  pendingStage,
+  stages,
+  stageLabels,
+  conditionsReady,
+} from "../state/requestRules";
 import Progress from "../components/flow/Progress";
 import QuantityStep from "../components/flow/QuantityStep";
 import ResponsibleStep from "../components/flow/ResponsibleStep";
@@ -12,7 +17,11 @@ import DocumentsStep from "../components/flow/DocumentsStep";
 import ConditionsStep from "../components/flow/ConditionsStep";
 import ReviewStep from "../components/flow/ReviewStep";
 import PaymentStep from "../components/flow/PaymentStep";
-import { firstIssue, type FlowIssue } from "../state/validationRules";
+import {
+  controlId,
+  firstIssue,
+  type FlowIssue,
+} from "../state/validationRules";
 import {
   FlowFeedback,
   focusControl,
@@ -20,9 +29,11 @@ import {
 } from "../components/flow/FlowFeedback";
 import NotFound from "./NotFound";
 export default function RequestPage() {
+  const account = useAccount();
+  const { events } = useCatalog();
   const { stage = "pedido" } = useParams();
   const navigate = useNavigate();
-  const { draft, resize, complete } = useDemo();
+  const { draft, resize } = useRequest();
   const [issue, setIssue] = useState<FlowIssue | null>(null);
   const [navigation, setNavigation] = useState<PanelNavigation | null>(null);
   function navigatePanel(id: string) {
@@ -36,6 +47,19 @@ export default function RequestPage() {
     setIssue(null);
     setNavigation(null);
   }
+  if (account.status === "loading")
+    return (
+      <div className="container page">
+        <p role="status">Conectando sua conta…</p>
+      </div>
+    );
+  if (!account.profile)
+    return (
+      <Navigate
+        replace
+        to={"/conta?continuar=" + encodeURIComponent("/solicitacao/" + stage)}
+      />
+    );
   if (draft.order) return <Navigate replace to="/conclusao" />;
   const aliases: Record<string, string> = {
     configuracao: "pedido",
@@ -50,21 +74,30 @@ export default function RequestPage() {
   if (!draft.selectedRaceIds.length)
     return (
       <div className="container page narrow">
-        <DemoNotice />
         <h1>Escolha suas corridas</h1>
-        <p>Os exemplos desta sessão são apagados ao atualizar a página.</p>
+        <p>Selecione ao menos uma corrida para continuar.</p>
         <Link className="button" to="/corridas">
           Selecionar corridas →
         </Link>
       </div>
     );
-  const pending = pendingStage(draft, events);
+  const pendingInput = pendingStage(draft, events);
+  // Consulta de documentos não simula upload; envio e conclusão continuam bloqueados.
+  const pending =
+    pendingInput === "documentos"
+      ? events
+          .filter((r) => draft.selectedRaceIds.includes(r.id))
+          .every((r) => conditionsReady(draft.acceptedConditions, r))
+        ? "revisao"
+        : "condicoes"
+      : pendingInput;
   const blocked = stages.indexOf(pending);
   if (step > blocked && blocked < 5)
     return <Navigate replace to={`/solicitacao/${pending}`} />;
   const visibleIssue =
     issue &&
     (issue.target === "flow-error-summary" ||
+      issue.target.startsWith("save-person--") ||
       firstIssue(stage, draft, events)?.target === issue.target)
       ? issue
       : null;
@@ -86,22 +119,36 @@ export default function RequestPage() {
       );
       return;
     }
-    if (step === 6) {
-      complete();
-      navigate("/conclusao");
-      return;
+    if (step === 2) {
+      const unsaved = draft.participants.find(
+        (p) =>
+          !account.participants.some(
+            (saved) =>
+              saved.id === p.directoryId &&
+              Object.entries(saved.person).every(
+                ([key, value]) =>
+                  p.person[key as keyof typeof p.person] === value,
+              ),
+          ),
+      );
+      if (unsaved) {
+        setIssue({
+          target: controlId("save-person", unsaved.id),
+          participantId: unsaved.id,
+          message: "Salve o cadastro do participante antes de continuar.",
+        });
+        return;
+      }
     }
+    if (step === 6) return;
     navigate(`/solicitacao/${stages[step + 1]}`);
   }
   return (
     <div className="flow-shell">
       <div className="container page flow">
-        <DemoNotice />
         <div className="flow-heading">
           <Link to="/corridas">← Alterar corridas selecionadas</Link>
-          <span className="badge">
-            {draft.participants.length} pessoa(s) · DEMONSTRAÇÃO
-          </span>
+          <span className="badge">{draft.participants.length} pessoa(s)</span>
         </div>
         <Progress step={step} />
         <FlowFeedback
@@ -119,9 +166,7 @@ export default function RequestPage() {
                 next();
               }}
             >
-              <span className="eyebrow">
-                {stageLabels[step]} · DEMONSTRAÇÃO
-              </span>
+              <span className="eyebrow">{stageLabels[step]}</span>
               {step === 0 && <QuantityStep />}
               {step === 1 && <ResponsibleStep />}
               {step === 2 && <ParticipantsStep />}
@@ -157,9 +202,9 @@ export default function RequestPage() {
                 >
                   ← Voltar
                 </Link>
-                <button className="button" type="submit">
+                <button className="button" type="submit" disabled={step === 6}>
                   {step === 6
-                    ? "Confirmar pagamento e finalizar"
+                    ? "Pagamento ainda indisponível"
                     : step === 5
                       ? "Ir para pagamento →"
                       : "Continuar →"}

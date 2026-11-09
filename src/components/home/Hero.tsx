@@ -1,6 +1,6 @@
 import { ClipboardCheck, FileCheck2, UsersRound } from "lucide-react";
 import { Action } from "../UI";
-import { asset } from "../../data/events";
+import { asset } from "../../data/assets";
 export default function Hero() {
   return (
     <section className="hero">
@@ -47,7 +47,6 @@ export default function Hero() {
             por evento
           </span>
         </div>
-        <small>Prévia demonstrativa · Fotografia conceitual</small>
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 import { Shirt, UsersRound } from "lucide-react";
-import { asset } from "../../data/events";
+import { asset } from "../../data/assets";
 import { Action } from "../UI";
 export default function Modalities() {
   return (
