@@ -2,10 +2,11 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { selectionEstimate, money, totalPrice } from "../../state/pricing";
 import { participantReady } from "../../state/requestRules";
-import { events } from "../../data/events";
-import { useDemo } from "../../state/DemoContext";
+import { useCatalog } from "../../state/CatalogContext";
+import { useRequest } from "../../state/RequestContext";
 export default function SelectionSummary() {
-  const { draft } = useDemo();
+  const { events } = useCatalog();
+  const { draft } = useRequest();
   const configured =
     draft.prepared &&
     draft.participants.every((p) =>
@@ -50,16 +51,16 @@ export default function SelectionSummary() {
           {draft.selectedRaceIds.length} corrida(s) selecionada(s)
         </strong>
         <small className="selection-estimate">
-          {configured ? "Total simulado" : "Referência a partir de"}{" "}
+          {configured ? "Total do serviço" : "Referência a partir de"}{" "}
           {money(estimate.known)}
-          {estimate.pending ? " + a confirmar" : ""} · demonstração
+          {estimate.pending ? " + a confirmar" : ""}
         </small>
         <details>
           <summary>Ver seleção e estimativa</summary>
           <p>
-            {configured ? "Total simulado" : "Referência a partir de"}{" "}
+            {configured ? "Total do serviço" : "Referência a partir de"}{" "}
             {money(estimate.known)}
-            {estimate.pending ? " + valores a confirmar" : ""} · exemplo no{" "}
+            {estimate.pending ? " + valores a confirmar" : ""} · no{" "}
             {draft.method}.{" "}
             {configured
               ? "Calculado com os participantes e opções deste pedido."

@@ -1,3 +1,4 @@
+import { personError, validCpf, validPhone } from "./identityRules.ts";
 import type {
   Draft,
   Person,
@@ -10,6 +11,7 @@ import { isAvailable } from "./selectionRules.ts";
 import { conditionsReady } from "./conditionRules.ts";
 export { conditionsReady } from "./conditionRules.ts";
 import { previewConfig } from "../config/preview.ts";
+import { raceOptions } from "./catalogRules.ts";
 export const stages = [
   "pedido",
   "responsavel",
@@ -30,41 +32,45 @@ export const stageLabels = [
 ];
 export function optionsReady(item: RaceSelection, race: Race) {
   const mode = race.modalities.find((m) => m.id === item.modality);
+  const options = raceOptions(race, item.modality);
   return Boolean(
     mode &&
-    race.distances.includes(item.distance) &&
-    (!race.pickupLocations.length ||
-      race.pickupLocations.includes(item.pickup)) &&
+    options.distances.includes(item.distance) &&
+    (!options.pickupLocations.length ||
+      options.pickupLocations.includes(item.pickup)) &&
     (item.modality !== "oficial" ||
-      !race.kitTypes.length ||
-      race.kitTypes.includes(item.kitType)) &&
+      !options.kitTypes.length ||
+      options.kitTypes.includes(item.kitType)) &&
     (item.modality !== "appai" ||
-      item.kit === "numero" ||
-      (item.kit === "camiseta" && mode.sizes.includes(item.size))),
+      (item.kit === "numero" && mode.numberEnabled !== false) ||
+      (item.kit === "camiseta" &&
+        mode.shirtEnabled !== false &&
+        mode.sizes.includes(item.size))),
   );
 }
 export function personReady(person: Person) {
-  const birth = Date.parse(person.birthDate);
-  return (
-    person.name.trim().length >= 3 &&
-    person.name.length <= 80 &&
-    /^DEMO-CPF-[0-9]{3,}$/.test(person.cpf) &&
-    /^DEMO-TELEFONE-/.test(person.phone) &&
-    person.email.endsWith("@example.invalid") &&
-    /^\d{4}-\d{2}-\d{2}$/.test(person.birthDate) &&
-    Number.isFinite(birth) &&
-    new Date(birth).toISOString().slice(0, 10) === person.birthDate &&
-    person.birthDate >= "1900-01-01" &&
-    person.birthDate <= new Date().toISOString().slice(0, 10)
-  );
+  return !personError(person);
 }
-export function requiredDocuments(item: RaceSelection, race: Race) {
+export function configuredDocuments(item: RaceSelection, race: Race) {
   return race.modalities.find((m) => m.id === item.modality)?.documents || [];
 }
-export function fieldsReady(item: RaceSelection) {
-  return item.modality === "appai"
-    ? /^DEMO-\d{3,6}$/.test(item.membership)
-    : /^DEMO-[A-Z0-9-]{3,40}$/.test(item.registration);
+export function requiredDocuments(item: RaceSelection, race: Race) {
+  return (
+    race.modalities
+      .find((m) => m.id === item.modality)
+      ?.documents.filter(
+        (d) => d.required !== false && d.requiresUpload !== false,
+      ) || []
+  );
+}
+export function fieldsReady(item: RaceSelection, race?: Race) {
+  const mode = race?.modalities.find((m) => m.id === item.modality);
+  if (item.modality === "appai" && mode?.requireMembership === false)
+    return true;
+  if (item.modality === "oficial" && mode?.requireRegistration === false)
+    return true;
+  const value = item.modality === "appai" ? item.membership : item.registration;
+  return value.trim().length > 0 && value.length <= 80;
 }
 export function documentsReady(
   item: RaceSelection,
@@ -79,9 +85,9 @@ export function responsibleReady(person: Responsible) {
   return (
     person.name.trim().length >= 3 &&
     person.name.length <= 80 &&
-    person.email === "responsavel@example.invalid" &&
-    person.identifier === "DEMO-RESPONSAVEL" &&
-    person.phone === "DEMO-TELEFONE-RESP"
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(person.email) &&
+    validPhone(person.phone) &&
+    validCpf(person.identifier)
   );
 }
 export function participantReady(
@@ -100,7 +106,7 @@ export function participantReady(
         selected.includes(i.raceId) &&
         isAvailable(race) &&
         optionsReady(i, race) &&
-        fieldsReady(i)
+        fieldsReady(i, race)
       );
     })
   );
@@ -121,8 +127,8 @@ export function pendingStage(draft: Draft, catalog: Race[]): string {
     return "pedido";
   if (!responsibleReady(draft.responsible)) return "responsavel";
   if (
-    new Set(draft.participants.map((p) => p.person.cpf)).size !==
-      draft.participants.length ||
+    new Set(draft.participants.map((p) => p.person.cpf.replace(/\D/g, "")))
+      .size !== draft.participants.length ||
     !draft.participants.every((p) =>
       participantReady(p, catalog, draft.selectedRaceIds),
     )

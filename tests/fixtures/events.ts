@@ -2,7 +2,7 @@ import type {
   DocumentRequirement,
   ModalityConfig,
   Race,
-} from "../types/domain";
+} from "../../src/types/domain";
 export type { Race } from "../types/domain";
 const identity: DocumentRequirement = {
   id: "identity",
@@ -157,5 +157,3 @@ export const events: Race[] = [
       "Prazo encerrado no cenário de demonstração. Não aceita novas seleções.",
   },
 ];
-export const asset = (file: string) => `/images/home/${file}`;
-export const findRace = (id: string) => events.find((event) => event.id === id);

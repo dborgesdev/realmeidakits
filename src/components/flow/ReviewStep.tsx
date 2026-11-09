@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import { events } from "../../data/events";
+import { useCatalog } from "../../state/CatalogContext";
 import { totalPrice, money } from "../../state/pricing";
-import { useDemo } from "../../state/DemoContext";
+import { useRequest } from "../../state/RequestContext";
 import OrderSummary from "./OrderSummary";
 export default function ReviewStep() {
-  const { draft } = useDemo();
+  const { events } = useCatalog();
+  const { draft } = useRequest();
   const total = totalPrice(
     draft.participants.flatMap((p) => p.items),
     events,
@@ -14,7 +15,7 @@ export default function ReviewStep() {
     <>
       <h1>Confira seu pedido</h1>
       <p className="help-panel">
-        Total demonstrativo do pedido · {draft.method}:{" "}
+        Total do pedido · {draft.method}:{" "}
         <strong>
           {money(total.known)}
           {total.pending ? " + a confirmar" : ""}
@@ -31,10 +32,7 @@ export default function ReviewStep() {
             {p.person.cpf} · {p.person.birthDate} · {p.person.phone}
           </p>
           <OrderSummary items={p.items} method={draft.method} />
-          <p className="success">
-            ✓ Documentos demonstrativos completos e condições aceitas para cada
-            corrida.
-          </p>
+          <p className="field-help">Solicitação ainda não enviada.</p>
         </section>
       ))}
       <nav
@@ -54,10 +52,6 @@ export default function ReviewStep() {
           Rever condições
         </Link>
       </nav>
-      <p className="notice">
-        Após finalizar, este pedido ficará bloqueado. Nenhuma cobrança, reserva
-        ou análise documental será realizada.
-      </p>
     </>
   );
 }

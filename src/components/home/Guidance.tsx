@@ -31,7 +31,6 @@ export default function Guidance() {
         <p>
           <Check size={18} /> Autorização específica, se solicitada
         </p>
-        <small>Nesta prévia, use apenas arquivos fictícios.</small>
       </div>
     </section>
   );

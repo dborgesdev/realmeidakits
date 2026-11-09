@@ -4,6 +4,12 @@ export type DocumentRequirement = {
   id: string;
   label: string;
   scope: "personal" | "race";
+  required?: boolean;
+  guidance?: string;
+  requiresUpload?: boolean;
+  purpose?: string;
+  version?: number;
+  template?: { url: string; name: string; mime: "application/pdf" } | null;
 };
 export type Prices = { pix: number | null; card: number | null };
 export type ModalityConfig = {
@@ -14,6 +20,22 @@ export type ModalityConfig = {
   shirtPrices?: Prices;
   numberPrices?: Prices;
   sizes: string[];
+  distances?: string[];
+  pickupLocations?: string[];
+  pickupDetails?: {
+    id: string;
+    label: string;
+    address: string;
+    at: string;
+    guidance: string;
+  }[];
+  kitTypes?: string[];
+  kitPrices?: Record<string, Prices>;
+  shirtEnabled?: boolean;
+  numberEnabled?: boolean;
+  shirtImage?: string;
+  requireRegistration?: boolean;
+  requireMembership?: boolean;
 };
 export type Race = {
   id: string;
@@ -22,13 +44,18 @@ export type Race = {
   image: string;
   description: string;
   raceDate?: string;
+  opensAt?: string;
+  raceTime?: string;
+  location?: string;
+  contact?: string;
+  source?: "wordpress";
   closesAt?: string;
   status: "open" | "closed" | "unavailable";
   modalities: ModalityConfig[];
   distances: string[];
   kitTypes: string[];
   pickupLocations: string[];
-  conditions: { id: string; text: string }[];
+  conditions: { id: string; text: string; version?: number }[];
   guidance: string;
   whatsappUrl?: string;
 };
@@ -58,6 +85,8 @@ export type Responsible = {
   identifier: string;
 };
 export type Participant = {
+  directoryId?: number;
+  directoryVersion?: number;
   id: string;
   person: Person;
   items: RaceSelection[];

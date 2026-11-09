@@ -1,4 +1,18 @@
-# Re Almeida Kits — QA final da V2 demonstrativa
+# Re Almeida Kits — projeto e histórico
+
+## Consolidação dos Blocos B e C — 09/11/2026
+
+O Bloco B entrega cadastro administrativo de corridas, catálogo REST consumido pelo React, bibliotecas versionadas de documentos e condições e download de modelos públicos em branco. O Bloco C entrega contas `customer`, CPF único para titulares, recuperação de senha pelo WordPress e até 20 participantes persistidos por titular. O plugin permanece na versão **1.2.0 / esquema 3**, com autenticação por código PKCE de uso único.
+
+A solicitação no React ainda é um rascunho. Upload privado, registro definitivo de solicitações, pedidos, checkout, pagamentos e acompanhamento operacional continuam pendentes. A publicação do frontend e a migração para `/app/` com contas nativas do WooCommerce e páginas de corrida renderizadas no servidor são etapas separadas. Os registros abaixo descrevem as rodadas anteriores de implementação e QA.
+
+> **Escopo vigente — 05/11/2026, Bloco C:** contas customer, autenticação, CPF único e até 20 participantes por titular persistidos no WordPress. Acesso entre domínios por código PKCE de uso único; senhas ficam no fluxo WordPress e o bearer somente na memória do React. Catálogo real com pnpm dev. Checkout, pedidos e uploads privados permanecem futuros. Plugin **1.2.0 / esquema 3**, sem deploy nesta rodada. As notas abaixo preservam o histórico.
+
+> **Escopo vigente — 30/10/2026:** V2 de desenvolvimento consome exclusivamente a API pública https://app.realmeidakits.com.br/wp-json/re-almeida/v1 com `pnpm dev`, sem modos/env de integração, fixtures no aplicativo ou avisos de demonstração. Formulários vazios; sem upload privado, envio de pedido ou pagamento implementado. Plugin **1.1.1** libera leitura local em loopback/portas 5173–5199; atualização no servidor é necessária. Worker publicado e main preservados. Os registros abaixo descrevem etapas históricas e não substituem esta orientação. [Setup](wordpress-setup.md) e [QA atual](qa-block-b.md).
+
+> Atualização de 29/10/2026: refinamento entregue no plugin **1.1.0 / esquema 2**, com oito abas, bibliotecas versionadas de documentos/condições, PDFs públicos em branco e duplicação revisada. API e React integrados, mantendo demo padrão e bloqueio de pedidos/pagamentos operacionais. Consulte [implementação](wordpress-implementation.md), [operação](wordpress-setup.md) e [QA](qa-block-b.md). A descrição histórica da V2 abaixo não limita o backend expressamente solicitado nesta evolução.
+
+> Atualização de escopo em 27/10/2026: o Bloco B autoriza backend de cadastro de corridas e catálogo REST, conforme [especificação autossuficiente](wordpress-block-b.md). As restrições abaixo descrevem a V2 demonstrativa e continuam válidas para pedidos, documentos, autenticação e pagamentos; não impedem o módulo administrativo/API solicitado nesta rodada. Prévia padrão em `demo`; sem commit, push, PR ou deploy nesta rodada.
 
 Atualizado em 21/10/2026, sobre o baseline `e43a57e8f0614a377e6a569778f4ac34c55a63bd`. As decisões desta revisão **substituem expressamente** as regras anteriores de uma participante por pedido e de conta individual impedindo pedidos para terceiros.
 

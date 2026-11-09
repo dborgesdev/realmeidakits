@@ -1,54 +1,48 @@
-# Re Almeida Kits — V2 demonstrativa refinada
+# Re Almeida Kits — desenvolvimento integrado ao WordPress
 
-React + TypeScript + Vite + Tailwind, pnpm. Ajuste local sobre a V2 publicada, na branch `feat/v2-preview`, sem backend ou operações reais. Após avaliação local, o usuário autorizou commit, push, PR, merge e deploy deste ajuste em 21/10/2026.
+Branch: `feat/v2-preview`. Catálogo exclusivo do plugin WordPress Re Almeida Kits, sem fixtures no aplicativo e sem deploy nesta rodada.
 
-## Atalhos por modalidade
+## Desenvolvimento local
 
-Hero: **Sou associado à APPAI** (primário vermelho) e **Já comprei meu kit com a organização** (secundário branco). Ambos abrem o catálogo e registram uma preferência opcional no rascunho. Os links existentes da seção Modalidades usam a mesma regra. O parâmetro `modalidade` é consumido e removido da URL, evitando reaplicação em uma nova sessão.
+```sh
+pnpm dev
+```
 
-A preferência só orienta novas atribuições de corrida a participantes; não altera itens existentes nem restringe a troca individual de modalidade. Quando indisponível, usa a primeira modalidade realmente oferecida (a única, nas fixtures atuais). Entrada direta pelo catálogo não define preferência global; mantém a escolha normal editável de cada corrida. Nova inscrição, seleção após conclusão e atualização descartam a preferência anterior; um novo clique no Hero após conclusão inicia rascunho limpo com a preferência recém-escolhida.
+A fonte pública padrão é definida em `src/config/catalog.ts`:
 
-## Executar e validar
+```text
+https://app.realmeidakits.com.br/wp-json/re-almeida/v1
+```
 
-`pnpm install --frozen-lockfile` e `pnpm dev`; abrir http://localhost:5173/ . Validações: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`. Preview estático: `pnpm preview`. Dados somente em memória, apagados ao atualizar a página. Use apenas identidades e documentos fictícios.
+Não são necessários modos, flags ou arquivos .env de integração. `.env.example` contém somente a URL canônica opcional. Respostas vazias mostram catálogo vazio; erros mostram a falha e ação de tentar novamente. Não há proxy ou fallback para exemplos.
 
-## Pedido individual
+## Atualização necessária no WordPress
 
-1. No catálogo, selecionar Circuito Rio Antigo; a faixa fixa mostra seleção e estimativa. “Finalizar inscrição →” abre configuração do pedido.
-2. Manter Somente para mim, continuar e conferir responsável demonstrativo.
-3. No participante, opcionalmente usar dados do responsável. Marcar explicitamente Circuito, Kit Oficial, 5 km, Kit tradicional e Ponto A. Manter identificador DEMO de inscrição.
-4. Documentos: autorizar reuso fictício da identidade ou usar exemplo novo, e usar exemplos nos documentos específicos. Aceitar as condições de exemplo.
-5. Revisar e escolher Pix/cartão sem cobrança. Confirmar pagamento e finalizar abre sucesso separado; edição fica bloqueada.
+Instale o [ZIP 1.2.0](wordpress/releases/re-almeida-kits.zip) em **Plugins → Adicionar plugin → Enviar plugin → Substituir o atual pelo enviado**. Faça backup antes; não desinstale. O pacote inclui contas reais e CORS automático para localhost, 127.0.0.1 e [::1], portas 5173–5199, somente leitura do catálogo e sem credenciais.
 
-## Três participantes e duas corridas
+Instale o plugin **1.2.0** antes de testar os endpoints novos no WordPress hospedado. Use HTTPS no WordPress e mantenha os endpoints próprios e admin-post.php acessíveis sem cache. As origens do site/Worker atual e localhost já estão autorizadas. Não são necessárias chaves administrativas, JWT secret ou cookies de terceiros. Nenhuma alteração no servidor hospedado foi realizada nesta rodada.
 
-1. Selecionar Circuito Rio Antigo e Corrida da Primavera. Finalizar inscrição → Para mais pessoas → quantidade 3.
-2. Conferir responsável. Abrir um painel por vez; nomes e CPFs são fictícios e distintos.
-3. Pessoa 1: Circuito, Oficial, 5 km, Kit tradicional, Ponto A.
-4. Pessoa 2: Circuito, APPAI, 10 km, somente número, Ponto B; matrícula DEMO própria se desejar alterar.
-5. Pessoa 3: Circuito, APPAI, 5 km, camiseta M, Ponto A; Primavera, Oficial, 10 km. Identificadores DEMO permanecem por item.
-6. Completar documentos de cada pessoa/prova e aceites gerais uma única vez por corrida. Identidade pode ser usada pela mesma titular; autorizações e comprovantes não se propagam a outras inscrições.
-7. Revisar quatro retiradas agrupadas em três pessoas. Neste exemplo, total ilustrativo Pix R$98 / cartão R$114. Alterar antes da confirmação e conferir preservação dos outros dados.
-8. Adicionar/remover pessoas, respeitando limite central em `src/config/preview.ts`. Alterar quantidade não reinicia o restante do pedido; reduzir descarta últimas pessoas.
+## Contas e participantes — Bloco C
 
-## PDF, conclusão e acompanhamento
+Em **Minha conta**, crie sua conta ou entre com e-mail/senha no domínio WordPress. Cadastro e recuperação usam o WordPress; dados do titular e até 20 participantes ficam armazenados no servidor e reaparecem após sair/entrar. CPF é validado e único entre titulares, incluindo contas legadas. Participantes não recebem contas automaticamente.
 
-Após finalizar, a conclusão exibe pedido fictício, participantes, corridas e vouchers únicos. Baixar PDF gera e baixa um PDF local do voucher selecionado, com logo, opções, orientações e marca d’água DEMONSTRAÇÃO — SEM VALIDADE. Sem QR/validade operacional. Não há download ou visualização de anexos pessoais.
+No fluxo de solicitação, selecione um participante salvo ou cadastre e salve seus dados antes de continuar. Perfil permite editar nome, nascimento e telefone; CPF/e-mail de acesso exigem atendimento para alteração. Nenhum pedido ou cobrança é criado.
 
-O botão de grupo WhatsApp só aparece com URL confirmada. As fixtures não têm URLs; a interface informa a indisponibilidade. Acompanhar pedido mostra status independentes por participante/corrida; primeiro item tem número 001 — EXEMPLO, demais pendentes. Seletor altera somente cenário ilustrativo de retirada.
+## Jornada atual
 
-Voltar do navegador ou abrir uma etapa após conclusão não permite editar: retorna ao sucesso. **Nova inscrição** inicia outro rascunho. Selecionar uma corrida aberta na home, catálogo ou detalhe depois de concluir também inicia automaticamente um novo pedido limpo, sem transportar dados/documentos/aceites e sem reset manual. Não há histórico do pedido anterior na prévia. Atualizar apaga a memória e mostra estado vazio, sem recuperar conta ou pedido.
+Dados de corridas, imagens, modalidades, distâncias, preços do serviço de retirada, documentos, modelos, condições e orientações vêm do WordPress. Formulários de responsável/participantes começam vazios, com opções independentes por pessoa/corrida. Cadastros de titular e participantes são persistidos no WordPress. Opções da solicitação ainda são rascunho em memória, sem pedido persistido.
 
-## Estrutura e produção preservada
+As etapas de documentos permitem consultar exigências e baixar modelos públicos. Upload pessoal, envio de pedido, pagamento e acompanhamento ainda estão indisponíveis. Não há arquivos de exemplo, cadastro/pagamento fictício nem confirmação de operação inexistente. Condições têm uma seleção por corrida, abrangendo seus participantes; não há registro jurídico persistente nesta entrega.
 
-Configuração em `src/config`, tipos em `src/types`, fixtures em `src/data`, regras puras em `src/state`; componentes por seção, etapa, participante e acompanhamento. Sem novas dependências. Logo original e imagens conceituais preservados. Noindex/robots bloqueado e canonical por origem. Footer com crédito Smart Local mantido.
+## Validação
 
-Wrangler mantém Worker `realmeidakits`, Static Assets `dist`, fallback SPA e workers.dev, sem domínio/backend. Script deploy disponível somente para autorização futura. Credenciais, arquivos locais, `.wrangler`, `dist` e `node_modules` ignorados.
+```sh
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+```
 
-[Escopo](docs/project.md), [integração futura](docs/integration.md) e [roteiro/resultados de QA](docs/qa.md). WordPress será administração; WooCommerce consolidará pagamento; futura conta pertence ao responsável. Segurança, documentos privados, permissões, edição controlada após pagamento e WhatsApp opcional exigem avaliação futura. Nenhuma integração ou API foi criada.
+Build estático em `dist`; Worker/Static Assets e fallback SPA preservados. Nada foi publicado. Fixtures ficam em `tests/fixtures`; `pnpm-lock.yaml` preservado e sem novas dependências.
 
-## QA final de navegação e validação
-
-“Próximo participante” abre e focaliza o próximo cabeçalho; não aparece no último painel ou pedido de uma pessoa. Adicionar participante abre o novo painel. Ao continuar com erro, o campo pendente é focalizado inclusive em painel fechado, com mensagem específica associada; corrigir o campo não desloca o foco. Documentos indicam quantidade pendente. Aceites estão no pedido por corrida e versão demonstrativa, sem repetir por participante; mudar a condição ou retirar/reinserir a corrida exige novo aceite. Autorizações individuais continuam separadas.
-
-Terminologia: Dados dos participantes → Confira seu pedido → Ir para pagamento → Pedido finalizado! → Acompanhar pedido / Voucher de retirada / Nova inscrição. As regras comerciais continuam sendo exclusivamente de retirada de kits.
+[Operação do plugin](docs/wordpress-setup.md) · [Implementação](docs/wordpress-implementation.md) · [Instalação/homologação](docs/wordpress-deployment.md) · [QA e limites](docs/qa-block-b.md).

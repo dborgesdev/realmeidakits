@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { DemoOrder, RaceSelection, Participant } from "../../types/domain";
-import { findRace } from "../../data/events";
+import { useCatalog } from "../../state/CatalogContext";
 import { modalityLabel } from "../../state/pricing";
 import { voucherId } from "../../state/participantRules";
 import { downloadVoucher } from "../../state/voucherPdf";
@@ -15,6 +15,7 @@ export default function Voucher({
   participant: Participant;
   item: RaceSelection;
 }) {
+  const { findRace } = useCatalog();
   const race = findRace(item.raceId)!;
   const [error, setError] = useState("");
   const group = groupUrl(race);

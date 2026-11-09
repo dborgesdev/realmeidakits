@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/home/Header";
 import Footer from "./components/home/Footer";
 import ConclusionPage from "./pages/ConclusionPage";
+import AccountPage from "./pages/AccountPage";
 import Home from "./pages/Home";
 import EventsPage from "./pages/EventsPage";
 import RequestPage from "./pages/RequestPage";
@@ -10,10 +11,13 @@ import TrackingPage from "./pages/TrackingPage";
 import LegacyRequest from "./pages/LegacyRequest";
 import InfoPage from "./pages/InfoPage";
 import NotFound from "./pages/NotFound";
+import { useCatalog } from "./state/CatalogContext";
+import CatalogStatus from "./components/CatalogStatus";
 export default function App() {
+  const { status } = useCatalog();
   const location = useLocation();
   useEffect(() => {
-    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Inscrição demonstrativa" : location.pathname === "/conclusao" ? "Pedido finalizado — demonstração" : location.pathname === "/acompanhamento" ? "Acompanhar pedido — demonstração" : "Conheça a plataforma"} | Re Almeida Kits`;
+    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Solicitação de retirada" : location.pathname === "/conclusao" ? "Solicitação de retirada" : location.pathname === "/acompanhamento" ? "Acompanhar pedido" : "Conheça a plataforma"} | Re Almeida Kits`;
     if (!location.hash) {
       window.scrollTo(0, 0);
       document.getElementById("conteudo")?.focus({ preventScroll: true });
@@ -38,21 +42,32 @@ export default function App() {
     <>
       <Header />
       <main id="conteudo" tabIndex={-1}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/corridas" element={<EventsPage />} />
-          <Route path="/corridas/:slug" element={<EventsPage />} />
-          <Route
-            path="/solicitacao/:stage"
-            element={<RequestPage key={location.pathname} />}
-          />
-          <Route path="/solicitacao/:slug/:stage" element={<LegacyRequest />} />
-          <Route path="/conclusao" element={<ConclusionPage />} />
-          <Route path="/acompanhamento" element={<TrackingPage />} />
-          <Route path="/orientacoes" element={<InfoPage />} />
-          <Route path="/privacidade" element={<InfoPage privacy />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        {status !== "ready" &&
+        (location.pathname === "/" ||
+          location.pathname.startsWith("/corridas") ||
+          location.pathname.startsWith("/solicitacao")) ? (
+          <CatalogStatus />
+        ) : (
+          <Routes>
+            <Route path="/conta/*" element={<AccountPage />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/corridas" element={<EventsPage />} />
+            <Route path="/corridas/:slug" element={<EventsPage />} />
+            <Route
+              path="/solicitacao/:stage"
+              element={<RequestPage key={location.pathname} />}
+            />
+            <Route
+              path="/solicitacao/:slug/:stage"
+              element={<LegacyRequest />}
+            />
+            <Route path="/conclusao" element={<ConclusionPage />} />
+            <Route path="/acompanhamento" element={<TrackingPage />} />
+            <Route path="/orientacoes" element={<InfoPage />} />
+            <Route path="/privacidade" element={<InfoPage privacy />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        )}
       </main>
       <Footer />
     </>

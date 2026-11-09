@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { events } from "../../data/events";
+import { useCatalog } from "../../state/CatalogContext";
 import type { PaymentMethod, RaceSelection } from "../../types/domain";
 import {
   itemPrice,
@@ -16,6 +16,7 @@ export default function OrderSummary({
   method: PaymentMethod;
   editable?: boolean;
 }) {
+  const { events } = useCatalog();
   const total = totalPrice(items, events, method);
   return (
     <section className="order-summary" aria-label="Resumo consolidado">
@@ -47,14 +48,14 @@ export default function OrderSummary({
       </div>
       <div className="order-total">
         <div>
-          <span>Total demonstrativo · {method}</span>
+          <span>Total · {method}</span>
           <strong>
             {money(total.known)}
             {total.pending > 0 && " + valores a confirmar"}
           </strong>
         </div>
         <small>
-          Valores fictícios por item. Não há cobrança, pedido real ou reserva.
+          Valores do serviço de retirada, conforme modalidade e opções.
         </small>
       </div>
       {editable && (

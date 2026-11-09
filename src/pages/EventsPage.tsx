@@ -1,19 +1,22 @@
 import { useEffect } from "react";
 import { Link, useSearchParams, useParams } from "react-router-dom";
-import { events, asset } from "../data/events";
+import { useCatalog } from "../state/CatalogContext";
+import { asset } from "../data/assets";
 import RaceDetailHero from "../components/RaceDetailHero";
 import { groupUrl } from "../state/voucherRules";
 import EventCard from "../components/EventCard";
-import { DemoNotice, PageTitle } from "../components/UI";
+import { PageTitle } from "../components/UI";
 import SelectionSummary from "../components/selection/SelectionSummary";
-import { useDemo } from "../state/DemoContext";
+import { useRequest } from "../state/RequestContext";
 import { availabilityLabel, isAvailable } from "../state/selectionRules";
 import NotFound from "./NotFound";
+import RaceImage from "../components/RaceImage";
 export default function EventsPage() {
+  const { events } = useCatalog();
   const { slug } = useParams();
   const [params, setParams] = useSearchParams();
   const event = events.find((e) => e.slug === slug);
-  const { draft, toggleRace, restart, prefer } = useDemo();
+  const { draft, toggleRace, restart, prefer } = useRequest();
   const entry = params.get("modalidade");
   useEffect(() => {
     if (entry !== "appai" && entry !== "oficial") return;
@@ -33,10 +36,9 @@ export default function EventsPage() {
   return (
     <div className="flow-shell">
       <div className="container page">
-        <DemoNotice />
         {draft.order && (
           <div className="notice">
-            Seu pedido demonstrativo foi finalizado.{" "}
+            Seu pedido foi finalizado.{" "}
             <Link to="/conclusao">Ver conclusão</Link> ou{" "}
             <Link
               className="button secondary small"
@@ -52,13 +54,17 @@ export default function EventsPage() {
           <>
             <RaceDetailHero race={event} />
             <div className="detail-grid">
-              <img
-                className="detail-image"
-                src={asset(event.image)}
-                alt={`Imagem conceitual de ${event.name}`}
-                width="800"
-                height="600"
-              />
+              {event.image ? (
+                <RaceImage
+                  className="detail-image"
+                  src={asset(event.image)}
+                  alt={`Imagem de ${event.name}`}
+                  width="800"
+                  height="600"
+                />
+              ) : (
+                <div className="panel">Imagem ainda não cadastrada.</div>
+              )}
               <div className="panel">
                 <span
                   className={`availability ${isAvailable(event) ? "available" : "closed"}`}
@@ -67,12 +73,11 @@ export default function EventsPage() {
                 </span>
                 <h2>Uma corrida, suas próprias opções</h2>
                 <p>
-                  Datas, valores e requisitos abaixo são exemplos, sem oferta
-                  real.
+                  Confira modalidades, documentos e orientações desta corrida.
                 </p>
                 {event.closesAt && (
                   <p>
-                    Prazo ilustrativo:{" "}
+                    Prazo:{" "}
                     {new Date(event.closesAt).toLocaleString("pt-BR", {
                       timeZone: "America/Sao_Paulo",
                     })}{" "}
@@ -80,25 +85,48 @@ export default function EventsPage() {
                   </p>
                 )}
                 <p>Distâncias: {event.distances.join(" / ")}.</p>
+                {event.location && (
+                  <p>
+                    Local da corrida: {event.location}
+                    {event.raceTime ? ` · ${event.raceTime}` : ""}.
+                  </p>
+                )}
                 {event.modalities.map((mode) => (
                   <section key={mode.id}>
                     <h3>{mode.label}</h3>
+                    {mode.distances && (
+                      <p>Distâncias: {mode.distances.join(" / ")}</p>
+                    )}
+                    {mode.shirtImage && (
+                      <RaceImage
+                        className="shirt-preview"
+                        src={mode.shirtImage}
+                        alt={`Camiseta de ${event.name}`}
+                        width="400"
+                        height="400"
+                        loading="lazy"
+                      />
+                    )}
                     <ul>
                       {mode.documents.map((doc) => (
                         <li key={doc.id}>
                           {doc.label}
+                          {doc.required === false ? " · opcional" : ""}
                           {doc.scope === "personal"
                             ? " · reutilizável pelo participante"
                             : " · específica desta corrida"}
+                          {doc.guidance && <p>{doc.guidance}</p>}
                         </li>
                       ))}
                     </ul>
                   </section>
                 ))}
                 <p>{event.guidance}</p>
+                {event.contact && <p>{event.contact}</p>}
                 {event.conditions.map((c) => (
                   <p key={c.id} className="caption">
-                    Condição demonstrativa: {c.text}
+                    {`Condição · versão ${c.version}: `}
+                    {c.text}
                   </p>
                 ))}
                 {groupUrl(event) && (
@@ -134,9 +162,8 @@ export default function EventsPage() {
               eyebrow="PARA VOCÊ OU MAIS PESSOAS"
               title="Escolha suas corridas"
             >
-              Selecione uma ou várias provas e configure cada uma antes de
-              simular um pagamento único. Todos os eventos, prazos e valores são
-              ilustrativos.
+              Selecione uma ou várias corridas e configure as opções de cada
+              participante.
             </PageTitle>
             {preferred && (
               <p className="notice">
@@ -148,6 +175,9 @@ export default function EventsPage() {
               </p>
             )}
             <div className="grid three">
+              {!events.length && (
+                <p role="status">Nenhuma corrida publicada no momento.</p>
+              )}
               {events.map((e) => (
                 <EventCard key={e.id} event={e} />
               ))}

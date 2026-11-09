@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "plugin:zip": "powershell -NoProfile -File scripts/package-plugin.ps1",
     "preview": "vite preview --host 0.0.0.0",
     "format": "prettier --write src tests *.json *.ts *.js index.html README.md",
     "deploy": "pnpm build && wrangler deploy"

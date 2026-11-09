@@ -1,5 +1,5 @@
 import { previewConfig } from "../config/preview.ts";
-import { makeParticipant } from "../data/demo.ts";
+import { makeParticipant } from "./draft.ts";
 import { isAvailable, makeSelection } from "./selectionRules.ts";
 import type { Draft, Race } from "../types/domain";
 export function resizeParticipants(draft: Draft, count: number): Draft {

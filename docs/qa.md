@@ -1,5 +1,9 @@
 # QA final — Re Almeida Kits V2
 
+> QA mais recente: Bloco C de 05/11/2026, contas reais e participantes, registrado em [qa-block-b.md](qa-block-b.md).
+
+> QA mais recente: refinamento WordPress/React de 29/10/2026 em [qa-block-b.md](qa-block-b.md). Este documento preserva a avaliação histórica da V2 demonstrativa.
+
 ## Ajuste dos CTAs por modalidade — 21/10/2026
 
 Rodada local sobre `56c1d3a149bbad1e6337737a6ac9925cfed65d64`, em `feat/v2-preview`, sem commit, push, PR, merge ou deploy. Os registros abaixo desta seção correspondem ao QA anterior à publicação.
@@ -76,3 +80,7 @@ Sem backend, autenticação, WordPress/WooCommerce real, persistência ou histó
 Validação de navegador assistida, sem suíte E2E persistente, auditoria WCAG completa, leitor de tela, dispositivos físicos ou matriz ampla de navegadores. Teclado virtual e safe area física dependem de testes em aparelhos reais; estilos e espaçamento foram conferidos no viewport simulado.
 
 Pendências para aprovação real: confirmar com Renata as informações de eventos, preços, documentos, locais, grades e condições jurídicas/operacionais, além dos links de grupos que vierem a existir. Segurança, autenticação, registro de versão/data do aceite geral pelo responsável, autorizações individuais e operações administrativas ficam na fase WordPress/WooCommerce, conforme [integration.md](integration.md).
+
+## Bloco B — revisão final de 28/10/2026
+
+O histórico acima permanece referente à V2. Os resultados locais do plugin WordPress e da integração de catálogo estão em [qa-block-b.md](qa-block-b.md), incluindo 34 testes finais, as 47 verificações WordPress anteriores aproveitadas, evidências visuais e pendências do servidor real.

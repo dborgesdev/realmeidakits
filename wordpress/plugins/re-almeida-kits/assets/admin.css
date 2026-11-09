@@ -1,0 +1,160 @@
+#rak-editor {
+  max-width: 1000px;
+}
+.rak-section {
+  border: 1px solid #bcc2ca;
+  border-radius: 5px;
+  margin: 12px 0;
+  background: #fff;
+}
+.rak-section summary {
+  cursor: pointer;
+  padding: 16px;
+  font-weight: 600;
+  font-size: 15px;
+  background: #f5f6f7;
+}
+.rak-section-body {
+  padding: 16px;
+}
+.rak-field {
+  margin: 0 0 18px;
+}
+.rak-field[hidden] {
+  display: none;
+}
+.rak-field > label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.rak-field input:not([type="checkbox"]),
+.rak-field select,
+.rak-field textarea {
+  width: 100%;
+  max-width: 650px;
+  min-height: 36px;
+}
+.rak-field textarea {
+  min-height: 100px;
+}
+.rak-field .description {
+  margin: 6px 0;
+  display: block;
+}
+.rak-row {
+  border: 1px solid #a7aaad;
+  padding: 16px;
+  margin: 12px 0;
+  border-radius: 4px;
+}
+.rak-row legend {
+  font-weight: 600;
+  padding: 0 6px;
+}
+.rak-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rak-image {
+  display: block;
+  max-width: 240px;
+  height: auto;
+  margin-top: 12px;
+}
+.rak-image[hidden] {
+  display: none;
+}
+#rak-editor :focus-visible {
+  outline: 3px solid #145d99;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .rak-section-body,
+  .rak-row {
+    padding: 12px;
+  }
+  .rak-row-actions .button {
+    min-height: 42px;
+  }
+}
+.rak-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 8px 0;
+  position: sticky;
+  top: 32px;
+  background: #fff;
+  z-index: 10;
+}
+.rak-tabs .nav-tab {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 12px;
+  cursor: pointer;
+  border: 1px solid #a7aaad;
+  white-space: nowrap;
+}
+.rak-tabs .nav-tab-active {
+  color: #135e96;
+  border-bottom: 3px solid #135e96;
+  background: #f0f6fc;
+}
+.rak-tab-panel {
+  padding: 20px 8px;
+}
+.rak-tab-panel[hidden],
+.rak-error-summary[hidden] {
+  display: none;
+}
+.rak-error-summary {
+  border-left: 4px solid #b32d2e;
+  background: #fff3f3;
+  padding: 12px;
+  margin: 12px 0;
+}
+.rak-error-summary .button {
+  display: block;
+  white-space: normal;
+  text-align: left;
+  margin: 6px 0;
+}
+#rak-editor [aria-invalid="true"] {
+  border: 2px solid #b32d2e;
+}
+#rak-editor #post-body-content {
+  float: none;
+  width: auto;
+  min-width: 0;
+}
+#rak-editor #postimagediv {
+  margin-top: 20px;
+}
+.rak-row > label {
+  display: block;
+  font-weight: 600;
+  margin: 8px 0;
+}
+.rak-row > input {
+  max-width: 100%;
+}
+.rak-field > .button {
+  margin: 4px;
+  white-space: normal;
+  height: auto;
+}
+@media (max-width: 782px) {
+  .rak-tabs {
+    top: 46px;
+  }
+  .rak-tab-panel {
+    padding: 14px 0;
+  }
+}
+@media (max-width: 600px) {
+  .rak-tabs {
+    position: static;
+  }
+}

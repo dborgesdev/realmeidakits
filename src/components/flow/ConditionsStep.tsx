@@ -1,5 +1,5 @@
-import { events } from "../../data/events";
-import { useDemo } from "../../state/DemoContext";
+import { useCatalog } from "../../state/CatalogContext";
+import { useRequest } from "../../state/RequestContext";
 import {
   acceptCondition,
   conditionVersion,
@@ -8,15 +8,15 @@ import {
 import { controlId } from "../../state/validationRules";
 import { FieldError, useFlowFeedback } from "./FlowFeedback";
 export default function ConditionsStep() {
-  const { draft, setDraft } = useDemo();
+  const { events } = useCatalog();
+  const { draft, setDraft } = useRequest();
   const { field } = useFlowFeedback();
   return (
     <>
       <h1>Condições das corridas</h1>
       <p>
         A pessoa responsável aceita cada condição uma única vez por corrida,
-        para todos os participantes vinculados a ela. Os textos são minutas
-        demonstrativas, sujeitos à validação.
+        para todos os participantes vinculados a ela.
       </p>
       {events
         .filter((r) => draft.selectedRaceIds.includes(r.id))
@@ -56,7 +56,7 @@ export default function ConditionsStep() {
               );
             })}
             {!race.conditions.length ? (
-              <p>Sem condição adicional neste exemplo.</p>
+              <p>Sem condição adicional para esta corrida.</p>
             ) : (
               conditionsReady(draft.acceptedConditions, race) && (
                 <p className="success">

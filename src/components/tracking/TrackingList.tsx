@@ -1,4 +1,4 @@
-import { findRace } from "../../data/events";
+import { useCatalog } from "../../state/CatalogContext";
 import { modalityLabel } from "../../state/pricing";
 import {
   trackingItems,
@@ -13,6 +13,7 @@ export default function TrackingList({
   order: DemoOrder;
   scenario: TrackingScenario;
 }) {
+  const { findRace } = useCatalog();
   return (
     <div className="tracking-list">
       {trackingItems(order, scenario).map((status) => {

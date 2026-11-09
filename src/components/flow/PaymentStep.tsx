@@ -1,20 +1,20 @@
-import { events } from "../../data/events";
-import { useDemo } from "../../state/DemoContext";
+import { useCatalog } from "../../state/CatalogContext";
+import { useRequest } from "../../state/RequestContext";
 import { money, totalPrice } from "../../state/pricing";
 import OrderSummary from "./OrderSummary";
 export default function PaymentStep() {
-  const { draft, setDraft } = useDemo();
+  const { events } = useCatalog();
+  const { draft, setDraft } = useRequest();
   const items = draft.participants.flatMap((p) => p.items);
   return (
     <>
-      <h1>Um pagamento para as suas corridas</h1>
-      <p>
-        Valores de demonstração, calculados por corrida e opção. Pix e cartão
-        são apenas alternativas visuais; não há cobrança ou confirmação
-        bancária.
+      <h1>Pagamento do serviço de retirada</h1>
+      <p className="field-help" role="status">
+        Pedidos e pagamentos ainda indisponíveis. Nenhuma solicitação foi
+        enviada.
       </p>
       <fieldset className="payment-choices">
-        <legend>Escolha uma alternativa simulada</legend>
+        <legend>Valores por forma de pagamento</legend>
         {(["Pix", "Cartão"] as const).map((method) => {
           const total = totalPrice(items, events, method);
           return (
@@ -31,8 +31,7 @@ export default function PaymentStep() {
                   {total.pending ? " + a confirmar" : ""}
                 </strong>
                 <span className="field-help">
-                  Total ilustrativo de {items.length}{" "}
-                  {items.length === 1 ? "corrida" : "corridas"}
+                  {items.length} serviço(s) de retirada
                 </span>
               </span>
             </label>
@@ -45,19 +44,6 @@ export default function PaymentStep() {
           <OrderSummary items={p.items} method={draft.method} />
         </section>
       ))}
-      <p className="notice">
-        Confirmar pagamento e finalizar apenas encerra esta demonstração.
-        Nenhuma cobrança será feita.
-      </p>
-      <div className="soft inset">
-        <h3>{draft.method} demonstrativo</h3>
-        <p>
-          {draft.method === "Pix"
-            ? "Sem chave, QR Pix ou código copiável. Não realize transferência."
-            : "Não informe dados de cartão. Não há formulário bancário ou processamento de crédito."}
-        </p>
-        <strong>Nenhuma transação será realizada ou confirmada.</strong>
-      </div>
     </>
   );
 }

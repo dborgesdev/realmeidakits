@@ -1,7 +1,11 @@
 import type { Draft, Race, ConditionAcceptances } from "../types/domain";
 // Identificação + conteúdo exato: editar uma minuta invalida seu aceite anterior.
 export function conditionVersion(condition: Race["conditions"][number]) {
-  return JSON.stringify([condition.id, condition.text]);
+  return JSON.stringify(
+    condition.version === undefined
+      ? [condition.id, condition.text]
+      : [condition.id, condition.version, condition.text],
+  );
 }
 export function conditionsReady(accepted: ConditionAcceptances, race: Race) {
   return race.conditions.every((c) =>

@@ -2,13 +2,16 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
+  useRef,
   useCallback,
   type ReactNode,
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { initialDraft } from "../data/demo";
-import { events, findRace } from "../data/events";
+import { useAccount } from "./AccountContext";
+import { initialDraft } from "./draft";
+import { useCatalog } from "../state/CatalogContext";
 import {
   changeSelection,
   selectForNewOrder,
@@ -19,7 +22,7 @@ import {
   resizeParticipants,
   removeParticipant,
 } from "./participantRules";
-import { editableUpdate, finalizeOrder } from "./orderRules";
+import { editableUpdate } from "./orderRules";
 import type { Draft, Race, RaceSelection, Modality } from "../types/domain";
 export type { Draft } from "../types/domain";
 const Context = createContext<{
@@ -34,12 +37,55 @@ const Context = createContext<{
   assign: (id: string, race: Race) => void;
   resize: (count: number) => void;
   remove: (id: string) => void;
-  complete: () => void;
   restart: () => void;
   prefer: (modality: Modality) => void;
 } | null>(null);
-export function DemoProvider({ children }: { children: ReactNode }) {
-  const [draft, storeDraft] = useState(initialDraft);
+export function RequestProvider({ children }: { children: ReactNode }) {
+  const { profile } = useAccount();
+  const previousUser = useRef<number | null>(null);
+  const { findRace } = useCatalog();
+  const [draft, storeDraft] = useState(() => {
+    const draft = initialDraft();
+    try {
+      const value = JSON.parse(
+        sessionStorage.getItem("rak_race_selection") || "null",
+      );
+      if (
+        value &&
+        Array.isArray(value.ids) &&
+        value.ids.every((id: unknown) => typeof id === "string")
+      )
+        draft.selectedRaceIds = value.ids.slice(0, 100);
+    } catch {
+      /* Selection is optional navigation context, never personal data. */
+    }
+    return draft;
+  });
+  useEffect(() => {
+    sessionStorage.setItem(
+      "rak_race_selection",
+      JSON.stringify({ ids: draft.selectedRaceIds }),
+    );
+  }, [draft.selectedRaceIds]);
+  useEffect(() => {
+    if (profile) {
+      const changed =
+        previousUser.current !== null && previousUser.current !== profile.id;
+      previousUser.current = profile.id;
+      storeDraft((d) => ({
+        ...(changed ? initialDraft() : d),
+        responsible: {
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+          identifier: profile.cpf,
+        },
+      }));
+    } else if (previousUser.current !== null) {
+      previousUser.current = null;
+      storeDraft(initialDraft());
+    }
+  }, [profile]);
   const prefer = useCallback((modality: Modality) => {
     storeDraft((d) => preferModality(d, modality));
   }, []);
@@ -75,7 +121,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
                 : p,
             ),
           })),
-        complete: () => storeDraft((d) => finalizeOrder(d, events)),
         restart: () => storeDraft(initialDraft()),
       }}
     >
@@ -83,8 +128,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     </Context.Provider>
   );
 }
-export function useDemo() {
+export function useRequest() {
   const value = useContext(Context);
-  if (!value) throw new Error("DemoProvider ausente");
+  if (!value) throw new Error("RequestProvider ausente");
   return value;
 }

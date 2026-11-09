@@ -1,7 +1,14 @@
+import { validCpf, validPhone } from "./identityRules.ts";
 import type { Draft, Participant, Race } from "../types/domain";
-import { personReady, requiredDocuments, fieldsReady } from "./requestRules.ts";
+import {
+  personReady,
+  responsibleReady,
+  requiredDocuments,
+  fieldsReady,
+} from "./requestRules.ts";
 import { conditionVersion } from "./conditionRules.ts";
 import { isAvailable } from "./selectionRules.ts";
+import { raceOptions } from "./catalogRules.ts";
 export type FlowIssue = {
   target: string;
   message: string;
@@ -53,27 +60,48 @@ export function firstIssue(
   )
     return issue(
       "responsible-name",
-      "Informe o nome fictício da pessoa responsável (3 a 80 caracteres).",
+      "Informe o nome da pessoa responsável (3 a 80 caracteres).",
     );
+  if (stage === "responsavel" && !responsibleReady(draft.responsible)) {
+    const emailInvalid = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      draft.responsible.email,
+    );
+    return issue(
+      emailInvalid ? "responsible-email" : "responsible-phone",
+      emailInvalid ? "Informe um e-mail válido." : "Informe telefone com DDD.",
+    );
+  }
   if (stage === "participantes")
     for (const [index, p] of draft.participants.entries()) {
       if (!personReady(p.person)) {
         const nameInvalid =
           p.person.name.trim().length < 3 || p.person.name.length > 80;
         return issue(
-          nameInvalid ? "name" : "birthDate",
-          `Informe ${nameInvalid ? "o nome fictício" : "uma data de nascimento válida"} do participante ${index + 1}.`,
+          nameInvalid
+            ? "name"
+            : !validCpf(p.person.cpf)
+              ? "cpf"
+              : !validPhone(p.person.phone)
+                ? "phone"
+                : p.person.email &&
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.person.email)
+                  ? "email"
+                  : "birthDate",
+          `Confira ${nameInvalid ? "o nome" : "os dados pessoais"} do participante ${index + 1}.`,
           p,
         );
       }
       if (
         draft.participants.some(
-          (other) => other.id !== p.id && other.person.cpf === p.person.cpf,
+          (other) =>
+            other.id !== p.id &&
+            other.person.cpf.replace(/\D/g, "") ===
+              p.person.cpf.replace(/\D/g, ""),
         )
       )
         return issue(
-          "name",
-          `Confira a identidade demonstrativa do participante ${index + 1}.`,
+          "cpf",
+          `Confira a identificação do participante ${index + 1}.`,
           p,
         );
       if (!p.items.length)
@@ -95,6 +123,7 @@ export function firstIssue(
             p,
           );
         const mode = race.modalities.find((m) => m.id === item.modality);
+        const options = raceOptions(race, item.modality);
         if (!mode)
           return issue(
             "modality",
@@ -102,7 +131,18 @@ export function firstIssue(
             p,
             race.id,
           );
-        if (!race.distances.includes(item.distance))
+        if (
+          item.modality === "appai" &&
+          ((item.kit === "numero" && mode.numberEnabled === false) ||
+            (item.kit === "camiseta" && mode.shirtEnabled === false))
+        )
+          return issue(
+            "modality",
+            `Escolha uma opção APPAI disponível para ${race.name}.`,
+            p,
+            race.id,
+          );
+        if (!options.distances.includes(item.distance))
           return issue(
             "distance",
             `Selecione a distância para ${race.name}.`,
@@ -111,8 +151,8 @@ export function firstIssue(
           );
         if (
           item.modality === "oficial" &&
-          race.kitTypes.length &&
-          !race.kitTypes.includes(item.kitType)
+          options.kitTypes.length &&
+          !options.kitTypes.includes(item.kitType)
         )
           return issue(
             "kitType",
@@ -132,8 +172,8 @@ export function firstIssue(
             race.id,
           );
         if (
-          race.pickupLocations.length &&
-          !race.pickupLocations.includes(item.pickup)
+          options.pickupLocations.length &&
+          !options.pickupLocations.includes(item.pickup)
         )
           return issue(
             "pickup",
@@ -141,10 +181,10 @@ export function firstIssue(
             p,
             race.id,
           );
-        if (!fieldsReady(item))
+        if (!fieldsReady(item, race))
           return issue(
             item.modality === "appai" ? "membership" : "registration",
-            `Informe ${item.modality === "appai" ? "a matrícula APPAI fictícia (DEMO- e 3 a 6 dígitos)" : "o número fictício da inscrição (DEMO- e 3 a 40 caracteres)"} para ${race.name}.`,
+            `Informe ${item.modality === "appai" ? "a matrícula APPAI" : "o número da inscrição"} para ${race.name}.`,
             p,
             race.id,
           );

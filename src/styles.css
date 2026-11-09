@@ -2055,3 +2055,30 @@ body {
     scroll-behavior: auto;
   }
 }
+.event-image-missing {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  background: #eeeae4;
+  color: #344054;
+  padding: 24px;
+}
+.shirt-preview {
+  display: block;
+  max-width: min(100%, 400px);
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  margin-block: 16px;
+}
+.race-hero > .event-image-missing {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.account-page { max-width: 1000px; display: grid; gap: 24px; }
+.account-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+.account-participants { list-style: none; padding: 0; }
+.account-participants li { padding: 20px 0; border-bottom: 1px solid #d9dfe5; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+.account-participants .field-help { display: block; }
+@media (max-width: 600px) { .account-actions { align-items: stretch; } .account-actions .button { width: 100%; } .account-participants li > div { width: 100%; } }

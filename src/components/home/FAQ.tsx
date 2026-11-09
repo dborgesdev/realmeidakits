@@ -11,7 +11,7 @@ export default function FAQ() {
         {[
           [
             "Estou comprando uma inscrição?",
-            "Não. O serviço apresentado é a retirada do kit para participantes. Esta prévia é uma demonstração.",
+            "Não. O serviço apresentado é a retirada do kit para participantes.",
           ],
           [
             "Posso escolher várias corridas?",
@@ -22,8 +22,8 @@ export default function FAQ() {
             "Cada pessoa mantém sua identidade e corridas. A autorização específica permite que a Re Almeida retire fisicamente o kit pelo participante.",
           ],
           [
-            "Vou pagar ou enviar documentos de verdade?",
-            "Não. Nenhuma cobrança ou transmissão de arquivos acontece nesta prévia. Use apenas dados fictícios.",
+            "Como consultar os documentos exigidos?",
+            "Confira os documentos e modelos de autorização na corrida e na modalidade selecionadas.",
           ],
         ].map(([q, a]) => (
           <details key={q}>
