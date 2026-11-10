@@ -31,7 +31,6 @@ export default function RaceFields({
         Matrícula APPAI
         <input
           required
-          maxLength={80}
           {...field(
             controlId("membership", participantId, race.id),
             `membership-${participantId}-${race.id}`,
@@ -52,7 +51,6 @@ export default function RaceFields({
         Número da inscrição
         <input
           required
-          maxLength={80}
           {...field(controlId("registration", participantId, race.id))}
           aria-label={`Número da inscrição — ${race.name}`}
           value={item.registration}

@@ -14,7 +14,6 @@ export function finalizeOrder(draft: Draft, catalog: Race[]): Draft {
     acceptedConditions: structuredClone(draft.acceptedConditions),
     responsible: structuredClone(draft.responsible),
     participants: structuredClone(draft.participants),
-    method: draft.method,
   };
   return { ...draft, order: freezeDeep(order) };
 }

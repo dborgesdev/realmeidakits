@@ -1,7 +1,8 @@
 import { useRequest } from "../../state/RequestContext";
-import { previewConfig } from "../../config/preview";
+import { useAccount } from "../../state/AccountContext";
 export default function QuantityStep() {
   const { draft, resize } = useRequest();
+  const { participantLimit } = useAccount();
   const count = draft.participants.length;
   return (
     <>
@@ -29,6 +30,7 @@ export default function QuantityStep() {
             type="radio"
             name="quantity-kind"
             checked={count > 1}
+            disabled={participantLimit < 2}
             onChange={() => resize(2)}
           />
           <span>
@@ -44,22 +46,21 @@ export default function QuantityStep() {
             value={count}
             onChange={(e) => resize(Number(e.target.value))}
           >
-            {Array.from(
-              { length: previewConfig.maxParticipants - 1 },
-              (_, i) => i + 2,
-            ).map((n) => (
-              <option key={n} value={n}>
-                {n} participantes
-              </option>
-            ))}
+            {Array.from({ length: participantLimit - 1 }, (_, i) => i + 2).map(
+              (n) => (
+                <option key={n} value={n}>
+                  {n} participantes
+                </option>
+              ),
+            )}
           </select>
         </label>
       )}
       <div className="help-panel">
-        Até {previewConfig.maxParticipants} participantes por pedido do serviço.
-        As corridas serão atribuídas a cada pessoa explicitamente, sem incluir
-        todas as provas automaticamente. Reduzir a quantidade remove as últimas
-        pessoas e suas configurações.
+        Até {participantLimit} participantes por pedido do serviço. As corridas
+        serão atribuídas a cada pessoa explicitamente, sem incluir todas as
+        provas automaticamente. Reduzir a quantidade remove as últimas pessoas e
+        suas configurações.
       </div>
     </>
   );

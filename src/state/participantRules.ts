@@ -2,13 +2,12 @@ import { previewConfig } from "../config/preview.ts";
 import { makeParticipant } from "./draft.ts";
 import { isAvailable, makeSelection } from "./selectionRules.ts";
 import type { Draft, Race } from "../types/domain";
-export function resizeParticipants(draft: Draft, count: number): Draft {
-  if (
-    draft.order ||
-    !Number.isInteger(count) ||
-    count < 1 ||
-    count > previewConfig.maxParticipants
-  )
+export function resizeParticipants(
+  draft: Draft,
+  count: number,
+  limit: number = previewConfig.maxParticipants,
+): Draft {
+  if (draft.order || !Number.isInteger(count) || count < 1 || count > limit)
     return draft;
   const participants = draft.participants.slice(0, count);
   let next = draft.nextParticipantNumber;

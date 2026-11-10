@@ -3,12 +3,9 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { useCatalog } from "../state/CatalogContext";
 import { useRequest } from "../state/RequestContext";
-import {
-  pendingStage,
-  stages,
-  stageLabels,
-  conditionsReady,
-} from "../state/requestRules";
+import { pendingStage, stages, stageLabels } from "../state/requestRules";
+import RequestRacePicker from "../components/flow/RequestRacePicker";
+import DraftStatus from "../components/flow/DraftStatus";
 import Progress from "../components/flow/Progress";
 import QuantityStep from "../components/flow/QuantityStep";
 import ResponsibleStep from "../components/flow/ResponsibleStep";
@@ -33,9 +30,10 @@ export default function RequestPage() {
   const { events } = useCatalog();
   const { stage = "pedido" } = useParams();
   const navigate = useNavigate();
-  const { draft, resize } = useRequest();
+  const { draft, resize, persistence } = useRequest();
   const [issue, setIssue] = useState<FlowIssue | null>(null);
   const [navigation, setNavigation] = useState<PanelNavigation | null>(null);
+  const [checkingAssignments, setCheckingAssignments] = useState(false);
   function navigatePanel(id: string) {
     setIssue(null);
     setNavigation((n) => ({
@@ -53,12 +51,31 @@ export default function RequestPage() {
         <p role="status">Conectando sua conta…</p>
       </div>
     );
+  if (account.status === "error")
+    return (
+      <div className="container page">
+        <p role="alert">{account.error}</p>
+        <button className="button" onClick={() => void account.recheck()}>
+          Verificar sessão novamente
+        </button>
+        <Link to="/conta">Minha conta</Link>
+      </div>
+    );
   if (!account.profile)
     return (
       <Navigate
         replace
         to={"/conta?continuar=" + encodeURIComponent("/solicitacao/" + stage)}
       />
+    );
+  if (
+    persistence.status === "loading" ||
+    (persistence.status === "error" && !persistence.loaded)
+  )
+    return (
+      <div className="container page">
+        <DraftStatus />
+      </div>
     );
   if (draft.order) return <Navigate replace to="/conclusao" />;
   const aliases: Record<string, string> = {
@@ -75,22 +92,15 @@ export default function RequestPage() {
     return (
       <div className="container page narrow">
         <h1>Escolha suas corridas</h1>
+        <DraftStatus stage="pedido" />
         <p>Selecione ao menos uma corrida para continuar.</p>
-        <Link className="button" to="/corridas">
+        <RequestRacePicker />
+        <Link className="button" reloadDocument to="/corridas">
           Selecionar corridas →
         </Link>
       </div>
     );
-  const pendingInput = pendingStage(draft, events);
-  // Consulta de documentos não simula upload; envio e conclusão continuam bloqueados.
-  const pending =
-    pendingInput === "documentos"
-      ? events
-          .filter((r) => draft.selectedRaceIds.includes(r.id))
-          .every((r) => conditionsReady(draft.acceptedConditions, r))
-        ? "revisao"
-        : "condicoes"
-      : pendingInput;
+  const pending = pendingStage(draft, events, account.participantLimit);
   const blocked = stages.indexOf(pending);
   if (step > blocked && blocked < 5)
     return <Navigate replace to={`/solicitacao/${pending}`} />;
@@ -101,7 +111,8 @@ export default function RequestPage() {
       firstIssue(stage, draft, events)?.target === issue.target)
       ? issue
       : null;
-  function next() {
+  async function next() {
+    if (checkingAssignments) return;
     setIssue(null);
     if (step === 0) {
       resize(draft.participants.length);
@@ -139,6 +150,26 @@ export default function RequestPage() {
         });
         return;
       }
+      if (persistence.status === "saved") {
+        setCheckingAssignments(true);
+        try {
+          const { conflicts } = await account.request<{
+            conflicts: { slot: string; raceId: string }[];
+          }>("/account/draft/registration-conflicts", "POST", {});
+          if (conflicts.length) {
+            setIssue({
+              target: "flow-error-summary",
+              message:
+                "Remova apenas a atribuição marcada como já inscrita antes de continuar.",
+            });
+            return;
+          }
+        } catch {
+          // Checkout repeats the authoritative check if the advisory lookup is unavailable.
+        } finally {
+          setCheckingAssignments(false);
+        }
+      }
     }
     if (step === 6) return;
     navigate(`/solicitacao/${stages[step + 1]}`);
@@ -147,9 +178,10 @@ export default function RequestPage() {
     <div className="flow-shell">
       <div className="container page flow">
         <div className="flow-heading">
-          <Link to="/corridas">← Alterar corridas selecionadas</Link>
+          <RequestRacePicker />
           <span className="badge">{draft.participants.length} pessoa(s)</span>
         </div>
+        <DraftStatus stage={stage} />
         <Progress step={step} />
         <FlowFeedback
           issue={issue}
@@ -163,7 +195,7 @@ export default function RequestPage() {
               noValidate
               onSubmit={(e) => {
                 e.preventDefault();
-                next();
+                void next();
               }}
             >
               <span className="eyebrow">{stageLabels[step]}</span>
@@ -194,6 +226,7 @@ export default function RequestPage() {
               <div className="flow-actions">
                 <Link
                   className="button secondary"
+                  reloadDocument={step === 0}
                   to={
                     step === 0
                       ? "/corridas"
@@ -202,13 +235,11 @@ export default function RequestPage() {
                 >
                   ← Voltar
                 </Link>
-                <button className="button" type="submit" disabled={step === 6}>
-                  {step === 6
-                    ? "Pagamento ainda indisponível"
-                    : step === 5
-                      ? "Ir para pagamento →"
-                      : "Continuar →"}
-                </button>
+                {step < 6 && (
+                  <button className="button" type="submit">
+                    {step === 5 ? "Revisar e finalizar →" : "Continuar →"}
+                  </button>
+                )}
               </div>
             </form>
           </div>

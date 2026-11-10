@@ -37,6 +37,209 @@
       selected.textContent = "Nenhum modelo selecionado";
     });
   });
+  const categories = {
+    "": "Outros documentos",
+    personal: "Documentos pessoais",
+    proof: "Comprovantes",
+    authorization: "Autorizações",
+  };
+  function documentEditor(config, item, onSaved) {
+    const dialog = node("dialog", "", "rak-library-dialog");
+    const form = node("form", "", "rak-library-form");
+    const title = node("h2", item.libraryId ? "Editar documento" : "Novo documento");
+    const message = node("p");
+    message.setAttribute("role", "status");
+    dialog.setAttribute("aria-label", title.textContent);
+    dialog.append(title, form);
+    const field = (label, control) => {
+      const wrap = node("label", label);
+      wrap.append(control);
+      form.append(wrap);
+      return control;
+    };
+    const label = field("Nome do documento", node("input"));
+    label.required = true;
+    label.maxLength = 200;
+    label.value = item.label ?? "";
+    const category = field("Categoria", node("select"));
+    for (const [key, name] of Object.entries(categories)) {
+      const option = node("option", name);
+      option.value = key;
+      category.append(option);
+    }
+    category.value = item.category ?? "";
+    const purpose = field("Finalidade", node("input"));
+    purpose.value = item.purpose ?? "";
+    const guidance = field("Instruções para o participante", node("textarea"));
+    guidance.rows = 4;
+    guidance.value = item.guidance ?? "";
+    const checkbox = (text, checked) => {
+      const control = node("input");
+      control.type = "checkbox";
+      control.checked = checked;
+      field(text, control).parentElement.className = "rak-library-check";
+      return control;
+    };
+    const active = checkbox("Disponível para novas associações", item.active !== false);
+    active.disabled = item.forRace === true;
+    const upload = checkbox("Exige envio de arquivo", item.requiresUpload !== false);
+    const signature = checkbox("Exige assinatura", item.requiresSignature === true);
+    signature.addEventListener("change", () => { if (signature.checked) upload.checked = true; });
+    upload.addEventListener("change", () => { if (!upload.checked) signature.checked = false; });
+    let templateId = item.templateId ?? 0;
+    const model = node("p", templateId ? "Modelo PDF selecionado" : "Sem modelo PDF");
+    const confirmed = checkbox("Confirmo que o modelo é público, em branco e sem dados pessoais", false);
+    form.append(model, button("Selecionar ou enviar modelo PDF", () => {
+      const frame = wp.media({ title: "Modelo PDF público em branco", library: { type: "application/pdf" }, multiple: false });
+      dialog.close();
+      frame.on("select", () => {
+        const selected = frame.state().get("selection").first().toJSON();
+        templateId = selected.id;
+        model.textContent = selected.filename;
+        confirmed.checked = false;
+      });
+      frame.on("close", () => dialog.showModal());
+      frame.open();
+    }), button("Remover modelo", () => {
+      templateId = 0;
+      model.textContent = "Sem modelo PDF";
+    }));
+    let modality, required, condition;
+    if (item.forRace) {
+      form.append(node("h3", "Aplicação nesta corrida"));
+      const selectField = (label, values) => {
+        const select = field(label, node("select"));
+        for (const [key, name] of values) {
+          const option = node("option", name);
+          option.value = key;
+          select.append(option);
+        }
+        return select;
+      };
+      modality = selectField("Modalidade", [["both", "Ambas"], ["oficial", "Kit Oficial"], ["appai", "APPAI"]]);
+      required = checkbox("Obrigatório nesta corrida", true);
+      condition = selectField("Condição de aplicação", [["", "Sempre nesta modalidade"], ...item.conditions.map((entry) =>
+        [entry.id, entry.text.slice(0, 85) || "Condição sem texto"])]);
+    }
+    const save = node("button", "Salvar documento", "button button-primary");
+    save.type = "submit";
+    const close = () => { dialog.close(); dialog.remove(); };
+    dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(); });
+    form.append(message, save, button("Cancelar", close));
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      save.disabled = true;
+      message.textContent = "Salvando documento…";
+      try {
+        const body = new window.URLSearchParams({
+          action: "rak_library_create", nonce: config.inlineNonce, kind: "documents",
+          libraryId: String(item.libraryId ?? 0),
+          item: JSON.stringify({
+            label: label.value, category: category.value, purpose: purpose.value, guidance: guidance.value,
+            active: active.checked, requiresUpload: upload.checked, requiresSignature: signature.checked,
+            templateId, confirmPublicTemplate: confirmed.checked,
+          }),
+        });
+        if (item.forRace) {
+          body.set("raceId", String(config.raceId));
+          body.set("modality", modality.value);
+          body.set("required", required.checked ? "1" : "0");
+          body.set("conditionId", condition.value);
+        }
+        const response = await window.fetch(config.ajaxUrl, { method: "POST", credentials: "same-origin", body });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.data?.message || "Não foi possível salvar o documento.");
+        close();
+        onSaved(result.data);
+      } catch (error) {
+        message.textContent = error.message;
+        save.disabled = false;
+      }
+    });
+    document.body.append(dialog);
+    dialog.showModal();
+  }
+
+  const libraryScreen = document.getElementById("rak-document-library");
+  if (libraryScreen) {
+    const config = JSON.parse(document.getElementById("rak-document-library-data").textContent);
+    const renderLibrary = () => {
+      const save = (item) => {
+        const index = config.items.findIndex((candidate) => candidate.libraryId === item.libraryId);
+        if (index < 0) config.items.unshift(item);
+        else config.items[index] = item;
+        renderLibrary();
+      };
+      libraryScreen.replaceChildren(button("Novo documento", () => documentEditor(config, {}, save)));
+      for (const [category, title] of Object.entries(categories)) {
+        const items = config.items.filter((item) => (item.category ?? "") === category);
+        if (!items.length) continue;
+        const group = node("section", "", "rak-library-group");
+        group.append(node("h2", title));
+        for (const item of items) {
+          const card = node("article", "", "rak-library-card");
+          card.append(node("h3", item.label), node("p", item.purpose || "Finalidade não informada"),
+            node("p", [item.active ? "Ativo" : "Inativo", "v" + (item.version ?? 0), item.templateId ? "Com modelo PDF" : "Sem modelo PDF"].join(" · ")),
+            button("Editar", () => documentEditor(config, item, save)));
+          const uses = config.associations[item.libraryId] ?? [];
+          const details = node("details");
+          details.append(node("summary", uses.length ? "Corridas associadas (" + uses.length + ")" : "Sem corridas associadas"));
+          for (const use of uses) {
+            const entry = node("p");
+            const link = node("a", use.name + " · versão " + use.version);
+            if (use.url) link.href = use.url;
+            entry.append(link);
+            details.append(entry);
+          }
+          card.append(details);
+          group.append(card);
+        }
+        libraryScreen.append(group);
+      }
+      if (!config.items.length) libraryScreen.append(node("p", "Nenhum documento cadastrado."));
+    };
+    renderLibrary();
+  }
+  function pickupEditor(config, onSaved) {
+    const dialog = node("dialog", "", "rak-library-dialog");
+    const form = node("form", "", "rak-library-form");
+    dialog.setAttribute("aria-label", "Novo local de retirada");
+    dialog.append(node("h2", "Novo local de retirada"), form);
+    const name = node("input");
+    const address = node("input");
+    for (const [control, label, limit] of [[name, "Nome do local", 200], [address, "Endereço completo", 500]]) {
+      control.required = true;
+      control.maxLength = limit;
+      const field = node("label", label);
+      field.append(control);
+      form.append(field);
+    }
+    const message = node("p");
+    message.setAttribute("role", "status");
+    const save = node("button", "Salvar local", "button button-primary");
+    save.type = "submit";
+    const close = () => { dialog.close(); dialog.remove(); };
+    dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(); });
+    form.append(message, save, button("Cancelar", close));
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      save.disabled = true;
+      try {
+        const body = new window.URLSearchParams({ action: "rak_pickup_create", nonce: config.inlineNonce,
+          label: name.value, address: address.value });
+        const response = await window.fetch(config.ajaxUrl, { method: "POST", credentials: "same-origin", body });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.data?.message || "Não foi possível salvar o local.");
+        close();
+        onSaved(result.data);
+      } catch (error) {
+        message.textContent = error.message;
+        save.disabled = false;
+      }
+    });
+    document.body.append(dialog);
+    dialog.showModal();
+  }
   const root = document.getElementById("rak-editor");
   if (!root) return;
   const config = JSON.parse(document.getElementById("rak-schema").textContent);
@@ -204,13 +407,12 @@
                 `${index + 1}. ${row.label || (key === "conditions" ? row.text.slice(0, 60) : f.label)}`,
               ),
             );
-            panel.append(
-              node(
-                "p",
-                `Identificador: ${row.id}${row.version ? ` · versão da corrida ${row.version}` : ""}${row.libraryId ? ` · biblioteca #${row.libraryId}, versão ${row.libraryVersion}` : " · específico desta corrida"}`,
-                "description",
-              ),
-            );
+            const description = key === "documents"
+              ? [row.libraryId ? "Biblioteca · versão " + row.libraryVersion : "Exigência específica",
+                  row.required ? "Obrigatório" : "Opcional", row.templateId ? "Com modelo PDF" : "Sem modelo PDF",
+                  row.requiresSignature ? "Exige assinatura" : ""].filter(Boolean).join(" · ")
+              : `Identificador: ${row.id}${row.version ? ` · versão da corrida ${row.version}` : ""}${row.libraryId ? ` · biblioteca #${row.libraryId}, versão ${row.libraryVersion}` : " · específico desta corrida"}`;
+            panel.append(node("p", description, "description"));
             if (row.libraryId) {
               const current = library?.find(
                 (item) => item.libraryId === row.libraryId,
@@ -235,18 +437,41 @@
                 ),
               );
             }
-            fields(panel, f.fields, row);
+            const definitions = key === "documents" && row.libraryId
+              ? Object.fromEntries(Object.entries(f.fields).filter(([field]) =>
+                  !["purpose", "requiresUpload", "requiresSignature", "templateId"].includes(field)))
+              : f.fields;
+            fields(panel, definitions, row);
+            if (key === "documents") {
+              const old = panel.querySelector("[data-key=conditionId] input");
+              if (old) {
+                const condition = node("select");
+                condition.id = old.id;
+                const fill = () => {
+                  condition.replaceChildren();
+                  for (const [value, label] of [["", "Sempre nesta modalidade"], ...state.conditions.map((entry) =>
+                    [entry.id, entry.text.slice(0, 85) || "Condição sem texto"])]) {
+                    const option = node("option", label);
+                    option.value = value;
+                    condition.append(option);
+                  }
+                  if (row.conditionId && !Array.from(condition.options).some((option) => option.value === row.conditionId)) {
+                    const missing = node("option", "Condição removida. Selecione outra.");
+                    missing.value = row.conditionId;
+                    condition.append(missing);
+                  }
+                  condition.value = row.conditionId ?? "";
+                };
+                fill();
+                old.replaceWith(condition);
+                condition.addEventListener("focus", fill);
+                condition.addEventListener("change", () => { row.conditionId = condition.value; changed(); });
+              }
+            }
+
             if (key === "conditions" && row.libraryId)
               panel.querySelector("textarea").readOnly = true;
-            if (key === "documents" && row.libraryId)
-              panel
-                .querySelectorAll(
-                  "[data-key=purpose] input,[data-key=requiresUpload] input,[data-key=templateId] button",
-                )
-                .forEach((el) => {
-                  el.disabled = true;
-                });
-            if (key === "documents" || key === "conditions") {
+            if (key === "conditions") {
               const name = node("input");
               name.type = "text";
               name.id = `rak-library-name-${++count}`;
@@ -370,13 +595,16 @@
                 return;
               }
               const row =
-                key === "documents"
+                key === "pickups"
+                  ? { id: item.id, label: item.label, address: item.address, modality: "both", at: "", guidance: "" }
+                  : key === "documents"
                   ? {
                       id: item.id,
                       label: item.label,
                       guidance: item.guidance,
                       purpose: item.purpose,
                       requiresUpload: item.requiresUpload,
+                      requiresSignature: item.requiresSignature ?? false,
                       templateId: item.templateId,
                       required: true,
                       scope: "race",
@@ -400,7 +628,38 @@
           );
         }
         wrap.append(list);
-        const add = button("+ Adicionar item específico", () => {
+        const addLabel = { documents: "Cadastrar documento na biblioteca", pickups: "Cadastrar local na biblioteca", kits: "Adicionar opção de kit" };
+        const add = button(addLabel[key] ?? "+ Adicionar item específico", () => {
+          if (key === "pickups") {
+            pickupEditor(config, (location) => {
+              if (!library.some((item) => item.libraryId === location.libraryId)) library.push(location);
+              if (!data[key].some((row) => row.libraryId === location.libraryId)) {
+                data[key].push({ id: location.id, label: location.label, address: location.address, modality: "both",
+                  at: "", guidance: "", libraryId: location.libraryId, libraryVersion: location.version });
+                changed();
+                renderRows();
+              }
+              const notice = node("p", "Local salvo na biblioteca. Salve a corrida para confirmar a associação.");
+              notice.setAttribute("role", "status");
+              list.prepend(notice);
+            });
+            return;
+          }
+          if (key === "documents") {
+            documentEditor(config, { forRace: true, conditions: state.conditions }, (item) => {
+              if (item.active) library.push(item);
+              data[key].push(item.association);
+              changed();
+              renderRows();
+              const notice = node("p", item.associationSaved
+                ? "Documento salvo na biblioteca e associado à corrida."
+                : "Documento salvo na biblioteca. Salve a corrida para publicar a associação.");
+              notice.setAttribute("role", "status");
+              list.prepend(notice);
+              list.lastElementChild?.querySelector("input,select,button")?.focus();
+            });
+            return;
+          }
           const row = { id: `rak-${crypto.randomUUID().slice(0, 18)}` };
           defaults(f.fields, row);
           data[key].push(row);
@@ -500,6 +759,25 @@
           selected,
           preview,
         );
+        return;
+      }
+      if (f.choices) {
+        const group = node("fieldset");
+        group.append(node("legend", f.label));
+        const choices = [...new Set([...f.choices, ...data[key]])];
+        for (const size of choices) {
+          const label = node("label");
+          const check = node("input");
+          check.type = "checkbox";
+          check.checked = data[key].includes(size);
+          check.addEventListener("change", () => {
+            data[key] = check.checked ? [...data[key], size] : data[key].filter((value) => value !== size);
+            changed();
+          });
+          label.append(check, node("span", f.choices.includes(size) ? size : size + " (cadastro anterior)"));
+          group.append(label, document.createTextNode(" "));
+        }
+        wrap.append(group);
         return;
       }
       const input = node(

@@ -42,9 +42,16 @@ final class Rest {
     public static function project(\WP_Post $post): array {
         $d = Repository::get($post->ID);
         $valid = Schema::validate($d);
-        if (is_wp_error($valid)) return ['id' => (string) $post->ID, 'slug' => $post->post_name, 'name' => get_the_title($post), 'status' => 'unavailable', 'configurationError' => true];
-        $prices = static fn($prefix) => ['pix' => $d[$prefix . 'Pix'], 'card' => $d[$prefix . 'Card']];
+        $editorial = [
+            'id' => (string) $post->ID, 'slug' => $post->post_name, 'name' => get_the_title($post),
+            'description' => wp_strip_all_tags($post->post_content), 'image' => self::image(get_post_thumbnail_id($post)),
+        ];
+        if (is_wp_error($valid)) return $editorial + ['status' => 'unavailable', 'configurationError' => true];
+        $d = $valid;
         $forMode = static fn($rows, $id) => array_values(array_filter($rows, static fn($row) => in_array($row['modality'], ['both', $id], true)));
+        $activeConditions = array_column(array_filter($valid['conditions'], static fn($condition) => $condition['active']), 'id');
+        $documents = array_filter($valid['documents'], static fn($document) =>
+            $document['conditionId'] === '' || in_array($document['conditionId'], $activeConditions, true));
         $modes = [];
         foreach (['oficial' => 'officialEnabled', 'appai' => 'appaiEnabled'] as $id => $enabled) {
             if (!$d[$enabled]) continue;
@@ -53,22 +60,20 @@ final class Rest {
                 'requireRegistration' => $id === 'oficial' && $d['requireRegistration'],
                 'requireMembership' => $id === 'appai' && $d['requireMembership'],
                 'distances' => array_column($forMode($d['distances'], $id), 'label'),
-                'pickups' => $forMode($d['pickups'], $id),
-                'kitTypes' => $id === 'oficial' ? array_map(static fn($kit) => ['id' => $kit['id'], 'label' => $kit['label'], 'prices' => ['pix' => $kit['pix'], 'card' => $kit['card']]], $d['kits']) : [],
-                'prices' => $id === 'oficial' ? $prices('official') : ['pix' => null, 'card' => null],
-                'shirtPrices' => $prices('shirt'), 'numberPrices' => $prices('number'),
+                'pickups' => array_map(static fn($pickup) => array_intersect_key($pickup, array_flip(['id', 'label', 'address', 'at', 'guidance', 'modality'])), $forMode($d['pickups'], $id)),
+                'kitTypes' => $id === 'oficial' ? array_map(static fn($kit) => ['id' => $kit['id'], 'label' => $kit['label'], 'additionalCents' => $kit['additionalCents'] ?? 0], $d['kits']) : [],
                 'shirtEnabled' => $id === 'appai' && $d['shirtEnabled'], 'numberEnabled' => $id === 'appai' && $d['numberEnabled'],
                 'sizes' => $id === 'appai' && $d['shirtEnabled'] ? $d['sizes'] : [],
                 'shirtImage' => $id === 'appai' && $d['shirtEnabled'] ? self::image($d['shirtImageId']) : null,
-                'documents' => array_map(static fn($doc) => [
+                'documents' => [...array_map(static fn($doc) => [
                     'id' => $doc['id'], 'label' => $doc['label'], 'scope' => $doc['scope'], 'modality' => $doc['modality'], 'required' => $doc['required'], 'guidance' => $doc['guidance'],
-                    'requiresUpload' => $doc['requiresUpload'] ?? true, 'purpose' => $doc['purpose'] ?? '', 'version' => $doc['libraryVersion'] ?: 1, 'template' => PublicModels::describe($doc['templateId'] ?? 0),
-                ], $forMode($valid['documents'], $id)),
+                    'requiresUpload' => $doc['requiresUpload'] ?? true, 'requiresSignature' => $doc['requiresSignature'],
+                    'purpose' => $doc['purpose'] ?? '', 'version' => $doc['libraryVersion'] ?: 1, 'template' => PublicModels::describe($doc['templateId'] ?? 0),
+                ], $forMode($documents, $id)), PersonalDocuments::requirement($id)],
             ];
         }
-        return [
-            'id' => (string) $post->ID, 'slug' => $post->post_name, 'name' => get_the_title($post),
-            'description' => wp_strip_all_tags($post->post_content), 'image' => self::image(get_post_thumbnail_id($post)),
+        return $editorial + [
+            'priceCents' => $d['priceCents'], 'prices' => ['official' => $d['officialCents'], 'shirt' => $d['shirtCents'], 'number' => $d['numberCents']],
             'raceDate' => $d['raceDate'], 'raceTime' => $d['raceTime'], 'location' => $d['location'],
             'opensAt' => $d['opensAt'], 'closesAt' => $d['closesAt'], 'status' => Repository::availability($d),
             'modalities' => $modes, 'conditions' => array_values(array_map(static fn($c) => ['id' => $c['id'], 'text' => $c['text'], 'version' => $c['version'], 'active' => true], array_filter($d['conditions'], static fn($c) => $c['active']))),
@@ -91,7 +96,7 @@ final class Rest {
         $allowed = apply_filters('rak_public_origins', ['https://realmeidakits.com.br']);
         $origin = get_http_origin();
         header('Vary: Origin', false);
-        if (in_array($request->get_method(), ['GET', 'HEAD', 'OPTIONS'], true) && $origin && (in_array($origin, $allowed, true) || self::localOrigin($origin))) {
+        if (NativeSession::legacy() && in_array($request->get_method(), ['GET', 'HEAD', 'OPTIONS'], true) && $origin && (in_array($origin, $allowed, true) || self::localOrigin($origin))) {
             header('Access-Control-Allow-Origin: ' . $origin);
             header('Access-Control-Allow-Methods: GET, HEAD, OPTIONS');
         }

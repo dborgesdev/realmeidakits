@@ -7,7 +7,7 @@ final class AccountAuth {
         add_action('rest_api_init',[self::class,'routes']);
         add_filter('rest_pre_serve_request',[self::class,'cors'],30,4);
         add_filter('rest_post_dispatch',static function($response,$server,$request){if(preg_match('#^/re-almeida/v1/(?:account|auth)(?:/|$)#',$request->get_route())){$response->header('Cache-Control','no-store, private');$response->header('Pragma','no-cache');}return $response;},10,3);
-        foreach(['rak_authorize'=>'authorize','rak_end_session'=>'endSession'] as $action=>$handler){add_action('admin_post_'.$action,[self::class,$handler]);add_action('admin_post_nopriv_'.$action,[self::class,$handler]);}
+        if (NativeSession::legacy()) foreach(['rak_authorize'=>'authorize','rak_end_session'=>'endSession'] as $action=>$handler){add_action('admin_post_'.$action,[self::class,$handler]);add_action('admin_post_nopriv_'.$action,[self::class,$handler]);}
         add_action('after_password_reset',static fn($user)=>self::revokeUser($user->ID));
         add_action('wp_set_password',static fn($password,$id)=>self::revokeUser((int)$id),10,2);
         add_action('profile_update',static function($id,$old){if(get_userdata($id)->user_pass!==$old->user_pass)self::revokeUser((int)$id);},10,2);
@@ -52,6 +52,8 @@ final class AccountAuth {
     public static function revokeUser(int $id): void {global $wpdb;if($id>0)$wpdb->delete(Accounts::table('sessions'),['user_id'=>$id]);}
     public static function customer(int $id): bool {$user=get_userdata($id);return $user&&in_array('customer',$user->roles,true)&&!user_can($user,'manage_options');}
     public static function user(\WP_REST_Request $request) {
+        if ($id = NativeSession::user($request)) return $id;
+        if (!NativeSession::legacy() || $request->get_header("X-WP-Nonce")) return Identity::error("Entre na sua conta para continuar.", 401);
         if(isset(self::$authenticated[$request]))return self::$authenticated[$request];
         $header=(string)$request->get_header('authorization');
         if(!preg_match('/^Bearer ([a-f0-9]{64})$/D',$header,$match))return Identity::error('Entre na sua conta para continuar.',401);
@@ -63,6 +65,9 @@ final class AccountAuth {
         return (int)$row->user_id;
     }
     public static function permission(\WP_REST_Request $request) {
+        if (NativeSession::user($request) && str_starts_with($request->get_route(), "/re-almeida/v1/account")) return true;
+        if (!NativeSession::legacy() || $request->get_header("X-WP-Nonce")) return Identity::error("Entre na sua conta para continuar.", 401);
+        if (!$request->get_header("authorization")) return Identity::error("Entre na sua conta para continuar.", 401);
         $origin=$request->get_header('origin');if(!$origin||!self::allowedOrigin($origin))return Identity::error('Origem não autorizada.',403);
         $id=self::user($request);return is_wp_error($id)?$id:true;
     }
@@ -71,8 +76,12 @@ final class AccountAuth {
         $body=$request->get_json_params();return is_array($body)?$body:Identity::error('Envie um objeto JSON válido.');
     }
     public static function routes(): void {
-        register_rest_route('re-almeida/v1','/auth/token',['methods'=>'POST','permission_callback'=>static function($r){return self::allowedOrigin((string)$r->get_header('origin'))?true:Identity::error('Origem não autorizada.',403);},'callback'=>[self::class,'exchange']]);
-        register_rest_route('re-almeida/v1','/auth/logout',['methods'=>'POST','permission_callback'=>[self::class,'permission'],'callback'=>[self::class,'logout']]);
+        register_rest_route('re-almeida/v1', '/account/session', [
+            'methods' => 'DELETE', 'permission_callback' => [self::class, 'permission'],
+            'callback' => [NativeSession::class, 'logout'],
+        ]);
+        if (NativeSession::legacy()) register_rest_route('re-almeida/v1','/auth/token',['methods'=>'POST','permission_callback'=>static function($r){return self::allowedOrigin((string)$r->get_header('origin'))?true:Identity::error('Origem não autorizada.',403);},'callback'=>[self::class,'exchange']]);
+        if (NativeSession::legacy()) register_rest_route('re-almeida/v1','/auth/logout',['methods'=>'POST','permission_callback'=>[self::class,'permission'],'callback'=>[self::class,'logout']]);
         register_rest_route('re-almeida/v1','/account',[
             ['methods'=>'GET','permission_callback'=>[self::class,'permission'],'callback'=>static fn($r)=>['data'=>Accounts::profile(self::user($r))]],
             ['methods'=>'PUT','permission_callback'=>[self::class,'permission'],'callback'=>static function($r){$body=self::body($r);if(is_wp_error($body))return $body;$data=Accounts::update(self::user($r),$body);return is_wp_error($data)?$data:['data'=>$data];}],
@@ -114,7 +123,7 @@ final class AccountAuth {
         if(!preg_match('#^/re-almeida/v1/(?:account|auth)(?:/|$)#',$request->get_route()))return $served;
         foreach(['Origin','Credentials','Methods','Headers'] as $key)header_remove('Access-Control-Allow-'.$key);
         header('Vary: Origin',false);header('Cache-Control: no-store, private');
-        $origin=get_http_origin();if($origin&&self::allowedOrigin($origin)){header('Access-Control-Allow-Origin: '.$origin);header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');header('Access-Control-Allow-Headers: Authorization, Content-Type');header('Access-Control-Max-Age: 600');}
+        $origin=get_http_origin();if(NativeSession::legacy()&&$origin&&self::allowedOrigin($origin)){header('Access-Control-Allow-Origin: '.$origin);header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');header('Access-Control-Allow-Headers: Authorization, Content-Type');header('Access-Control-Max-Age: 600');}
         return $served;
     }
     public static function headers(string $formOrigin=""): void {nocache_headers();header('Cache-Control: no-store, private');header('Referrer-Policy: same-origin');header('X-Frame-Options: DENY');header("Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; form-action 'self'".($formOrigin?' '.$formOrigin:'')."; base-uri 'none'; frame-ancestors 'none'");}

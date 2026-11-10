@@ -1,0 +1,18 @@
+.rak-operations { max-width: 1600px; }
+.rak-metrics, .rak-controls { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 16px; }
+.rak-metrics > div { flex: 1 1 135px; display: grid; gap: 6px; padding: 16px; background: #fff; border: 1px solid #c3c4c7; border-radius: 6px; }
+.rak-metrics strong { font-size: 24px; line-height: 1.1; color: #1d2327; }
+.rak-controls { align-items: end; }
+.rak-controls label, .rak-table td label { display: grid; gap: 4px; }
+.rak-table { overflow-x: auto; }
+.rak-table table { min-width: 1000px; }
+.rak-table th { font-weight: 600; }
+.rak-table td { vertical-align: middle; padding-block: 12px; }
+.rak-table small { display: block; color: #50575e; margin-top: 4px; }
+.rak-bib { width: 85px; }
+.rak-empty { background: #fff; padding: 20px; border: 1px solid #c3c4c7; }
+#rak-feedback:not(:empty) { padding: 10px; border-left: 3px solid #2271b1; background: #fff; }
+#rak-detail { width: min(680px, 88vw); max-height: 78vh; overflow: auto; border: 1px solid #8c8f94; border-radius: 8px; padding: 20px; }
+#rak-detail::backdrop { background: rgb(0 0 0 / 50%); }
+.rak-doc { border-top: 1px solid #dcdcde; padding: 8px 0 14px; }
+.rak-doc h4 { margin: 8px 0; }

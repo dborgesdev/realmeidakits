@@ -37,12 +37,16 @@ export async function loadWordpressRaces(
   apiUrl: string,
   signal?: AbortSignal,
 ): Promise<Race[]> {
+  const resolvedApiUrl = new URL(apiUrl, globalThis.location?.origin).href;
   const races: Race[] = [];
   let pages = 1;
   for (let page = 1; page <= pages; page++) {
     const result = normalizePage(
-      await request(`${apiUrl}/corridas?per_page=100&page=${page}`, signal),
-      apiUrl,
+      await request(
+        `${resolvedApiUrl}/corridas?per_page=100&page=${page}`,
+        signal,
+      ),
+      resolvedApiUrl,
     );
     if (
       result.page !== page ||
@@ -71,11 +75,12 @@ export async function loadWordpressRace(
 ) {
   if (!/^[a-z0-9-]{1,200}$/.test(slug))
     throw new CatalogError("Identificador de corrida inválido.");
+  const resolvedApiUrl = new URL(apiUrl, globalThis.location?.origin).href;
   const result = await request(
-    `${apiUrl}/corridas/${encodeURIComponent(slug)}`,
+    `${resolvedApiUrl}/corridas/${encodeURIComponent(slug)}`,
     signal,
   );
   if (!result || typeof result !== "object" || !("data" in result))
     throw new CatalogError("Resposta inválida da API.");
-  return normalizeRace(result.data, apiUrl);
+  return normalizeRace(result.data, resolvedApiUrl);
 }

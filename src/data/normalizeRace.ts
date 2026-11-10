@@ -15,7 +15,13 @@ const strings = (v: unknown) => array(v).map(nonempty);
 const boolean = (v: unknown): boolean => (typeof v === "boolean" ? v : fail());
 const integer = (v: unknown): number =>
   typeof v === "number" && Number.isSafeInteger(v) && v >= 0 ? v : fail();
-function image(v: unknown) {
+function loopback(url: URL) {
+  return (
+    url.protocol === "http:" &&
+    ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
+  );
+}
+function image(v: unknown, apiUrl?: string) {
   if (v === null) return "";
   const img = record(v);
   let url: URL;
@@ -24,18 +30,14 @@ function image(v: unknown) {
   } catch {
     return fail();
   }
-  if (url.protocol !== "https:" || url.username || url.password) fail();
+  const local =
+    loopback(url) && apiUrl && url.origin === new URL(apiUrl).origin;
+  if ((url.protocol !== "https:" && !local) || url.username || url.password)
+    fail();
   integer(img.width);
   integer(img.height);
   string(img.alt);
   return url.href;
-}
-function prices(v: unknown) {
-  const p = record(v);
-  return {
-    pix: p.pix === null ? null : integer(p.pix),
-    card: p.card === null ? null : integer(p.card),
-  };
 }
 function date(v: unknown, day = false) {
   const value = string(v);
@@ -66,9 +68,7 @@ function normalizeTemplate(
   } catch {
     return fail();
   }
-  const local =
-    url.protocol === "http:" &&
-    ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
+  const local = loopback(url);
   if (
     (url.protocol !== "https:" && !local) ||
     url.username ||
@@ -83,6 +83,16 @@ function normalizeTemplate(
     fail();
   return { url: url.href, name: nonempty(t.name), mime: "application/pdf" };
 }
+function readPrices(value: unknown) {
+  const prices = record(value);
+  const amount = (value: unknown) => (value === null ? null : integer(value));
+  return {
+    official: amount(prices.official),
+    shirt: amount(prices.shirt),
+    number: amount(prices.number),
+  };
+}
+
 export function normalizeRace(value: unknown, apiUrl?: string): Race {
   const r = record(value);
   if (!["open", "closed", "unavailable"].includes(string(r.status))) fail();
@@ -102,6 +112,9 @@ export function normalizeRace(value: unknown, apiUrl?: string): Race {
             guidance: string(d.guidance),
             requiresUpload:
               d.requiresUpload === undefined ? true : boolean(d.requiresUpload),
+            ...(d.requiresSignature === undefined
+              ? {}
+              : { requiresSignature: boolean(d.requiresSignature) }),
             purpose: d.purpose === undefined ? "" : string(d.purpose),
             version: d.version === undefined ? 1 : integer(d.version),
             template: normalizeTemplate(d.template, apiUrl),
@@ -115,7 +128,8 @@ export function normalizeRace(value: unknown, apiUrl?: string): Race {
           return {
             id: nonempty(k.id),
             label: nonempty(k.label),
-            prices: prices(k.prices),
+            additionalCents:
+              k.additionalCents === undefined ? 0 : integer(k.additionalCents),
           };
         }),
         (k) => k.id,
@@ -148,18 +162,21 @@ export function normalizeRace(value: unknown, apiUrl?: string): Race {
         id: m.id as "oficial" | "appai",
         label: nonempty(m.label),
         documents,
-        prices: prices(m.prices),
-        shirtPrices: prices(m.shirtPrices),
-        numberPrices: prices(m.numberPrices),
         sizes,
         distances,
         pickupLocations: pickups.map((p) => p.label),
         pickupDetails: pickups,
         kitTypes: kits.map((k) => k.label),
-        kitPrices: Object.fromEntries(kits.map((k) => [k.label, k.prices])),
+        ...(kits.some((k) => k.additionalCents !== 0)
+          ? {
+              kitAdditions: Object.fromEntries(
+                kits.map((k) => [k.label, k.additionalCents]),
+              ),
+            }
+          : {}),
         shirtEnabled,
         numberEnabled,
-        shirtImage: image(m.shirtImage),
+        shirtImage: image(m.shirtImage, apiUrl),
         requireRegistration: boolean(m.requireRegistration),
         requireMembership: boolean(m.requireMembership),
       };
@@ -186,7 +203,7 @@ export function normalizeRace(value: unknown, apiUrl?: string): Race {
     slug,
     name: nonempty(r.name),
     description: string(r.description),
-    image: image(r.image),
+    image: image(r.image, apiUrl),
     raceDate: date(r.raceDate, true),
     raceTime: string(r.raceTime),
     location: string(r.location),
@@ -202,6 +219,8 @@ export function normalizeRace(value: unknown, apiUrl?: string): Race {
     contact: string(r.contact),
     whatsappUrl: string(r.whatsappUrl),
     source: "wordpress",
+    priceCents: r.priceCents === null ? null : integer(r.priceCents),
+    ...(r.prices === undefined ? {} : { prices: readPrices(r.prices) }),
   };
 }
 export function normalizePage(

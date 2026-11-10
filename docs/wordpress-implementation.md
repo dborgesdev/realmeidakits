@@ -1,5 +1,7 @@
 # Implementação entregue — refinamento do Bloco B
 
+> Registro histórico. Consulte a [arquitetura vigente](project.md), a [autenticação](wordpress-authentication.md) e o [procedimento HostGator](wordpress-deployment.md).
+
 Revisão: 05/11/2026. Branch `feat/v2-preview`. Plugin **1.2.0**, esquema **3**. Evolução existente, sem reconstrução da jornada e sem novas dependências.
 
 ## Bloco C — contas e identificação

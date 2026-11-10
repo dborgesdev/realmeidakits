@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
-export default function Footer() {
+export default function Footer({
+  publicPage = false,
+}: {
+  publicPage?: boolean;
+}) {
   return (
     <footer>
       <div className="container footer-grid">
@@ -16,14 +20,20 @@ export default function Footer() {
         </div>
         <div>
           <h3>Explore</h3>
-          <Link to="/corridas">Corridas</Link>
+          <Link reloadDocument to="/corridas">
+            Corridas
+          </Link>
           <a href="/#como-funciona">Como funciona</a>
           <a href="/#modalidades">Modalidades</a>
         </div>
         <div>
           <h3>Informações</h3>
-          <Link to="/orientacoes">Documentos e retirada</Link>
-          <Link to="/privacidade">Privacidade</Link>
+          <Link reloadDocument={publicPage} to="/orientacoes">
+            Documentos e retirada
+          </Link>
+          <Link reloadDocument={publicPage} to="/privacidade">
+            Privacidade
+          </Link>
           <a href="https://realmeidakits.com.br/">Site principal ↗</a>
         </div>
       </div>

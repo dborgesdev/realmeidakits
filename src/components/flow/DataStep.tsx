@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { useAccount } from "../../state/AccountContext";
+import {
+  formatIdentity,
+  maskIdentityInput,
+  maskedField,
+} from "../../state/identityMasks";
 import { personError } from "../../state/identityRules";
 import { controlId } from "../../state/validationRules";
 import { FieldError, useFlowFeedback } from "./FlowFeedback";
@@ -132,7 +137,7 @@ export default function DataStep({
         [
           { key: "name", label: "Nome completo", type: "text" },
           { key: "cpf", label: "CPF", type: "text" },
-          { key: "birthDate", label: "Data de nascimento", type: "date" },
+          { key: "birthDate", label: "Data de nascimento", type: "text" },
           { key: "phone", label: "Telefone", type: "tel" },
           { key: "email", label: "E-mail", type: "email" },
         ] as const
@@ -146,16 +151,36 @@ export default function DataStep({
               type={input.type}
               required={input.key !== "email"}
               maxLength={
-                input.key === "cpf" ? 14 : input.key === "name" ? 80 : 120
+                input.key === "name"
+                  ? 80
+                  : input.key === "email"
+                    ? 120
+                    : undefined
               }
-              min={input.key === "birthDate" ? "1900-01-01" : undefined}
-              max={
-                input.key === "birthDate"
-                  ? new Date().toISOString().slice(0, 10)
-                  : undefined
+              inputMode={maskedField(input.key) ? "numeric" : undefined}
+              placeholder={input.key === "birthDate" ? "DD/MM/AAAA" : undefined}
+              autoComplete={
+                {
+                  name: "name",
+                  cpf: "off",
+                  birthDate: "bday",
+                  phone: "tel-national",
+                  email: "email",
+                }[input.key]
               }
-              value={participant.person[input.key]}
-              onChange={(e) => edit(input.key, e.target.value)}
+              value={
+                maskedField(input.key)
+                  ? formatIdentity(input.key, participant.person[input.key])
+                  : participant.person[input.key]
+              }
+              onChange={(event) =>
+                edit(
+                  input.key,
+                  maskedField(input.key)
+                    ? maskIdentityInput(input.key, event.currentTarget)
+                    : event.currentTarget.value,
+                )
+              }
             />
             <FieldError id={id} />
           </label>

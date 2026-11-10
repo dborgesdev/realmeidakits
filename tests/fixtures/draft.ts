@@ -40,6 +40,5 @@ export function initialDraft(): Draft {
     },
     prepared: false,
     nextParticipantNumber: 2,
-    method: "Pix",
   };
 }

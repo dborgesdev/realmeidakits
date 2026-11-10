@@ -2,8 +2,16 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAccount } from "../../state/AccountContext";
 import { Menu, X } from "lucide-react";
-export default function Header() {
+export default function Header({
+  publicPage = false,
+}: {
+  publicPage?: boolean;
+}) {
   const { profile } = useAccount();
+  const accountPath =
+    publicPage && !profile
+      ? "/conta?continuar=" + encodeURIComponent(location.pathname)
+      : "/conta";
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -12,7 +20,11 @@ export default function Header() {
       </a>
       <header className="header">
         <div className="container header-inner">
-          <Link to="/" aria-label="Re Almeida Kits, início">
+          <Link
+            reloadDocument={publicPage}
+            to="/"
+            aria-label="Re Almeida Kits, início"
+          >
             <img
               className="brand"
               src="/brand/logo-corredor-original.jpg"
@@ -34,13 +46,21 @@ export default function Header() {
             aria-label="Navegação principal"
             onClick={() => setOpen(false)}
           >
-            <NavLink to="/">Início</NavLink>
-            <NavLink to="/corridas">Corridas</NavLink>
+            <NavLink reloadDocument={publicPage} to="/">
+              Início
+            </NavLink>
+            <NavLink reloadDocument to="/corridas">
+              Corridas
+            </NavLink>
             <a href="/#como-funciona">Como funciona</a>
             <a href="/#modalidades">Modalidades</a>
-            <NavLink to="/conta">{profile ? "Minha conta" : "Entrar"}</NavLink>
-            <Link to="/orientacoes">Orientações</Link>
-            <Link className="button small" to="/corridas">
+            <NavLink reloadDocument={publicPage} to={accountPath}>
+              {profile ? "Minha conta" : "Entrar"}
+            </NavLink>
+            <Link reloadDocument={publicPage} to="/orientacoes">
+              Orientações
+            </Link>
+            <Link className="button small" reloadDocument to="/corridas">
               Ver corridas <span aria-hidden="true">↗</span>
             </Link>
           </nav>

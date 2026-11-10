@@ -1,29 +1,31 @@
 import { Link } from "react-router-dom";
 import { useCatalog } from "../../state/CatalogContext";
-import type { PaymentMethod, RaceSelection } from "../../types/domain";
+import type { RaceSelection } from "../../types/domain";
 import {
   itemPrice,
+  kitAdditional,
+  itemBasePrice,
   money,
   modalityLabel,
   totalPrice,
 } from "../../state/pricing";
 export default function OrderSummary({
   items,
-  method,
   editable = false,
 }: {
   items: RaceSelection[];
-  method: PaymentMethod;
   editable?: boolean;
 }) {
   const { events } = useCatalog();
-  const total = totalPrice(items, events, method);
+  const total = totalPrice(items, events);
   return (
     <section className="order-summary" aria-label="Resumo consolidado">
       <div className="order-items">
         {items.map((item) => {
           const race = events.find((r) => r.id === item.raceId)!;
-          const price = itemPrice(item, race, method);
+          const price = itemPrice(item, race);
+          const base = itemBasePrice(item, race);
+          const additional = kitAdditional(item, race);
           return (
             <article className="order-item" key={item.raceId}>
               <div>
@@ -32,7 +34,13 @@ export default function OrderSummary({
                   {modalityLabel(item)} · {item.distance}
                 </p>
                 {item.modality === "oficial" && item.kitType && (
-                  <p>{item.kitType}</p>
+                  <p>
+                    {item.kitType}
+                    {additional > 0 && <> · adicional {money(additional)}</>}
+                  </p>
+                )}
+                {additional > 0 && base !== null && (
+                  <p>Serviço de retirada {money(base)}</p>
                 )}
                 {item.pickup && <p>{item.pickup}</p>}
                 <small>
@@ -48,7 +56,7 @@ export default function OrderSummary({
       </div>
       <div className="order-total">
         <div>
-          <span>Total · {method}</span>
+          <span>Total</span>
           <strong>
             {money(total.known)}
             {total.pending > 0 && " + valores a confirmar"}

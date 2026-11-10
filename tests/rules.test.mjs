@@ -253,27 +253,17 @@ test("guards catch unfinished persons, duplicate identity, specific documents an
   x.acceptedConditions[rio.id] = [];
   assert.equal(pendingStage(x, events), "condicoes");
 });
-test("totals sum all participants in cents with different payment methods", () => {
+test("totals sum the same race price for each participant and option", () => {
   const d = completeDraft(3);
   const items = d.participants.flatMap((p) => p.items);
-  assert.equal(totalPrice(items, events, "Pix").known, 12400);
-  assert.equal(totalPrice(items, events, "Cartão").known, 14400);
-  assert.equal(totalPrice(d.participants[0].items, events, "Pix").known, 7200);
+  assert.equal(totalPrice(items, events).known, 15800);
+  assert.equal(totalPrice(d.participants[0].items, events).known, 9600);
+  assert.equal(itemPrice({ ...items[1], kit: "numero" }, primavera), 3200);
+  assert.equal(selectionEstimate([rio, primavera]).known, 6300);
   assert.equal(
-    itemPrice({ ...items[1], kit: "numero" }, primavera, "Pix"),
-    2000,
+    totalPrice([items[0]], [{ ...rio, priceCents: null }]).pending,
+    1,
   );
-  assert.equal(selectionEstimate([rio, primavera], "Pix").known, 4000);
-  const noPrice = {
-    ...rio,
-    modalities: rio.modalities.map((m) => ({
-      ...m,
-      prices: { pix: null, card: null },
-      shirtPrices: undefined,
-      numberPrices: undefined,
-    })),
-  };
-  assert.equal(totalPrice([items[0]], [noPrice], "Pix").pending, 1);
 });
 test("final simulation creates deeply frozen snapshot and every edit path stays locked", () => {
   const d = completeDraft(3);
@@ -487,7 +477,7 @@ test("conditional fields, document counts and race conditions have specific targ
   assert.equal(missingDocuments(d.participants[1], events), 2);
   assert.equal(
     firstIssue("documentos", d, events).target,
-    controlId("document", "p2", undefined, "identity"),
+    controlId("document", "p2", rio.id, "identity"),
   );
   d.acceptedConditions[rio.id] = [];
   assert.equal(
@@ -556,4 +546,34 @@ test("different conditions of the same race need separate versioned consent", ()
   assert.equal(d.acceptedConditions[race.id].length, 2);
   d = acceptCondition(d, race, race.conditions[0].id, false);
   assert.equal(conditionsReady(d.acceptedConditions, race), false);
+});
+
+test("modality prices and the optional kit surcharge are added independently", () => {
+  const original = fixtures[0];
+  const race = {
+    ...original,
+    prices: { official: 2600, shirt: 3600, number: 1800 },
+    modalities: original.modalities.map((mode) => ({
+      ...mode,
+      shirtEnabled: true,
+      numberEnabled: true,
+      kitAdditions: { "Kit adicional": 500 },
+    })),
+  };
+  const official = {
+    ...makeSelection(race, "oficial"),
+    kitType: "Kit adicional",
+  };
+  const shirt = { ...makeSelection(race, "appai"), kit: "camiseta" };
+  const bib = { ...shirt, kit: "numero" };
+  assert.equal(itemPrice(official, race), 3100);
+  assert.equal(
+    itemPrice({ ...official, kitType: "Kit sem adicional" }, race),
+    2600,
+  );
+  assert.equal(totalPrice([official, shirt, bib], [race]).known, 8500);
+  assert.equal(
+    itemPrice(shirt, { ...race, prices: { ...race.prices, shirt: null } }),
+    null,
+  );
 });

@@ -27,19 +27,16 @@ final class Schema {
                 'distances' => ['type' => 'rows', 'label' => 'Distâncias (na ordem de exibição)', 'fields' => ['label' => ['type' => 'text', 'label' => 'Distância *', 'required' => true], 'modality' => $mode]],
             ]],
             ['title' => '5. Kits e camisetas', 'fields' => [
-                'kits' => ['type' => 'rows', 'label' => 'Tipos de Kit Oficial e valores específicos', 'when' => 'officialEnabled', 'fields' => ['label' => ['type' => 'text', 'label' => 'Nome do kit *', 'required' => true], 'pix' => $price('Pix'), 'card' => $price('Cartão')]],
+                'kits' => ['type' => 'rows', 'label' => 'Tipos de Kit Oficial', 'fields' => ['label' => ['type' => 'text', 'label' => 'Nome do kit *', 'required' => true], 'additionalCents' => $price('Adicional opcional')]],
                 'shirtEnabled' => ['type' => 'checkbox', 'label' => 'APPAI: camiseta com número de peito', 'when' => 'appaiEnabled'],
                 'numberEnabled' => ['type' => 'checkbox', 'label' => 'APPAI: somente número de peito', 'when' => 'appaiEnabled'],
-                'sizes' => ['type' => 'lines', 'label' => 'Tamanhos habilitados (um por linha)', 'help' => 'Grade inicial sugerida: P, M, G, GG, XG. Habilite somente os tamanhos existentes nesta corrida.', 'when' => 'shirtEnabled'],
+                'sizes' => ['type' => 'lines', 'label' => 'Tamanhos disponíveis', 'choices' => ['PP', 'P', 'M', 'G', 'GG', 'XGG'], 'default' => ['PP', 'P', 'M', 'G', 'GG', 'XGG'], 'when' => 'shirtEnabled'],
                 'shirtImageId' => ['type' => 'image', 'label' => 'Imagem real da camiseta', 'when' => 'shirtEnabled'],
             ]],
             ['title' => '6. Valores', 'fields' => [
-                'officialPix' => $price('Kit Oficial padrão — Pix') + ['when' => 'officialEnabled'],
-                'officialCard' => $price('Kit Oficial padrão — Cartão') + ['when' => 'officialEnabled'],
-                'shirtPix' => $price('APPAI camiseta — Pix') + ['when' => 'shirtEnabled'],
-                'shirtCard' => $price('APPAI camiseta — Cartão') + ['when' => 'shirtEnabled'],
-                'numberPix' => $price('APPAI somente número — Pix') + ['when' => 'numberEnabled'],
-                'numberCard' => $price('APPAI somente número — Cartão') + ['when' => 'numberEnabled'],
+                'officialCents' => $price('Kit Oficial') + ['when' => 'officialEnabled'],
+                'shirtCents' => $price('APPAI com camiseta') + ['when' => 'shirtEnabled'],
+                'numberCents' => $price('APPAI somente número de peito') + ['when' => 'numberEnabled'],
             ]],
             ['title' => '7. Retirada', 'fields' => [
                 'pickups' => ['type' => 'rows', 'label' => 'Pontos de retirada', 'fields' => [
@@ -49,7 +46,7 @@ final class Schema {
                 ]],
             ]],
             ['title' => '8. Documentos exigidos', 'fields' => [
-                'documents' => ['type' => 'rows', 'label' => 'Exigências documentais (sem upload de documentos pessoais)', 'help' => 'Exemplos de tipos: identificação com foto, comprovante de inscrição, autorização assinada, declaração específica ou outro documento.', 'fields' => [
+                'documents' => ['type' => 'rows', 'label' => 'Exigências adicionais da corrida', 'help' => 'RG ou CNH já é obrigatório para cada participante. Associe comprovantes, autorizações e outras exigências da corrida.', 'fields' => [
                     'label' => ['type' => 'text', 'label' => 'Nome exibido *', 'required' => true], 'modality' => $mode,
                     'scope' => ['type' => 'select', 'label' => 'Escopo', 'options' => ['personal' => 'Pessoal (participante)', 'race' => 'Específico da corrida']],
                     'required' => ['type' => 'checkbox', 'label' => 'Obrigatório'], 'guidance' => ['type' => 'textarea', 'label' => 'Orientações de envio'],
@@ -76,12 +73,14 @@ final class Schema {
         $sections[7]['title'] = 'Documentos';
         $sections[8]['title'] = 'Condições';
         $sections[9]['title'] = 'Comunicação';
-        $sections[4]['fields']['kits']['label'] = 'Opções de kit da organizadora — valores do serviço de retirada';
+        $sections[4]['fields']['kits']['label'] = 'Opções de kit da organizadora';
         foreach ($sections[4]['fields'] as &$field) if ($field['type'] === 'money') $field['label'] = 'Serviço de retirada · ' . $field['label'];
         unset($field);
         $sections[7]['fields']['documents']['fields'] += [
             'purpose' => ['type' => 'text', 'label' => 'Tipo / finalidade'],
             'requiresUpload' => ['type' => 'checkbox', 'label' => 'Exige arquivo preenchido ou assinado', 'default' => true],
+            'requiresSignature' => ['type' => 'checkbox', 'label' => 'Exige assinatura'],
+            'conditionId' => ['type' => 'text', 'label' => 'Condição de aplicação'],
             'templateId' => ['type' => 'pdf', 'label' => 'PDF modelo público em branco'],
         ];
         return array_values(array_intersect_key($sections, array_flip([0,1,2,4,6,7,8,9])));
@@ -90,6 +89,7 @@ final class Schema {
         if (!is_array($input)) {
             return new \WP_Error('rak_invalid', 'Configuração inválida.', ['status' => 422]);
         }
+        $input = RacePrices::canonical($input);
         $errors = [];
         $result = [];
         foreach (self::sections() as $section) {
@@ -111,6 +111,20 @@ final class Schema {
             if ($enabled && !array_filter($result['distances'], static fn($row) => in_array($row['modality'], ['both', $mode], true))) {
                 $errors[] = 'Informe ao menos uma distância para ' . $mode . '.';
             }
+        }
+        $amounts = array_filter([
+            $result['officialEnabled'] ? $result['officialCents'] : null,
+            $result['appaiEnabled'] && $result['shirtEnabled'] ? $result['shirtCents'] : null,
+            $result['appaiEnabled'] && $result['numberEnabled'] ? $result['numberCents'] : null,
+        ], 'is_int');
+        $result['priceCents'] = $amounts ? min($amounts) : null;
+        $conditionIds = array_column($result['conditions'], 'id');
+        foreach ($result['documents'] as $document) {
+            if ($document['id'] === PersonalDocuments::ID) $errors[] = 'Exigências adicionais da corrida: identificação pessoal é definida pelo sistema.';
+            if ($document['conditionId'] !== '' && !in_array($document['conditionId'], $conditionIds, true)) {
+                $errors[] = 'Condição de aplicação: selecione uma condição desta corrida.';
+            }
+            if ($document['requiresSignature'] && !$document['requiresUpload']) $errors[] = 'Exige assinatura: habilite o envio de arquivo.';
         }
         $paths = [];
         foreach ($errors as $message) {
@@ -146,7 +160,7 @@ final class Schema {
                     }
                     $ids[] = $row['id'];
                     $clean = ['id' => $row['id']] + self::fields($row, $field['fields'], $errors);
-                    if (in_array($key, ['documents', 'conditions'], true)) {
+                    if (in_array($key, ['documents', 'conditions', 'pickups'], true)) {
                         foreach (['libraryId','libraryVersion'] as $ref) {
                             $refValue = $row[$ref] ?? 0;
                             if (!is_int($refValue) || $refValue < 0) $errors[] = "$label: referência de biblioteca inválida.";

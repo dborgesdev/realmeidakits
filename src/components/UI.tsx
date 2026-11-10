@@ -11,7 +11,11 @@ export function Action({
   secondary?: boolean;
 }) {
   return (
-    <Link className={`button ${secondary ? "secondary" : ""}`} to={to}>
+    <Link
+      className={`button ${secondary ? "secondary" : ""}`}
+      reloadDocument={/^\/corridas(?:[/?]|$)/.test(to)}
+      to={to}
+    >
       {children}
       <ArrowRight size={18} />
     </Link>

@@ -1,28 +1,34 @@
-import type { PaymentMethod, Race, RaceSelection } from "../types/domain";
-export function itemPrice(
-  item: RaceSelection,
-  race: Race,
-  method: PaymentMethod,
-): number | null {
-  const mode = race.modalities.find((m) => m.id === item.modality);
+import type { Race, RaceSelection } from "../types/domain";
+export function itemBasePrice(item: RaceSelection, race: Race): number | null {
+  const mode = race.modalities.find((entry) => entry.id === item.modality);
   if (!mode) return null;
-  const prices =
-    item.modality === "appai"
-      ? (item.kit === "numero" ? mode.numberPrices : mode.shirtPrices) ||
-        mode.prices
-      : (mode.kitPrices?.[item.kitType] ?? mode.prices);
-  return method === "Pix" ? prices.pix : prices.card;
+  if (!race.prices) return race.priceCents;
+  if (item.modality === "oficial") return race.prices.official;
+  return item.kit === "camiseta"
+    ? mode.shirtEnabled
+      ? race.prices.shirt
+      : null
+    : mode.numberEnabled
+      ? race.prices.number
+      : null;
 }
-export function totalPrice(
-  items: RaceSelection[],
-  catalog: Race[],
-  method: PaymentMethod,
-) {
+export function kitAdditional(item: RaceSelection, race: Race) {
+  return item.modality === "oficial"
+    ? (race.modalities.find((mode) => mode.id === "oficial")?.kitAdditions?.[
+        item.kitType
+      ] ?? 0)
+    : 0;
+}
+export function itemPrice(item: RaceSelection, race: Race): number | null {
+  const base = itemBasePrice(item, race);
+  return base === null ? null : base + kitAdditional(item, race);
+}
+export function totalPrice(items: RaceSelection[], catalog: Race[]) {
   let known = 0,
     pending = 0;
   for (const item of items) {
     const race = catalog.find((r) => r.id === item.raceId);
-    const amount = race ? itemPrice(item, race, method) : null;
+    const amount = race ? itemPrice(item, race) : null;
     if (amount === null) pending++;
     else known += amount;
   }
@@ -42,25 +48,12 @@ export function modalityLabel(item: RaceSelection) {
       : `APPAI · Camiseta ${item.size || "a escolher"} com número de peito`;
 }
 
-export function selectionEstimate(races: Race[], method: PaymentMethod) {
-  let known = 0,
-    pending = 0;
-  for (const race of races) {
-    const key = method === "Pix" ? "pix" : "card";
-    const values = race.modalities
-      .flatMap((mode) =>
-        [
-          mode.prices,
-          ...(mode.kitPrices ? Object.values(mode.kitPrices) : []),
-          ...(mode.shirtEnabled === false ? [] : [mode.shirtPrices]),
-          ...(mode.numberEnabled === false ? [] : [mode.numberPrices]),
-        ]
-          .filter((value) => value !== undefined)
-          .map((value) => value![key]),
-      )
-      .filter((value): value is number => value !== null);
-    if (values.length) known += Math.min(...values);
-    else pending++;
-  }
-  return { known, pending };
+export function selectionEstimate(races: Race[]) {
+  return races.reduce(
+    (total, race) => ({
+      known: total.known + (race.priceCents ?? 0),
+      pending: total.pending + (race.priceCents === null ? 1 : 0),
+    }),
+    { known: 0, pending: 0 },
+  );
 }

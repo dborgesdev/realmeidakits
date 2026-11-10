@@ -7,6 +7,7 @@ function header_remove($name){global $headers;unset($headers[strtolower($name)])
 function header($line,$replace=true){global $headers;[$name,$value]=explode(':',$line,2);$headers[strtolower($name)]=trim($value);}
 function apply_filters($name,$value){return $value;}
 function get_http_origin(){global $origin;return $origin;}
+require __DIR__.'/../wordpress/plugins/re-almeida-kits/includes/NativeSession.php';
 require __DIR__.'/../wordpress/plugins/re-almeida-kits/includes/Rest.php';
 function verify($ok,$message){global $count;if(!$ok)throw new \Exception($message);$count++;}
 foreach(['http://localhost:5173','http://127.0.0.1:5174','http://[::1]:5175','https://localhost:5199'] as $value)verify(Rest::localOrigin($value),'Expected local: '.$value);

@@ -14,7 +14,7 @@ export default function OptionsStep({
   items: RaceSelection[];
 }) {
   const { events } = useCatalog();
-  const { draft, updateItem: editItem, assign } = useRequest();
+  const { updateItem: editItem, assign } = useRequest();
   const { field } = useFlowFeedback();
   const updateItem = (id: string, patch: Partial<RaceSelection>) =>
     editItem(participantId, id, patch);
@@ -29,7 +29,7 @@ export default function OptionsStep({
         const race = events.find((r) => r.id === item.raceId)!;
         const mode = race.modalities.find((m) => m.id === item.modality)!;
         const options = raceOptions(race, item.modality);
-        const price = itemPrice(item, race, draft.method);
+        const price = itemPrice(item, race);
         return (
           <fieldset className="form-section race-section" key={race.id}>
             <legend>{race.name}</legend>
@@ -95,7 +95,12 @@ export default function OptionsStep({
                   >
                     <option value="">Selecione seu kit</option>
                     {options.kitTypes.map((k) => (
-                      <option key={k}>{k}</option>
+                      <option key={k} value={k}>
+                        {k}
+                        {mode.kitAdditions?.[k]
+                          ? " · +" + money(mode.kitAdditions[k])
+                          : ""}
+                      </option>
                     ))}
                   </select>
                   <FieldError
@@ -201,9 +206,9 @@ export default function OptionsStep({
                   <p>{p.guidance}</p>
                 </div>
               ))}
-            <p className="item-price">
+            <p className="item-price" aria-live="polite">
               {price === null ? "Valor a confirmar" : money(price)}{" "}
-              <small>· no {draft.method}, sem cobrança</small>
+              <small>· total da modalidade e opções</small>
             </p>
           </fieldset>
         );

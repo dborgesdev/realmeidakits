@@ -1,12 +1,19 @@
-import { Navigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useCatalog } from "../state/CatalogContext";
+import CatalogStatus from "../components/CatalogStatus";
 import NotFound from "./NotFound";
-// Links da V1 continuam navegáveis, mas entram pela configuração atual da corrida.
+
 export default function LegacyRequest() {
-  const { events } = useCatalog();
+  const { events, status } = useCatalog();
   const { slug } = useParams();
-  return events.some((r) => r.slug === slug) ? (
-    <Navigate replace to={`/corridas/${slug}`} />
+  const race = events.find((entry) => entry.slug === slug);
+  useEffect(() => {
+    if (race) location.replace("/corridas/" + race.slug);
+  }, [race]);
+  if (status !== "ready") return <CatalogStatus />;
+  return race ? (
+    <a href={`/corridas/${race.slug}`}>Ver corrida</a>
   ) : (
     <NotFound />
   );

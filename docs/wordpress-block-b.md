@@ -24,7 +24,7 @@ O React mantém a identidade, home, hero, páginas, navegação, formulários e 
 | Capability `manage_re_almeida_kits` | Concedida apenas ao papel administrador na migração inicial |
 | Transient por usuário/corrida | Tentativa inválida e mensagem, validade de 30 minutos, somente recuperação administrativa |
 
-`Schema::sections()` define todos os campos e orienta tanto a apresentação administrativa quanto a validação autoritativa. Valores em transporte e armazenamento são **centavos inteiros**, limitados a 99.999.999; `null` significa a confirmar, e zero é permitido. O painel converte reais com vírgula/ponto e até duas casas. Kits podem ter preços próprios Pix/cartão; sem kit configurado usa-se o preço padrão da modalidade Oficial. Não há cálculo de tarifas ou estoque.
+`Schema::sections()` define todos os campos e orienta tanto a apresentação administrativa quanto a validação autoritativa. Valores em transporte e armazenamento são **centavos inteiros**, limitados a 99.999.999; `null` significa a confirmar, e zero é permitido. O painel converte reais com vírgula/ponto e até duas casas. O preço vigente é único por corrida e vale para todas as modalidades e opções. Não há cálculo de tarifas ou estoque.
 
 Datas/horários são opcionais; quando informados, têm validação estrita. Abertura precisa anteceder encerramento. Prazos são convertidos do fuso do WordPress para ISO 8601 com offset; recomenda-se `America/Sao_Paulo`. Antes da abertura retorna `unavailable`; na abertura, `open`; no encerramento exato, `closed`. Controle manual `closed` ou `unavailable` prevalece. O React também reavalia limites temporais ao selecionar e validar.
 
@@ -58,9 +58,9 @@ Campos públicos da corrida:
 | `conditions` | Lista ativa com `{id, text, version, active: true}` |
 | `guidance`, `contact`, `whatsappUrl` | Texto público e URL confirmada opcional; nunca contatos privados |
 
-Cada modalidade possui `id` (`oficial`/`appai`), `label`, `requireRegistration`, `requireMembership`, `distances: string[]`, `pickups`, `kitTypes`, `prices`, `shirtPrices`, `numberPrices`, `shirtEnabled`, `numberEnabled`, `sizes`, `shirtImage`, `documents`.
+Cada modalidade possui `id` (`oficial`/`appai`), `label`, `requireRegistration`, `requireMembership`, `distances: string[]`, `pickups`, `kitTypes`, `shirtEnabled`, `numberEnabled`, `sizes`, `shirtImage`, `documents`.
 
-Preços: `{pix: integer|null, card: integer|null}`. Kits: `{id, label, prices}`. Pontos: `{id, label, modality, address, at, guidance}`; não confundem endereço de retirada com local da corrida. Exigências: `{id, label, modality, scope: personal|race, required: boolean, guidance}`. Imagem de camiseta tem o mesmo formato da imagem da corrida. A normalização mantém somente os dados do domínio, filtra exigências opcionais na validação obrigatória e preserva distâncias/locais/preços por modalidade. A imagem da camiseta aparece ao escolher camiseta.
+A corrida expõe `priceCents` (inteiro em centavos ou nulo enquanto o valor aguarda confirmação). Kits: `{id, label}`. Pontos: `{id, label, modality, address, at, guidance}`; não confundem endereço de retirada com local da corrida. Exigências: `{id, label, modality, scope: personal|race, required: boolean, guidance}`. Imagem de camiseta tem o mesmo formato da imagem da corrida. A normalização mantém somente os dados do domínio, filtra exigências opcionais na validação obrigatória e preserva distâncias e locais por modalidade e o preço único da corrida. A imagem da camiseta aparece ao escolher camiseta.
 
 Erros seguem o formato WordPress `{code, message, data: {status, ...}}`: parâmetro inválido 400, corrida não publicada/inexistente/protegida por senha 404, acesso à rota core do CPT sem capacidade 403. Configuração legada/corrompida publicada aparece com `configurationError: true` e `status: unavailable`; o cliente a trata explicitamente como dados inválidos e não oferece fixtures substitutas. Respostas de sucesso são `Cache-Control: no-store`; o cache da hospedagem deve respeitar isso para não congelar disponibilidade. O painel não expõe o histórico ou metadados internos no contrato.
 

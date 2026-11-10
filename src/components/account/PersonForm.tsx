@@ -1,4 +1,10 @@
 import { useState, useRef } from "react";
+import {
+  formatIdentity,
+  maskIdentityInput,
+  maskedField,
+  normalizeIdentity,
+} from "../../state/identityMasks";
 import type { Person } from "../../types/domain";
 import {
   personError,
@@ -16,7 +22,7 @@ export const emptyPerson = (): Person => ({
 const fields = [
   { key: "name", label: "Nome completo", type: "text" },
   { key: "cpf", label: "CPF", type: "text" },
-  { key: "birthDate", label: "Data de nascimento", type: "date" },
+  { key: "birthDate", label: "Data de nascimento", type: "text" },
   { key: "phone", label: "Telefone com DDD", type: "tel" },
   { key: "email", label: "E-mail", type: "email" },
 ] as const;
@@ -41,7 +47,13 @@ export default function PersonForm({
     setSuccess(false);
     const data = new FormData(e.currentTarget);
     const person = Object.fromEntries(
-      fields.map((f) => [f.key, String(data.get(f.key) || "")]),
+      fields.map((f) => {
+        const value = String(data.get(f.key) || "");
+        return [
+          f.key,
+          maskedField(f.key) ? normalizeIdentity(f.key, value) : value,
+        ];
+      }),
     ) as Person;
     setSubmitted(person);
     const invalid = personError(person, owner);
@@ -75,15 +87,28 @@ export default function PersonForm({
               disabled={busy}
               readOnly={owner && (input.key === "cpf" || input.key === "email")}
               maxLength={
-                input.key === "cpf" ? 14 : input.key === "name" ? 80 : 120
+                input.key === "name"
+                  ? 80
+                  : input.key === "email"
+                    ? 120
+                    : undefined
               }
-              min={input.key === "birthDate" ? "1900-01-01" : undefined}
-              max={
-                input.key === "birthDate"
-                  ? new Date().toISOString().slice(0, 10)
-                  : undefined
+              inputMode={maskedField(input.key) ? "numeric" : undefined}
+              placeholder={input.key === "birthDate" ? "DD/MM/AAAA" : undefined}
+              autoComplete={
+                {
+                  name: "name",
+                  cpf: "off",
+                  birthDate: "bday",
+                  phone: "tel-national",
+                  email: "email",
+                }[input.key]
               }
-              defaultValue={initial[input.key]}
+              defaultValue={
+                maskedField(input.key)
+                  ? formatIdentity(input.key, initial[input.key])
+                  : initial[input.key]
+              }
               aria-invalid={
                 !!error &&
                 ((input.key === "cpf" && !validCpf(submitted.cpf)) ||
@@ -92,7 +117,9 @@ export default function PersonForm({
                     (owner || !!submitted.email) &&
                     !validEmail(submitted.email)))
               }
-              onInput={() => {
+              onInput={(event) => {
+                if (maskedField(input.key))
+                  maskIdentityInput(input.key, event.currentTarget);
                 setSuccess(false);
                 setError("");
               }}

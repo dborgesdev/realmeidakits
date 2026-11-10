@@ -12,7 +12,7 @@ export default function Events() {
           <h2>Encontre sua próxima corrida</h2>
           <p>Selecione uma ou várias corridas para você ou mais pessoas.</p>
         </div>
-        <Link className="text-link" to="/corridas">
+        <Link className="text-link" reloadDocument to="/corridas">
           Ver todas as corridas →
         </Link>
       </div>

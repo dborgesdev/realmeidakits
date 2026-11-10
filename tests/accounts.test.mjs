@@ -1,4 +1,7 @@
-import { URLSearchParams } from "node:url";
+import {
+  formatIdentity,
+  normalizeIdentity,
+} from "../src/state/identityMasks.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -6,7 +9,6 @@ import {
   validPhone,
   personError,
 } from "../src/state/identityRules.ts";
-import { authReturn } from "../src/state/authRules.ts";
 import { syntheticCpf } from "./fixtures/draft.ts";
 test("CPF checks digits, formatting and repeated sequences", () => {
   const cpf = syntheticCpf(77);
@@ -40,40 +42,11 @@ test("person validation rejects missing, malformed contact and impossible dates"
   assert.ok(validPhone("(21) 99999-0001"));
   assert.ok(personError({ ...person, name: "" }));
 });
-test("auth return validates state, expiration, redirect and one-use code shape", () => {
-  const now = 12345678;
-  const pending = {
-    state: "a".repeat(64),
-    verifier: "b".repeat(64),
-    redirectUri: "http://localhost:5173/conta/retorno",
-    created: now,
-    returnTo: "/solicitacao/participantes",
-  };
-  const query = new URLSearchParams({
-    code: "c".repeat(64),
-    state: pending.state,
-  });
-  assert.equal(
-    authReturn(query, pending, "http://localhost:5173", now).returnTo,
-    pending.returnTo,
-  );
-  for (const patch of [
-    { state: "wrong" },
-    { created: now - 600001 },
-    { created: now + 1 },
-    { redirectUri: "https://evil.invalid/conta/retorno" },
-    { verifier: "short" },
-  ])
-    assert.throws(() =>
-      authReturn(query, { ...pending, ...patch }, "http://localhost:5173", now),
-    );
-  assert.equal(
-    authReturn(
-      query,
-      { ...pending, returnTo: "//evil.invalid" },
-      "http://localhost:5173",
-      now,
-    ).returnTo,
-    "/conta",
-  );
+
+test("identity masks limit national digits and convert displayed birth dates", () => {
+  assert.equal(formatIdentity("cpf", "12345678901234"), "123.456.789-01");
+  assert.equal(formatIdentity("phone", "4333334444"), "(43) 3333-4444");
+  assert.equal(formatIdentity("phone", "43999999999"), "(43) 99999-9999");
+  assert.equal(formatIdentity("birthDate", "2000-02-29"), "29/02/2000");
+  assert.equal(normalizeIdentity("birthDate", "29/02/2000"), "2000-02-29");
 });

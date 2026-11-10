@@ -42,7 +42,7 @@ test("contact validation targets actual editable controls without demo-only form
   assert.equal(responsibleReady(draft.responsible), false);
   assert.equal(personReady(draft.participants[0].person), false);
 });
-test("operational entry has no simulated completion, mock imports, proxy or mode configuration", () => {
+test("operational entry has no simulated completion, mock imports or alternate backend configuration", () => {
   const context = readFileSync(
     new URL("../src/state/RequestContext.tsx", import.meta.url),
     "utf8",
@@ -52,10 +52,10 @@ test("operational entry has no simulated completion, mock imports, proxy or mode
     new URL("../src/pages/RequestPage.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(page, /disabled=\{step === 6\}/);
+  assert.match(page, /<PaymentStep/);
   const vite = readFileSync(
     new URL("../vite.config.ts", import.meta.url),
     "utf8",
   );
-  assert.doesNotMatch(vite, /proxy|wordpress-local|wordpress-homologacao/);
+  assert.match(vite, /command === "serve" \? env\.RAK_DEV_REPLICA/);
 });

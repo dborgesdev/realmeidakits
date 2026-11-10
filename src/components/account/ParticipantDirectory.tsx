@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useAccount } from "../../state/AccountContext";
 import PersonForm, { emptyPerson } from "./PersonForm";
 export default function ParticipantDirectory() {
-  const { participants, saveParticipant, removeParticipant } = useAccount();
+  const { participants, saveParticipant, removeParticipant, participantLimit } =
+    useAccount();
   const [editing, setEditing] = useState<number | null | undefined>(undefined),
     [error, setError] = useState(""),
     [removing, setRemoving] = useState<number | null>(null),
@@ -25,8 +26,8 @@ export default function ParticipantDirectory() {
     <section className="panel">
       <h2>Meus participantes</h2>
       <p>
-        {participants.length} de 20 participantes. O cadastro de participante
-        não cria uma conta de acesso.
+        {participants.length} de {participantLimit} participantes. O cadastro de
+        participante não cria uma conta de acesso.
       </p>
       {error && (
         <p role="alert" className="error">
@@ -89,7 +90,7 @@ export default function ParticipantDirectory() {
         <button
           type="button"
           className="button secondary"
-          disabled={participants.length >= 20}
+          disabled={participants.length >= participantLimit}
           onClick={() => setEditing(null)}
         >
           Adicionar participante

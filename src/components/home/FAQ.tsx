@@ -1,4 +1,3 @@
-import { previewConfig } from "../../config/preview";
 export default function FAQ() {
   return (
     <section className="container section faq">
@@ -15,7 +14,7 @@ export default function FAQ() {
           ],
           [
             "Posso escolher várias corridas?",
-            `Sim. Uma pessoa responsável pode organizar até ${previewConfig.maxParticipants} participantes, cada um com uma ou várias corridas. As opções e os documentos são separados por pessoa e prova.`,
+            `Sim. Uma pessoa responsável pode organizar vários participantes, cada um com uma ou várias corridas. As opções e os documentos são separados por pessoa e prova.`,
           ],
           [
             "O que significa autorizar a retirada?",

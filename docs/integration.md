@@ -1,5 +1,7 @@
 # WordPress/WooCommerce — integração e histórico
 
+> Registro histórico. Consulte a [arquitetura vigente](project.md), a [autenticação](wordpress-authentication.md) e o [procedimento HostGator](wordpress-deployment.md).
+
 > **Escopo vigente — 05/11/2026, Bloco C:** contas customer, autenticação, CPF único e até 20 participantes por titular persistidos no WordPress. Acesso entre domínios por código PKCE de uso único; senhas ficam no fluxo WordPress e o bearer somente na memória do React. Catálogo real com pnpm dev. Checkout, pedidos e uploads privados permanecem futuros. Plugin **1.2.0 / esquema 3**, sem deploy nesta rodada. As notas abaixo preservam o histórico.
 
 > **Escopo vigente — 30/10/2026:** V2 de desenvolvimento consome exclusivamente a API pública https://app.realmeidakits.com.br/wp-json/re-almeida/v1 com `pnpm dev`, sem modos/env de integração, fixtures no aplicativo ou avisos de demonstração. Formulários vazios; sem upload privado, envio de pedido ou pagamento implementado. Plugin **1.1.1** libera leitura local em loopback/portas 5173–5199; atualização no servidor é necessária. Worker publicado e main preservados. Os registros abaixo descrevem etapas históricas e não substituem esta orientação. [Setup](wordpress-setup.md) e [QA atual](qa-block-b.md).
