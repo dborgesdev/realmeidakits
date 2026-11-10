@@ -1,4 +1,7 @@
-import { Navigate } from "react-router-dom";
+import { useEffect } from "react";
 export default function ConclusionPage() {
-  return <Navigate to="/corridas" replace />;
+  useEffect(() => {
+    location.replace("/corridas");
+  }, []);
+  return <a href="/corridas">Voltar às corridas</a>;
 }

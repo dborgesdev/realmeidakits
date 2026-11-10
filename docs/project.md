@@ -1,5 +1,15 @@
 # Re Almeida Kits — projeto e histórico
 
+## Solicitação operacional e preço único
+
+A integração da versão 1.4.0 usa rascunho versionado por titular, documentos privados, solicitações vinculadas a pedidos WooCommerce, acompanhamento e operação administrativa. Cada corrida tem um único preço-base. O checkout nativo escolhe o meio de pagamento. A ativação em ambiente real depende da configuração e homologação do WooCommerce, do armazenamento privado e do Mercado Pago. Consulte o [procedimento operacional](wordpress-requests.md). As seções abaixo registram decisões anteriores.
+
+## Arquitetura HostGator — 09/11/2026
+
+A raiz serve React estático no Apache. WordPress e WooCommerce em /app/ administram corridas, identidade e participantes. A REST fica em /app/wp-json/re-almeida/v1/. O plugin 1.3.0 conserva o esquema 3 e entrega catálogo, detalhes e sitemap a partir do mesmo modelo público da REST. Os controles React mantêm a seleção e a jornada de solicitação.
+
+A autenticação ativa usa cookies nativos e nonce REST. O servidor conserva o PKCE legado até o aceite da substituição. Checkout integrado, pedidos, pagamentos, uploads privados e vouchers operacionais permanecem pendentes. Consulte a [autenticação](wordpress-authentication.md), a [implantação e reversão](wordpress-deployment.md) e o [QA](qa-hostgator.md). As seções seguintes são históricas.
+
 ## Consolidação dos Blocos B e C — 09/11/2026
 
 O Bloco B entrega cadastro administrativo de corridas, catálogo REST consumido pelo React, bibliotecas versionadas de documentos e condições e download de modelos públicos em branco. O Bloco C entrega contas `customer`, CPF único para titulares, recuperação de senha pelo WordPress e até 20 participantes persistidos por titular. O plugin permanece na versão **1.2.0 / esquema 3**, com autenticação por código PKCE de uso único.
@@ -73,7 +83,7 @@ Esse aceite geral não substitui documentos e autorizações individuais exigido
 
 ## Revisão, simulação e bloqueio
 
-Revisão e pagamento agrupados por participante; um total soma todos os itens em centavos por método Pix/cartão. Referências ilustrativas preservadas: R$26/30 em algumas opções, número R$20/24 e camiseta Desafio R$28/32. Valores ausentes aparecem a confirmar. Edição de participantes, opções, documentos e condições permitida antes da finalização.
+Revisão agrupada por participante. O total soma os serviços selecionados em centavos. Valores ausentes aparecem a confirmar. Edição de participantes, opções, documentos e condições permitida antes da finalização.
 
 “Confirmar pagamento e finalizar” informa expressamente ausência de cobrança. Sem QR Pix, chave, cartão ou confirmação bancária. Cria snapshot local profundamente copiado e congelado `DEMO-PEDIDO-001`; todas as mutações comuns são bloqueadas no contexto e nas regras. Acesso às etapas por URL ou voltar do navegador redireciona para conclusão. Iniciar **Nova inscrição** libera um novo rascunho. Também é possível voltar à home, catálogo ou detalhe e selecionar uma corrida aberta: essa ação cria automaticamente um rascunho limpo, sem reabrir o snapshot anterior. Participantes preenchidos, documentos, opções e aceites do pedido anterior não são herdados. Corridas encerradas continuam indisponíveis, inclusive após concluir. A tela anterior de conclusão deixa de estar disponível ao iniciar outro pedido: não existe histórico persistente nesta prévia. Recarregar também apaga toda a memória, sem recuperar pedido anterior.
 

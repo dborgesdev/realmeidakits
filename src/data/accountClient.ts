@@ -1,134 +1,141 @@
-import { authReturn } from "../state/authRules";
+import { WORDPRESS_API_URL, WORDPRESS_ROOT } from "../config/catalog";
 import type { Person } from "../types/domain";
-import { WORDPRESS_API_URL } from "../config/catalog";
+
 export type AccountProfile = Person & { id: number };
 export type SavedParticipant = { id: number; version: number; person: Person };
 export type AccountSession = {
-  accessToken: string;
-  expiresIn: number;
-  data: AccountProfile;
+  nonce: string | null;
+  participantLimit?: number;
+  signedIn?: boolean;
+  registrationEnabled?: boolean;
+  accountUrl: string;
+  recoveryUrl: string;
+  editUrl: string;
+  checkoutUrl: string;
 };
+
 export class AccountError extends Error {
   constructor(
     message: string,
     public status: number,
+    public code?: string,
   ) {
     super(message);
     this.name = "AccountError";
   }
 }
-export async function accountRequest<T>(
-  path: string,
-  token?: string,
-  method = "GET",
-  body?: unknown,
+
+async function readResponse<T>(
+  url: string,
+  init: RequestInit,
+  binary = false,
 ): Promise<T> {
-  const response = await fetch(WORDPRESS_API_URL + path, {
-    method,
-    credentials: "omit",
+  const response = await fetch(url, {
+    ...init,
+    credentials: "same-origin",
     cache: "no-store",
-    referrerPolicy: "no-referrer",
+    redirect: "error",
     signal: AbortSignal.timeout(15000),
-    headers: {
-      Accept: "application/json",
-      ...(body ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: "Bearer " + token } : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  let data;
-  try {
-    data = await response.json();
-  } catch {
+  if (binary && response.ok) return (await response.blob()) as T;
+  const data = await response.json().catch(() => null);
+  if (!data || typeof data !== "object")
     throw new AccountError(
       "Resposta inválida do serviço de contas.",
       response.status,
     );
-  }
   if (!response.ok)
     throw new AccountError(
-      typeof data?.message === "string"
-        ? data.message
-        : "Não foi possível concluir a operação.",
+      data.message || "Não foi possível concluir a operação.",
       response.status,
+      data.code,
     );
   return data as T;
 }
-export const accountHost = new URL(WORDPRESS_API_URL).origin;
-const pendingKey = "rak_auth_pending";
-export const sessionHint = "rak_session_active";
-function random() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(32)), (v) =>
-    v.toString(16).padStart(2, "0"),
-  ).join("");
-}
-export async function beginAccount(
-  intent: "login" | "register" | "recover" = "login",
-  returnTo = "/conta",
-) {
-  const verifier = random(),
-    state = random();
-  const challenge = btoa(
-    String.fromCharCode(
-      ...new Uint8Array(
-        await crypto.subtle.digest(
-          "SHA-256",
-          new TextEncoder().encode(verifier),
-        ),
-      ),
-    ),
-  )
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replace(/=+$/, "");
-  const redirectUri = location.origin + "/conta/retorno";
-  sessionStorage.setItem(
-    pendingKey,
-    JSON.stringify({
-      verifier,
-      state,
-      redirectUri,
-      created: Date.now(),
-      returnTo: returnTo.startsWith("/solicitacao/") ? returnTo : "/conta",
-    }),
+
+export function bootstrapAccount() {
+  return readResponse<AccountSession>(
+    WORDPRESS_ROOT + "/wp-admin/admin-ajax.php?action=rak_session",
+    {
+      headers: { "X-RAK-Session": "1" },
+    },
   );
-  const url = new URL("/wp-admin/admin-post.php", accountHost);
-  url.search = new URLSearchParams({
-    action: "rak_authorize",
-    client: redirectUri,
-    state,
-    challenge,
-    ...(intent !== "login" ? { intent } : {}),
-  }).toString();
-  location.assign(url.href);
 }
-let finishing: Promise<{ session: AccountSession; returnTo: string }> | null =
-  null;
-export function finishAccount(): Promise<{
-  session: AccountSession;
-  returnTo: string;
-}> {
-  // React StrictMode reuses a single exchange; the authorization code is one-use.
-  if (finishing) return finishing;
-  finishing = (async () => {
-    const query = new URLSearchParams(location.search);
-    history.replaceState(null, "", location.pathname);
-    const raw = sessionStorage.getItem(pendingKey);
-    sessionStorage.removeItem(pendingKey);
-    const pending = raw ? JSON.parse(raw) : null;
-    const validated = authReturn(query, pending, location.origin);
-    const session = await accountRequest<AccountSession>(
-      "/auth/token",
-      undefined,
-      "POST",
-      {
-        code: validated.code,
-        verifier: validated.verifier,
-        redirectUri: validated.redirectUri,
+
+export function accountRequest<T>(
+  path: string,
+  nonce: string,
+  method = "GET",
+  body?: unknown,
+  binary = false,
+) {
+  const multipart = body instanceof FormData;
+  return readResponse<T>(
+    WORDPRESS_API_URL + path,
+    {
+      method,
+      headers: {
+        Accept: binary
+          ? "application/octet-stream, application/json"
+          : "application/json",
+        "X-WP-Nonce": nonce,
+        ...(body && !multipart ? { "Content-Type": "application/json" } : {}),
       },
-    );
-    sessionStorage.setItem(sessionHint, "1");
-    return { session, returnTo: validated.returnTo };
-  })();
-  return finishing;
+      ...(body ? { body: multipart ? body : JSON.stringify(body) } : {}),
+    },
+    binary,
+  );
+}
+
+export function continuation(path: string | null) {
+  return path &&
+    path.trim() === path &&
+    /^\/(?:conta|solicitacao\/(?:pedido|responsavel|participantes|documentos|condicoes|revisao|pagamento|configuracao|identificacao|dados|confirmacao)|corridas(?:\/[a-z0-9-]+)?)$/.test(
+      path,
+    )
+    ? path
+    : null;
+}
+
+const returnKey = "rak_account_return";
+export function rememberContinuation(path: string) {
+  try {
+    if (continuation(path))
+      sessionStorage.setItem(
+        returnKey,
+        JSON.stringify({ path, until: Date.now() + 30 * 60_000 }),
+      );
+  } catch {
+    // Navigation still works when browser storage is unavailable.
+  }
+}
+export function rememberedContinuation() {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(returnKey) ?? "null");
+    return typeof value?.path === "string" &&
+      typeof value.until === "number" &&
+      value.until > Date.now()
+      ? continuation(value.path)
+      : null;
+  } catch {
+    return null;
+  }
+}
+export function clearContinuation() {
+  try {
+    sessionStorage.removeItem(returnKey);
+  } catch {
+    // Storage may be disabled.
+  }
+}
+
+export function accountUrl(url: string, returnTo: string) {
+  const target = new URL(url, location.origin);
+  if (
+    target.origin !== location.origin ||
+    !target.pathname.startsWith(WORDPRESS_ROOT + "/")
+  )
+    throw new Error("Página de conta indisponível nesta origem.");
+  if (continuation(returnTo)) target.searchParams.set("rak_return", returnTo);
+  return target.href;
 }

@@ -13,7 +13,7 @@ final class Identity {
         }
         return true;
     }
-    public static function person(array $input, bool $emailRequired=false) {
+    public static function person(array $input, bool $emailRequired=false, bool $cpfRequired=true) {
         $data = [];
         foreach (['name','cpf','birthDate','phone','email'] as $key) {
             if(isset($input[$key])&&!is_string($input[$key]))return self::error('Informe dados pessoais válidos.');
@@ -24,7 +24,7 @@ final class Identity {
         $data['email']=strtolower($data['email']);
         $date=\DateTimeImmutable::createFromFormat('!Y-m-d',$data['birthDate']);
         if(mb_strlen($data['name'])<3||mb_strlen($data['name'])>80)return self::error('Informe nome completo entre 3 e 80 caracteres.');
-        if(!self::cpf($data['cpf']))return self::error('Informe um CPF válido.');
+        if (($cpfRequired || $data['cpf'] !== '') && !self::cpf($data['cpf'])) return self::error('Informe um CPF válido.');
         if(!preg_match('/^[1-9]{2}(?:[2-5]\d{7}|9\d{8})$/',$data['phone']))return self::error('Informe telefone com DDD válido.');
         if(($emailRequired||$data['email']!=='')&&(!is_email($data['email'])||strlen($data['email'])>120))return self::error('Informe e-mail válido.');
         if(!$date||$date->format('Y-m-d')!==$data['birthDate']||$data['birthDate']<'1900-01-01'||$data['birthDate']>current_time('Y-m-d'))return self::error('Informe data de nascimento válida.');

@@ -19,39 +19,30 @@ const authorization: DocumentRequirement = {
   label: "Autorização específica de retirada",
   scope: "race",
 };
-function official(
-  documents: DocumentRequirement[],
-  pix = 2600,
-  card = 3000,
-): ModalityConfig {
+function official(documents: DocumentRequirement[]): ModalityConfig {
   return {
     id: "oficial",
     label: "Kit Oficial",
     documents,
-    prices: { pix, card },
     sizes: [],
   };
 }
 function appai(
   documents: DocumentRequirement[],
   sizes: string[],
-  pix = 2600,
-  card = 3000,
 ): ModalityConfig {
   return {
     id: "appai",
     label: "Associado à APPAI",
     documents,
     sizes,
-    prices: { pix, card },
-    shirtPrices: { pix, card },
-    numberPrices: { pix: 2000, card: 2400 },
   };
 }
 // Todas as datas, preços, opções e exigências abaixo são fixtures, não ofertas reais.
 export const events: Race[] = [
   {
     id: "rio",
+    priceCents: 3100,
     slug: "circuito-rio-antigo",
     name: "Circuito Rio Antigo",
     image: "event-circuito-rio-antigo.webp",
@@ -80,6 +71,7 @@ export const events: Race[] = [
   },
   {
     id: "primavera",
+    priceCents: 3200,
     slug: "corrida-primavera",
     name: "Corrida da Primavera",
     image: "event-corrida-primavera.webp",
@@ -105,6 +97,7 @@ export const events: Race[] = [
   },
   {
     id: "cidade",
+    priceCents: 3300,
     slug: "desafio-10k-cidade",
     name: "Desafio 10K da Cidade",
     image: "event-desafio-10k-cidade.webp",
@@ -123,8 +116,6 @@ export const events: Race[] = [
           },
         ],
         ["M", "G", "GG"],
-        2800,
-        3200,
       ),
     ],
     distances: ["5 km", "10 km"],
@@ -141,6 +132,7 @@ export const events: Race[] = [
   },
   {
     id: "rio-encerrada",
+    priceCents: null,
     slug: "circuito-rio-antigo-encerrado",
     name: "Circuito Rio Antigo — edição encerrada",
     image: "event-circuito-rio-antigo.webp",

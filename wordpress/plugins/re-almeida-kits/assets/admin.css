@@ -158,3 +158,14 @@
     position: static;
   }
 }
+.rak-library-dialog { width: min(540px, 88vw); max-height: 82vh; overflow: auto; border: 1px solid #8c8f94; border-radius: 8px; padding: 24px; }
+.rak-library-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+.rak-library-form { display: grid; gap: 12px; }
+.rak-library-form label { display: grid; gap: 4px; font-weight: 600; }
+.rak-library-form .rak-library-check { display: flex; flex-direction: row-reverse; justify-content: start; align-items: center; gap: 8px; }
+.rak-library-form .button { justify-self: start; }
+.rak-library-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; max-width: 1200px; }
+.rak-library-group > h2 { grid-column: 1 / -1; }
+.rak-library-card { background: #fff; border: 1px solid #c3c4c7; border-radius: 6px; padding: 16px; }
+.rak-library-card h3 { margin-top: 0; }
+.rak-library-card details { margin-top: 12px; }

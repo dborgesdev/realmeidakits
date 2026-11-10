@@ -1,5 +1,4 @@
 export type Modality = "oficial" | "appai";
-export type PaymentMethod = "Pix" | "Cartão";
 export type DocumentRequirement = {
   id: string;
   label: string;
@@ -7,18 +6,15 @@ export type DocumentRequirement = {
   required?: boolean;
   guidance?: string;
   requiresUpload?: boolean;
+  requiresSignature?: boolean;
   purpose?: string;
   version?: number;
   template?: { url: string; name: string; mime: "application/pdf" } | null;
 };
-export type Prices = { pix: number | null; card: number | null };
 export type ModalityConfig = {
   id: Modality;
   label: string;
   documents: DocumentRequirement[];
-  prices: Prices;
-  shirtPrices?: Prices;
-  numberPrices?: Prices;
   sizes: string[];
   distances?: string[];
   pickupLocations?: string[];
@@ -30,7 +26,7 @@ export type ModalityConfig = {
     guidance: string;
   }[];
   kitTypes?: string[];
-  kitPrices?: Record<string, Prices>;
+  kitAdditions?: Record<string, number>;
   shirtEnabled?: boolean;
   numberEnabled?: boolean;
   shirtImage?: string;
@@ -49,6 +45,12 @@ export type Race = {
   location?: string;
   contact?: string;
   source?: "wordpress";
+  priceCents: number | null;
+  prices?: {
+    official: number | null;
+    shirt: number | null;
+    number: number | null;
+  };
   closesAt?: string;
   status: "open" | "closed" | "unavailable";
   modalities: ModalityConfig[];
@@ -100,7 +102,6 @@ export type DemoOrder = {
   id: string;
   responsible: Responsible;
   participants: Participant[];
-  method: PaymentMethod;
 };
 export type Draft = {
   preferredModality?: Modality;
@@ -110,6 +111,5 @@ export type Draft = {
   responsible: Responsible;
   prepared: boolean;
   nextParticipantNumber: number;
-  method: PaymentMethod;
   order?: DemoOrder;
 };

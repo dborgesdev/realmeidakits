@@ -30,7 +30,8 @@ export function missingDocuments(p: Participant, catalog: Race[]) {
     if (!race) continue;
     for (const doc of requiredDocuments(item, race)) {
       if (doc.scope === "personal") {
-        if (!p.documents[doc.id]) personal.add(doc.id);
+        if (!p.documents[doc.id] && !item.documents[doc.id])
+          personal.add(doc.id);
       } else if (!item.documents[doc.id]) count++;
     }
   }
@@ -197,13 +198,14 @@ export function firstIssue(
         if (!race) continue;
         for (const doc of requiredDocuments(item, race)) {
           if (
-            !(doc.scope === "personal" ? p.documents : item.documents)[doc.id]
+            !item.documents[doc.id] &&
+            !(doc.scope === "personal" && p.documents[doc.id])
           )
             return issue(
               "document",
               `Adicione ${doc.label.toLowerCase()} ${doc.scope === "race" ? `para ${race.name}` : `de ${p.person.name}`}.`,
               p,
-              doc.scope === "race" ? race.id : undefined,
+              race.id,
               doc.id,
             );
         }

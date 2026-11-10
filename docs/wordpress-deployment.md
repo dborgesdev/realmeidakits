@@ -1,50 +1,29 @@
-# Instalação, homologação e atualização na HostGator
+# Publicação e reversão na HostGator
 
-Revisão: 05/11/2026. Pacote pronto para homologação. Sem acesso/alteração de produção, commit, push, PR, merge ou deploy.
+O Apache serve a distribuição React no document root. O WordPress restaurado fica em `app/`, com `WP_HOME` e `WP_SITEURL` apontando para `https://realmeidakits.com.br/app`. Preserve banco, chaves, usuários, uploads e tabelas do plugin. Confira se URLs da biblioteca e links editoriais gravados antes da mudança de domínio resolvem corretamente. Corrija referências antigas em homologação com backup e revisão da substituição.
 
-## Artefato final
+## Pré-requisitos
 
-- `wordpress/releases/re-almeida-kits.zip`: versão **1.2.0**, esquema **3**, **42.361 bytes**.
-- SHA-256: `dc9524b825c2f3e3f898c49e484e056423bcd5646d86fd4cec9f578934d803db`.
-- Raiz única `re-almeida-kits/`; arquivos conferidos byte a byte contra fontes e checksum adjacente.
-- Somente runtime/readme; sem testes, ambiente local, credenciais, frontend ou anexos privados.
+- Confirme document root, SSL, redirecionamento para HTTPS sem www, PHP 8.3+, WordPress 6.7+, WooCommerce, MySQL/MariaDB, mbstring, Fileinfo, limites de upload e memória, permissões, compressão e ModSecurity.
+- Confirme mod_rewrite, mod_headers e permissão para as diretivas em `.htaccess`. Preserve o `app/.htaccess` do WordPress com permalinks em `/app/`, as regras de segurança e os blocos gerenciados pelo cPanel.
+- Configure Minha conta e checkout no WooCommerce. Habilite o cadastro e confirme que Minha conta renderiza `[woocommerce_my_account]` e os hooks do plugin no tema ativo. Mantenha o cadastro fora de Minha conta desabilitado enquanto não houver validação de identidade nesses canais. Verifique o transporte de e-mail.
+- Exclua da cache compartilhada conta, checkout, o bootstrap `admin-ajax.php?action=rak_session`, REST privada e downloads do plugin. Preserve Cookie, Set-Cookie, X-WP-Nonce, Cache-Control e X-Robots-Tag.
 
-ZIP atualizado porque houve alterações no plugin. Documentação posterior não exige empacotar novamente. Não é preciso compilar React para instalar.
+## Desenvolvimento e homologação
 
-## Configurações externas do Bloco C
+Monte uma réplica isolada em origem única, com o frontend no document root e WordPress em `/app/`. Use uma base separada e dados sintéticos rotulados DEMONSTRAÇÃO em testes de escrita. Proteja staging com autenticação no servidor e desabilite `blog_public`. Execute `pnpm build` e copie o conteúdo de `dist`, incluindo arquivos ocultos, para o document root da réplica.
 
-1. Backup restaurável e atualização do plugin pelo ZIP 1.2.0, sem desinstalar. WooCommerce já deve fornecer customer; GoSMTP/Brevo existente é reutilizado.
-2. HTTPS reconhecido pelo WordPress (home/siteurl e terminação TLS). Segurança/cache devem permitir admin-post.php?action=rak_authorize/rak_end_session, wp-login.php para recuperação e /wp-json/re-almeida/v1/account e /auth, sem cache de conteúdo privado e sem remover Authorization/Origin. Métodos/preflight CORS são tratados pelo plugin; cookies de terceiros não precisam ser habilitados.
-3. As origens https://realmeidakits.com.br, https://www.realmeidakits.com.br, Worker atual e loopback 5173–5199 já são permitidas. Somente se o frontend usar outra origem real, registrar essa origem exata por rak_account_origins; callback permanece /conta/retorno. Não há chave administrativa, application password, client secret ou configuração SMTP nova no React.
-4. Depois de instalar, testar criação/login/logout, senha e acesso de dois clientes. Confirmar chegada real do e-mail de recuperação pelo Brevo e redefinição; local validou wp_mail com interceptação, sem transmissão. Homologar o caminho WooCommerce carregado/MySQL real, pois o ambiente local utilizou WordPress/SQLite e a função customer provisionada para teste.
+Para HMR, use `pnpm dev` e configure `RAK_DEV_REPLICA` em `.env.local` com o endereço do Apache local. O navegador usa `http://127.0.0.1:5173` e o Vite encaminha `/app/`, `/corridas`, `/sitemap.xml` e `/assets/`. Nesse modo, `WP_HOME` e `WP_SITEURL` devem usar a origem visível ao navegador mais `/app`. As páginas PHP usam os assets compilados da réplica. Recompile após editar seus componentes. Use o endereço do Apache diretamente para validar as regras de produção.
 
-Nenhum deploy, atualização no WordPress hospedado ou envio real de e-mail foi executado nesta rodada.
+## Preparar e instalar
 
-## Pré-requisitos no servidor real
+1. Faça backup verificável do banco, `app/wp-config.php`, plugins, uploads, ambos os `.htaccess` e arquivos estáticos. Guarde uma cópia fora do document root e teste a recuperação em staging.
+2. Execute `pnpm build:hostgator` e `pnpm plugin:zip`. A distribuição é o conteúdo de `dist/`, incluindo `.vite/manifest.json`. Confira o SHA-256 de `wordpress/releases/re-almeida-kits.zip` e use **Substituir o atual pelo enviado** no wp-admin.
+3. Compare `dist/.htaccess` com as regras atuais. Substitua eventual fallback genérico do frontend anterior e preserve as regras de outras aplicações nos respectivos prefixos, além de `app/.htaccess`. O bloco da raiz delega `/app/` ao WordPress, preserva arquivos existentes, encaminha corridas e sitemap a `app/index.php` e aplica fallback às rotas React.
+4. Transfira primeiro os assets com hash e os arquivos públicos. Atualize manifesto, index, robots e regras da raiz na mesma janela. Preserve os assets antigos até encerrar a janela de reversão.
+5. Execute o [roteiro de QA](qa-hostgator.md). Após validar integralmente o fluxo nativo, configure `define('RAK_LEGACY_PKCE', false);` no `wp-config.php` e repita os testes. O React desta arquitetura já utiliza a sessão nativa.
+6. Após autorização de publicação, habilite `define('RAK_PUBLIC_INDEXING', true);` e a indexação do WordPress. O sitemap exige ambas as opções e o domínio canônico. Confira robots, sitemap, HTML inicial e status HTTP.
 
-1. Homologação autorizada, backup restaurável de banco/plugins/uploads e responsável pela reversão.
-2. WordPress >= 6.7, PHP >= 8.3, Fileinfo, banco MySQL/MariaDB e compatibilidade com plugins/WooCommerce. Local usou WP 6.7.10/PHP 8.3.36/SQLite; WP 6.7.13 informado não foi reproduzido.
-3. HTTPS, fuso, permissões de extração/mídia, limites PHP/espaço e PDFs até 5 MB (ou limite menor do servidor).
-4. REST e links permanentes; segurança/cache/CDN devem permitir endpoints próprios e download GET/HEAD de `wp-admin/admin-post.php?action=rak_public_model`, inclusive visitante. Respeitar no-store/no-cache; não desabilitar proteção global.
-5. Uploads públicos devem receber somente modelos em branco aprovados. Documentos pessoais precisam de infraestrutura privada futura. Conferir backup/retenção dos anexos históricos protegidos.
-6. O catálogo público permite automaticamente Vite em localhost/127.0.0.1/[::1], portas 5173–5199, apenas leitura, sem credenciais. Origem pública https://realmeidakits.com.br e filtro rak_public_origins preservados. Nenhum filtro manual é necessário para desenvolvimento local. Worker publicado permanece intacto.
+## Reversão
 
-## Instalar e homologar
-
-**Plugins → Adicionar plugin → Enviar plugin → escolher ZIP → Instalar agora → Ativar**. Na atualização, **Substituir o atual pelo enviado**, sem desinstalar. Confirme versão e acesso administrativo. [Primeiro cadastro](wordpress-setup.md).
-
-Crie autorização DEMONSTRAÇÃO com PDF em branco e condição não jurídica. Associe em duas corridas, reabra, remova uma associação e confira independência. Edite/desative biblioteca e confira versões antigas/downloads. Reassocie explicitamente para nova versão. Duplique corrida, revise campos limpos e publique somente teste autorizado.
-
-Percorra oito abas, mudanças não salvas e erro em outra aba. Teste 320, 375, 768 e 1440 px, teclado/foco e mídia real autorizada. Confira REST lista/detalhe, rascunhos/privadas/senha, campos opcionais, versões, CORS/cache. Baixe como visitante e valide conteúdo/headers. Não envie anexos pessoais.
-
-Execute somente pnpm dev, sem arquivo .env/modo de integração: duas pessoas/duas corridas, Oficial/APPAI, documentos/modelos opcionais e ausentes, aceites por corrida, revisão e pagamento bloqueado. Confira carregando/vazio/erro e imagem de camiseta. [Resultados locais e limites](qa-block-b.md).
-
-Homologue WooCommerce HPOS/Checkout Blocks, segurança/cache e MySQL. Declaração de compatibilidade não comprova testes no servidor. GoSMTP/Brevo existente é usado na recuperação de senha. Cron/Action Scheduler e gateway de pagamento permanecem fora deste bloco.
-
-## Migração e reversão
-
-Migração automática em lotes de 25 e idempotente preserva configurações/IDs/versões e cria associações de bibliotecas. Em bases maiores, confira conclusão nas próximas requisições e logs. Teste local migrou legado e comprovou repetição sem duplicar. Atualização nativa 1.0.0 → 1.1.0 preservou snapshots de duas corridas existentes.
-
-Para reverter esquema 3, restaure **backup consistente de banco, plugin e uploads**. Não basta instalar 1.0.0 e continuar editando: editor antigo pode descartar campos novos e não conhece as tabelas de contas. Desativar preserva cadastros, mas interrompe menu/API. Não apague posts/opções/metadados para reverter. Sem atualizador remoto.
-
-A aplicação de desenvolvimento já usa a API real como fonte única. Em 30/10/2026, o servidor hospedado respondeu HTTP 200, mas não autorizou a origem local via CORS. Atualize o plugin hospedado com este ZIP 1.2.0; essa instalação não foi executada nesta tarefa. Depois repita o QA completo no navegador com pnpm dev. Nenhuma mudança no Worker publicado é necessária. O Bloco C acrescenta migração 3 para contas/participantes/sessões; os dados de corridas permanecem preservados.
+Restaure juntos os arquivos estáticos, o manifesto e as regras anteriores. Reinstale a versão anterior do plugin sem desinstalar e restaure as constantes do baseline. A versão 1.3.1 conserva o esquema 3, permitindo voltar à 1.2.0 com os cadastros feitos no intervalo. Restaure banco e uploads somente se necessário e depois de reconciliar alterações posteriores ao backup. Verifique contas, participantes, administração, REST e downloads antes de liberar o tráfego.

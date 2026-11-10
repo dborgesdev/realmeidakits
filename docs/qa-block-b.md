@@ -1,5 +1,7 @@
 # QA atual — Bloco C (05/11/2026)
 
+> Registro histórico. Consulte a [arquitetura vigente](project.md), a [autenticação](wordpress-authentication.md) e o [procedimento HostGator](wordpress-deployment.md).
+
 Plugin **1.2.0**, esquema **3**, branch feat/v2-preview. Sem commit, push, PR, merge, deploy ou atualização no WordPress hospedado.
 
 ## Resultado local
@@ -92,7 +94,7 @@ A validação de Node usa fixtures somente nos testes. Testes históricos de sna
 Somente GET/HEAD de recursos públicos, sem login ou alteração do WordPress. Lista e detalhe passaram pelo adaptador real loadWordpressRaces/loadWordpressRace, sem fixture:
 
 - Lista HTTP 200: uma corrida **Runlloween**, ID 16, slug runlloween, estado aberto na consulta de 30/10/2026 às 11:01 (Brasília).
-- Distância 5km, Oficial e APPAI. Valores em centavos: Oficial Pix 2600/cartão 3000; APPAI camiseta 2400/2800, somente número 2000/2400; tamanhos P/M/G/GG.
+- Distância 5 km, Oficial e APPAI, com tamanhos P/M/G/GG. A política vigente é preço único por corrida.
 - Dois documentos por modalidade, instruções preservadas e uma condição versão 1. O modelo chamado “Exemplo” foi cadastrado no WordPress; esse nome vem da API, não de fixture e não foi alterado.
 - Imagem da corrida e camiseta: HTTP 200/image/jpeg.
 - Modelo público: HTTP 200/application/pdf, download attachment, 128.023 bytes, assinatura %PDF- válida.

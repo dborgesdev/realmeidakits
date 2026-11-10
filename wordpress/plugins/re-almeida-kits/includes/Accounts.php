@@ -59,15 +59,21 @@ final class Accounts {
             return $id;
         });
     }
-    private static function writeProfile(int $id,array $data): void {
+    public static function writeProfile(int $id, array $data, ?string $firstName = null, string $lastName = ""): void {
+        if ($firstName === null) {
+            $names = preg_split("/\s+/", $data["name"], 2);
+            $firstName = $names[0];
+            $lastName = $names[1] ?? "";
+        }
         update_user_meta($id,'_rak_profile',$data);update_user_meta($id,'_rak_cpf',$data['cpf']);
-        foreach(['billing_first_name'=>$data['name'],'billing_email'=>$data['email'],'billing_phone'=>$data['phone'],'billing_cpf'=>$data['cpf']] as $key=>$value)update_user_meta($id,$key,$value);
-        update_user_meta($id,'first_name',$data['name']);
+        foreach(['billing_first_name'=>$firstName,'billing_last_name'=>$lastName,'billing_birthdate'=>$data['birthDate'],'billing_email'=>$data['email'],'billing_phone'=>$data['phone'],'billing_cpf'=>$data['cpf']] as $key=>$value)update_user_meta($id,$key,$value);
+        update_user_meta($id,'first_name',$firstName);
+        update_user_meta($id,'last_name',$lastName);
     }
     public static function profile(int $id): array {
         $user=get_userdata($id);$stored=get_user_meta($id,'_rak_profile',true);
         if(!is_array($stored))$stored=[];
-        return ['id'=>$id,'name'=>$stored['name']??$user->display_name,'cpf'=>get_user_meta($id,'_rak_cpf',true)?:get_user_meta($id,'billing_cpf',true),'birthDate'=>$stored['birthDate']??'','phone'=>$stored['phone']??get_user_meta($id,'billing_phone',true),'email'=>$user->user_email];
+        return ['id'=>$id,'name'=>$stored['name']??$user->display_name,'cpf'=>get_user_meta($id,'_rak_cpf',true)?:get_user_meta($id,'billing_cpf',true),'birthDate'=>$stored['birthDate']??get_user_meta($id,'billing_birthdate',true),'phone'=>$stored['phone']??get_user_meta($id,'billing_phone',true),'email'=>$user->user_email];
     }
     public static function update(int $id,array $input) {
         $data=Identity::person($input,true);if(is_wp_error($data))return $data;
@@ -91,7 +97,7 @@ final class Accounts {
             if($id){$row=$wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d AND owner_id=%d",$id,$owner));if(!$row)return Identity::error('Participante não encontrado.',404);
                 if(!isset($input['version'])||(int)$input['version']!==(int)$row->version)return Identity::error('Cadastro alterado em outra sessão. Recarregue antes de salvar.',409);
                 $version=(int)$row->version+1;
-            }else{if((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE owner_id=%d",$owner))>=20)return Identity::error('Limite de 20 participantes por titular.',409);$version=1;}
+            }else{if((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE owner_id=%d",$owner))>=RequestSettings::limit())return Identity::error('Limite de participantes do titular atingido.',409);$version=1;}
             $duplicate=$wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE owner_id=%d AND cpf=%s AND id<>%d",$owner,$data['cpf'],$id));
             if($duplicate)return Identity::error('Já existe participante com este CPF neste titular.',409);
             $record=['owner_id'=>$owner,'cpf'=>$data['cpf'],'data'=>wp_json_encode($data),'version'=>$version];

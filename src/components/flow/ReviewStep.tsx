@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { formatIdentity } from "../../state/identityMasks";
 import { useCatalog } from "../../state/CatalogContext";
 import { totalPrice, money } from "../../state/pricing";
 import { useRequest } from "../../state/RequestContext";
@@ -9,13 +10,12 @@ export default function ReviewStep() {
   const total = totalPrice(
     draft.participants.flatMap((p) => p.items),
     events,
-    draft.method,
   );
   return (
     <>
       <h1>Confira seu pedido</h1>
       <p className="help-panel">
-        Total do pedido · {draft.method}:{" "}
+        Total do serviço{" "}
         <strong>
           {money(total.known)}
           {total.pending ? " + a confirmar" : ""}
@@ -29,9 +29,11 @@ export default function ReviewStep() {
         <section className="form-section" key={p.id}>
           <h2>{p.person.name}</h2>
           <p>
-            {p.person.cpf} · {p.person.birthDate} · {p.person.phone}
+            {formatIdentity("cpf", p.person.cpf)} ·{" "}
+            {formatIdentity("birthDate", p.person.birthDate)} ·{" "}
+            {formatIdentity("phone", p.person.phone)}
           </p>
-          <OrderSummary items={p.items} method={draft.method} />
+          <OrderSummary items={p.items} />
           <p className="field-help">Solicitação ainda não enviada.</p>
         </section>
       ))}

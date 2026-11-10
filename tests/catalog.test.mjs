@@ -26,7 +26,7 @@ const fixture = JSON.parse(
 test("WordPress is the only default with the known public API, without mode flags", () => {
   assert.deepEqual(catalogConfig(), {
     source: "wordpress",
-    apiUrl: "https://app.realmeidakits.com.br/wp-json/re-almeida/v1",
+    apiUrl: "/app/wp-json/re-almeida/v1",
   });
   const context = readFileSync(
     new URL("../src/state/CatalogContext.tsx", import.meta.url),
@@ -38,7 +38,7 @@ test("normalizer consumes actual WordPress projection without fictitious fallbac
   const race = normalizeRace(fixture);
   assert.equal(race.source, "wordpress");
   assert.equal(race.image, "");
-  assert.equal(race.modalities[0].prices.pix, null);
+  assert.equal(race.priceCents, null);
   assert.equal(race.modalities[1].numberEnabled, true);
   assert.equal(race.modalities[1].shirtEnabled, false);
   assert.equal(makeSelection(race, "appai").kit, "numero");
@@ -56,17 +56,17 @@ test("invalid nested API data, negative money and duplicate identities are rejec
   ])
     assert.throws(() => normalizeRace({ ...fixture, ...patch }));
   const data = structuredClone(fixture);
-  data.modalities[0].prices.pix = -1;
+  data.priceCents = -1;
   assert.throws(() => normalizeRace(data));
   assert.throws(() =>
     normalizePage({ data: [], page: 1, totalPages: 0, total: 1 }),
   );
 });
-test("per-modality distances, pickups, options and kit prices remain independent", () => {
+test("modality options do not change the race price", () => {
   const race = normalizeRace(fixture);
   race.modalities[0].distances = ["10 km"];
   race.modalities[0].kitTypes = ["Completo"];
-  race.modalities[0].kitPrices = { Completo: { pix: 1234, card: null } };
+  race.priceCents = 1234;
   const item = {
     ...makeSelection(race, "oficial"),
     distance: "10 km",
@@ -77,8 +77,11 @@ test("per-modality distances, pickups, options and kit prices remain independent
     optionsReady({ ...item, distance: race.modalities[1].distances[0] }, race),
     false,
   );
-  assert.equal(itemPrice(item, race, "Pix"), 1234);
-  assert.equal(itemPrice(item, race, "Cartão"), null);
+  assert.equal(itemPrice(item, race), 1234);
+  assert.equal(
+    itemPrice({ ...item, modality: "appai", kit: "numero" }, race),
+    1234,
+  );
   race.modalities[0].documents.push({
     id: "optional-demo",
     label: "DEMONSTRAÇÃO opcional",
@@ -167,5 +170,47 @@ test("empty catalog, malformed payload, not-found detail and cancellation stay e
   await assert.rejects(
     loadWordpressRaces("https://example.invalid", controller.signal),
     { name: "AbortError" },
+  );
+});
+
+test("the relative API accepts local media and WordPress models from the browser origin", async (t) => {
+  const previousLocation = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "location",
+  );
+  const origin = "http://127.0.0.1:5173";
+  Object.defineProperty(globalThis, "location", {
+    configurable: true,
+    value: { origin },
+  });
+  t.after(() => {
+    if (previousLocation)
+      Object.defineProperty(globalThis, "location", previousLocation);
+    else delete globalThis.location;
+  });
+  const race = structuredClone(fixture);
+  race.image = {
+    url: origin + "/app/wp-content/uploads/qa.jpg",
+    width: 1,
+    height: 1,
+    alt: "",
+  };
+  const doc = race.modalities[0].documents[0];
+  doc.template = {
+    url:
+      origin +
+      "/app/wp-admin/admin-post.php?action=rak_public_model&attachment=10",
+    name: "demonstracao-modelo.pdf",
+    mime: "application/pdf",
+  };
+  t.mock.method(globalThis, "fetch", async (url) => {
+    assert.equal(new URL(url).origin, origin);
+    return Response.json({ data: [race], page: 1, totalPages: 1, total: 1 });
+  });
+  const [result] = await loadWordpressRaces(catalogConfig().apiUrl);
+  assert.equal(result.image, race.image.url);
+  assert.equal(
+    result.modalities[0].documents[0].template.url,
+    doc.template.url,
   );
 });

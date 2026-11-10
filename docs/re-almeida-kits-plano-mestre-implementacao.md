@@ -120,7 +120,7 @@
 
 **Modelo:** produtos técnicos virtuais ocultos; para cada atribuição participante×corrida, item Woo com metadados estáveis: corrida ID/versão, modalidade, distância, tipo de kit, camiseta/tamanho, participante ID, preço validado, requisitos aplicáveis. A quantidade pode ser uma unidade por atribuição para facilitar vouchers e auditoria. Não usar nome do produto como fonte de verdade.
 
-**Preço:** servidor revalida disponibilidade, prazos, modalidade, combinação e valor no instante do pedido; nunca aceita total informado pelo React. Regras de Pix/cartão e eventuais taxas dependem da configuração real e do gateway futuro; pagamento manual de testes deve preservar valor auditável. Não vender kit ou inscrição.
+**Preço:** servidor revalida disponibilidade, prazos, modalidade, combinação e valor no instante do pedido; nunca aceita total informado pelo React. Cada corrida tem um único preço-base. Meios de pagamento e eventuais condições financeiras seguem a configuração real do WooCommerce e do gateway. Não vender kit ou inscrição.
 
 **Pedido:** responsável WooCommerce, até 20 participantes distintos, várias corridas, aceite por corrida com texto/versão/timestamp, referência dos documentos, snapshot das escolhas, prevenção de duplicidade em reenvios (idempotência). Criar pedido real via APIs Woo, HPOS; não editar tabelas diretamente. Status de pagamento separados de status de documento e de retirada. Confirmação manual pelo painel Woo aciona os mesmos efeitos de um pagamento futuro aprovado, sem inventar transação.
 

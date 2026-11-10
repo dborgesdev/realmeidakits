@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -12,7 +12,7 @@
     "plugin:zip": "powershell -NoProfile -File scripts/package-plugin.ps1",
     "preview": "vite preview --host 0.0.0.0",
     "format": "prettier --write src tests *.json *.ts *.js index.html README.md",
-    "deploy": "pnpm build && wrangler deploy"
+    "build:hostgator": "tsc -b && vite build --mode hostgator"
   },
   "dependencies": {
     "lucide-react": "^1.57.0",
@@ -32,8 +32,7 @@
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.2",
-    "vite": "^8.3.4",
-    "wrangler": "^4.151.0"
+    "vite": "^8.3.4"
   },
   "packageManager": "pnpm@12.11.2"
 }

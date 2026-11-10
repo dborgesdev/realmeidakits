@@ -347,7 +347,7 @@ ul {
 .card-body {
   padding: 21px;
 }
-.card-body h3 {
+.card-body :is(h2, h3) {
   font-size: 1.25rem;
   margin-bottom: 17px;
 }
@@ -1360,7 +1360,8 @@ main {
   }
 }
 /* V2: seleção e configuração independente, sobre o design system aprovado. */
-.event-card.is-selected {
+.event-card.is-selected,
+.event-card:has([data-race-selection] button[aria-pressed="true"]) {
   border: 2px solid #c5091d;
   box-shadow: 0 6px 22px #c5091d12;
 }
@@ -1816,7 +1817,9 @@ body {
   position: relative;
   z-index: 1;
   padding: 48px;
-  max-width: 760px;
+  width: min(100%, 760px);
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: white;
 }
 .race-hero h1 {
@@ -2076,9 +2079,67 @@ body {
   inset: 0;
   z-index: 0;
 }
-.account-page { max-width: 1000px; display: grid; gap: 24px; }
-.account-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
-.account-participants { list-style: none; padding: 0; }
-.account-participants li { padding: 20px 0; border-bottom: 1px solid #d9dfe5; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
-.account-participants .field-help { display: block; }
-@media (max-width: 600px) { .account-actions { align-items: stretch; } .account-actions .button { width: 100%; } .account-participants li > div { width: 100%; } }
+.account-page {
+  max-width: 1000px;
+  display: grid;
+  gap: 24px;
+}
+.account-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+.account-participants {
+  list-style: none;
+  padding: 0;
+}
+.account-participants li {
+  padding: 20px 0;
+  border-bottom: 1px solid #d9dfe5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.account-participants .field-help {
+  display: block;
+}
+@media (max-width: 600px) {
+  .account-actions {
+    align-items: stretch;
+  }
+  .account-actions .button {
+    width: 100%;
+  }
+  .account-participants li > div {
+    width: 100%;
+  }
+}
+
+.request-race-picker {
+  flex: 1;
+  min-width: 0;
+}
+.request-race-picker > summary {
+  cursor: pointer;
+}
+.request-race-picker .panel {
+  margin-top: 0.75rem;
+}
+.request-race-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.request-race-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}

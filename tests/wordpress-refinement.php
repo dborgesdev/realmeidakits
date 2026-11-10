@@ -58,11 +58,11 @@ try {
     verify(Repository::get($r2)['conditions'][0]['text']===$term['text'],'corrida antiga não recebe alteração retroativa');
     $new=Repository::get($r1);$new['conditions']=[Library::associate($condition)];Repository::save($r1,$new);
     verify(Repository::get($r1)['conditions'][0]['text']===$newTerm['text'],'reassociação explícita aplica nova versão');
-    $d=Repository::get($r2);$d['raceDate']='2099-12-01';$d['raceTime']='08:00';$d['opensAt']='2099-10-01T00:00:00-03:00';$d['closesAt']='2099-11-01T00:00:00-03:00';$d['location']='DEMONSTRAÇÃO — local';$d['officialPix']=1234;$d['whatsappUrl']='';$d['kits']=[['id'=>'demo-kit','label'=>'DEMONSTRAÇÃO — kit','pix'=>1234,'card'=>2345]];Repository::save($r2,$d);
+    $d=Repository::get($r2);$d['raceDate']='2099-12-01';$d['raceTime']='08:00';$d['opensAt']='2099-10-01T00:00:00-03:00';$d['closesAt']='2099-11-01T00:00:00-03:00';$d['location']='DEMONSTRAÇÃO — local';$d['priceCents']=1234;$d['whatsappUrl']='';$d['kits']=[['id'=>'demo-kit','label'=>'DEMONSTRAÇÃO — kit']];Repository::save($r2,$d);
     $copy=Duplicate::create($r2);$created[]=$copy;$copied=Repository::get($copy);
     verify(get_post_status($copy)==='draft'&&$copied['status']==='unavailable','duplicação cria somente rascunho indisponível');
     verify(!$copied['raceDate']&&!$copied['raceTime']&&!$copied['opensAt']&&!$copied['closesAt']&&!$copied['location']&&!get_post_thumbnail_id($copy),'duplicação limpa dados específicos e imagem');
-    verify($copied['officialPix']===null&&$copied['kits'][0]['pix']===null,'duplicação limpa preços inclusive por opção');
+    verify(array_key_exists('priceCents', $copied) && $copied['priceCents'] === null,'duplicação limpa o preço único');
     verify($copied['documents']===$d['documents']&&$copied['distances']===$d['distances'],'duplicação preserva exigências e configurações recorrentes');
     wp_update_post(['ID'=>$copy,'post_status'=>'publish']);verify(get_post_status($copy)==='draft','publicação da cópia bloqueada antes de revisão');
     $_POST=['rak_nonce'=>wp_create_nonce('rak_save_'.$copy),'rak_copy_reviewed'=>'1','rak_payload'=>wp_slash(wp_json_encode($copied))];

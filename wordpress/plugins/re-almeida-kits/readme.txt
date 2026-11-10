@@ -1,19 +1,20 @@
 === Re Almeida Kits ===
 Requires at least: 6.7
 Requires PHP: 8.3
-Stable tag: 1.2.0
+Stable tag: 1.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Cadastro de corridas no wp-admin e API pública de leitura.
-Não cria pedidos, pagamentos, documentos pessoais nem vouchers operacionais.
+Cadastro de corridas no wp-admin, páginas públicas, API e integração com contas WooCommerce.
+Inclui rascunhos, documentos privados e integração opcional de pedidos com o checkout WooCommerce.
 
 == Instalação ==
 1. Plugins > Adicionar plugin > Enviar plugin.
 2. Selecione re-almeida-kits.zip, instale e ative.
 3. Abra Re Almeida Kits > Adicionar corrida.
 4. Configure ao menos uma modalidade e uma distância correspondente.
-5. Publique e confira /wp-json/re-almeida/v1/corridas.
+5. Publique e confira /corridas e /app/wp-json/re-almeida/v1/corridas na arquitetura HostGator.
+6. Configure Minha conta no WooCommerce para cadastro, login e recuperação de senha.
 
 == Atualização ==
 Faça backup do banco e do plugin antes de atualizar.
@@ -32,6 +33,47 @@ Não cadastre documentos pessoais: somente exigências públicas.
 Textos das condições possuem histórico privado e versão incremental.
 
 == Changelog ==
+
+= 1.8.1 =
+Nova inscrição direta e reutilização de identificação do histórico do próprio titular.
+
+= 1.8.0 =
+Novas solicitações, preços por modalidade e biblioteca de locais de retirada.
+
+= 1.7.0 =
+Biblioteca documental, identificação reutilizável e correção de anexos por solicitação.
+
+= 1.6.0 =
+Central operacional por participante, análise de documentos e exportação XLSX.
+
+= 1.5.1 =
+Diagnóstico do checkout WooCommerce e retomada de pedidos existentes.
+
+= 1.5.0 =
+Armazenamento protegido em wp-content com habilitação explícita após prova HTTP.
+
+= 1.4.4 =
+Compara o acesso à pasta privada com uma prova descartável em wp-content.
+
+= 1.4.3 =
+Detalha o diagnóstico administrativo do armazenamento privado.
+
+= 1.4.2 =
+Valida o diretório privado existente mesmo quando open_basedir restringe o pai.
+
+= 1.4.1 =
+Diagnóstico do armazenamento privado, criação segura do diretório e validação de uploads.
+
+= 1.4.0 =
+Rascunho privado por titular com controle de versão.
+
+= 1.3.1 =
+Acesso nativo à conta no modo Em breve, retorno seguro e cache privado.
+
+= 1.3.0 =
+Catálogo e detalhes em PHP, sitemap dinâmico e controles React com assets do manifesto Vite.
+Contas WooCommerce com cookies nativos e nonce REST. Esquema 3 e registros existentes preservados.
+Após a homologação da sessão nativa, RAK_LEGACY_PKCE=false desativa as rotas e o CORS de transição.
 
 = 1.2.0 =
 Contas customer, CPF único, autenticação por código PKCE de uso único, sessões revogáveis e participantes privados por titular.

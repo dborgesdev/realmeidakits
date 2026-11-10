@@ -1,6 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCatalog } from "../../state/CatalogContext";
-import { previewConfig } from "../../config/preview";
+import { useAccount } from "../../state/AccountContext";
 import { useRequest } from "../../state/RequestContext";
 import { participantReady } from "../../state/requestRules";
 import { controlId } from "../../state/validationRules";
@@ -11,8 +12,37 @@ import DataStep from "./DataStep";
 import OptionsStep from "./OptionsStep";
 import RaceFields from "./RaceFields";
 export default function ParticipantsStep() {
+  const { participantLimit, request } = useAccount();
   const { events } = useCatalog();
-  const { draft, resize, remove, assign } = useRequest();
+  const { draft, resize, remove, assign, persistence } = useRequest();
+  const [conflicts, setConflicts] = useState<
+    { slot: string; raceId: string }[]
+  >([]);
+  const [lookupError, setLookupError] = useState("");
+  useEffect(() => {
+    if (persistence.status !== "saved") return;
+    let active = true;
+    request<{ conflicts: { slot: string; raceId: string }[] }>(
+      "/account/draft/registration-conflicts",
+      "POST",
+      {},
+    )
+      .then((result) => {
+        if (active) {
+          setConflicts(result.conflicts);
+          setLookupError("");
+        }
+      })
+      .catch(() => {
+        if (active)
+          setLookupError(
+            "A verificação de CPF será repetida antes de finalizar.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [request, persistence.status, persistence.version]);
   const { field, navigatePanel } = useFlowFeedback();
   const complete = draft.participants.filter((p) =>
     participantReady(p, events, draft.selectedRaceIds),
@@ -31,7 +61,7 @@ export default function ParticipantsStep() {
         <button
           type="button"
           className="button secondary small"
-          disabled={draft.participants.length >= previewConfig.maxParticipants}
+          disabled={draft.participants.length >= participantLimit}
           onClick={() => {
             resize(draft.participants.length + 1);
             navigatePanel(`p${draft.nextParticipantNumber}`);
@@ -40,11 +70,36 @@ export default function ParticipantsStep() {
           Adicionar participante
         </button>
       </div>
-      {draft.participants.length >= previewConfig.maxParticipants && (
+      {draft.participants.length >= participantLimit && (
         <p className="caption">
-          Limite de {previewConfig.maxParticipants} participantes atingido.
+          Limite de {participantLimit} participantes atingido.
         </p>
       )}
+      {lookupError && <p role="status">{lookupError}</p>}
+      {conflicts.map((entry) => {
+        const person = draft.participants.find((p) => p.id === entry.slot);
+        const race = events.find((event) => event.id === entry.raceId);
+        if (
+          !person?.items.some((item) => item.raceId === entry.raceId) ||
+          !race
+        )
+          return null;
+        return (
+          <div className="error" key={entry.slot + ":" + entry.raceId}>
+            <p role="alert">
+              {person.person.name || "Participante"} já possui uma solicitação
+              para {race.name}.
+            </p>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => assign(person.id, race)}
+            >
+              Remover apenas esta atribuição
+            </button>
+          </div>
+        );
+      })}
       <ParticipantPanels
         participants={draft.participants}
         describe={(p) =>
@@ -79,7 +134,7 @@ export default function ParticipantsStep() {
               <p className="field-help">
                 Sem duplicar a combinação de participante e corrida.
               </p>
-              <Link className="text-link" to="/corridas">
+              <Link className="text-link" reloadDocument to="/corridas">
                 Escolher outras corridas no catálogo
               </Link>
             </fieldset>

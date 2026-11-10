@@ -10,9 +10,15 @@ export default function DocumentRequirementInfo({
       aria-label={`Orientações: ${doc.label}`}
     >
       <h3>
-        {doc.label} {doc.required === false ? <small>· opcional</small> : null}
+        {doc.label}{" "}
+        <small>· {doc.required === false ? "opcional" : "obrigatório"}</small>
       </h3>
       {doc.guidance && <p className="field-help">{doc.guidance}</p>}
+      {doc.requiresSignature && (
+        <p className="field-help">
+          Preencha e assine o documento antes de enviar.
+        </p>
+      )}
       {doc.template && (
         <a
           className="button secondary small"

@@ -14,7 +14,7 @@ final class Admin {
         add_action('admin_notices', [self::class, 'notice']);
     }
     public static function assets(): void {
-        if (!in_array(get_current_screen()?->post_type, ['corrida','rak_document','rak_condition'], true)) return;
+        if (!in_array(get_current_screen()?->post_type, ['corrida','rak_document','rak_condition'], true) && ( $_GET['page'] ?? '') !== 'rak-document-library') return;
         wp_enqueue_media();
         wp_enqueue_style('rak-admin', plugins_url('assets/admin.css', FILE), [], VERSION);
         wp_enqueue_script('rak-admin', plugins_url('assets/admin.js', FILE), [], VERSION, true);
@@ -25,13 +25,19 @@ final class Admin {
     public static function render(\WP_Post $post): void {
         wp_nonce_field('rak_save_' . $post->ID, 'rak_nonce');
         $pending = get_transient(self::transient($post->ID));
-        $data = $pending['input'] ?? Repository::get($post->ID);
+        $raw = Repository::get($post->ID);
+        $data = RacePrices::canonical($pending['input'] ?? $raw);
+        $legacy = RacePrices::legacy($raw) ?: get_post_meta($post->ID, '_rak_legacy_prices', true);
+        if (empty($data['priceCents']) && ($data['priceCents'] ?? null) !== 0 && is_array($legacy) && count(array_unique($legacy)) > 1) {
+            $values = array_map(static fn($cents) => 'R$ ' . number_format($cents / 100, 2, ',', '.'), array_unique($legacy));
+            echo '<div class="notice notice-warning inline"><p>Defina os valores das modalidades oferecidas. Os valores anteriores divergem (' . esc_html(implode(', ', $values)) . ') e foram mantidos como referência.</p></div>';
+        }
         echo '<p>Nome, descrição, slug, imagem destacada e publicação utilizam os campos nativos do WordPress. Os prazos abaixo usam o fuso <strong>' . esc_html(wp_timezone_string()) . '</strong>. Configure-o em Configurações → Geral.</p>';
         echo '<p>Todos os campos sem * são opcionais. Habilite ao menos uma modalidade e uma distância correspondente. Preços vazios significam “a confirmar”. Nenhuma cobrança é criada.</p>';
         if (get_post_meta($post->ID, '_rak_duplicate_review', true)) echo '<div class="notice notice-warning inline"><p>Cópia em rascunho: revise nome, data/horário, prazos, imagem, local, valores e WhatsApp antes de publicar.</p><label><input type="checkbox" id="rak-copy-reviewed" name="rak_copy_reviewed" value="1"> Revisei os dados específicos desta nova corrida.</label></div>';
         echo '<div id="rak-editor"></div><noscript>Ative JavaScript para editar as opções estruturadas desta corrida. O salvamento está bloqueado sem o formulário completo.</noscript>';
         echo '<input type="hidden" name="rak_payload" id="rak-payload" disabled>';
-        echo '<script type="application/json" id="rak-schema">' . wp_json_encode(['ajaxUrl' => admin_url('admin-ajax.php'), 'inlineNonce' => wp_create_nonce('rak_library_inline'), 'sections' => Schema::sections(), 'libraries' => ['documents' => Library::available('rak_document'), 'conditions' => Library::available('rak_condition')], 'errorFields' => $pending['fields'] ?? [], 'errorMessage' => $pending['error'] ?? '', 'data' => $data, 'image' => !empty($data['shirtImageId']) ? wp_get_attachment_image_url((int) $data['shirtImageId'], 'medium') : ''], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . '</script>';
+        echo '<script type="application/json" id="rak-schema">' . wp_json_encode(['raceId' => (int) $post->ID, 'ajaxUrl' => admin_url('admin-ajax.php'), 'inlineNonce' => wp_create_nonce('rak_library_inline'), 'sections' => Schema::sections(), 'libraries' => ['documents' => Library::available('rak_document'), 'conditions' => Library::available('rak_condition'), 'pickups' => PickupLibrary::available()], 'errorFields' => $pending['fields'] ?? [], 'errorMessage' => $pending['error'] ?? '', 'data' => $data, 'image' => !empty($data['shirtImageId']) ? wp_get_attachment_image_url((int) $data['shirtImageId'], 'medium') : ''], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . '</script>';
     }
     public static function beforeSave(array $data, array $postarr): array {
         if (($data['post_type'] ?? '') !== 'corrida' || !isset($_POST['rak_nonce']) || (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)) return $data;

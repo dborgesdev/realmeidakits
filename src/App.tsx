@@ -5,7 +5,6 @@ import Footer from "./components/home/Footer";
 import ConclusionPage from "./pages/ConclusionPage";
 import AccountPage from "./pages/AccountPage";
 import Home from "./pages/Home";
-import EventsPage from "./pages/EventsPage";
 import RequestPage from "./pages/RequestPage";
 import TrackingPage from "./pages/TrackingPage";
 import LegacyRequest from "./pages/LegacyRequest";
@@ -25,7 +24,28 @@ export default function App() {
       requestAnimationFrame(() =>
         document.getElementById(location.hash.slice(1))?.scrollIntoView(),
       );
-    const configured = import.meta.env.VITE_SITE_URL || window.location.origin;
+    const robots = document.querySelector<HTMLMetaElement>(
+      'meta[name="robots"]',
+    );
+    if (robots) robots.content = "noindex,nofollow";
+    else if (
+      /^\/(conta|solicitacao|acompanhamento|conclusao)(?:\/|$)/.test(
+        location.pathname,
+      )
+    ) {
+      const tag = document.createElement("meta");
+      tag.name = "robots";
+      tag.content = "noindex,nofollow";
+      tag.dataset.privateRoute = "";
+      document.head.appendChild(tag);
+    }
+    if (
+      !/^\/(conta|solicitacao|acompanhamento|conclusao)(?:\/|$)/.test(
+        location.pathname,
+      )
+    )
+      document.querySelector("meta[data-private-route]")?.remove();
+    const configured = window.location.origin;
     if (configured) {
       let link = document.querySelector<HTMLLinkElement>(
         'link[rel="canonical"]',
@@ -44,15 +64,12 @@ export default function App() {
       <main id="conteudo" tabIndex={-1}>
         {status !== "ready" &&
         (location.pathname === "/" ||
-          location.pathname.startsWith("/corridas") ||
           location.pathname.startsWith("/solicitacao")) ? (
           <CatalogStatus />
         ) : (
           <Routes>
             <Route path="/conta/*" element={<AccountPage />} />
             <Route path="/" element={<Home />} />
-            <Route path="/corridas" element={<EventsPage />} />
-            <Route path="/corridas/:slug" element={<EventsPage />} />
             <Route
               path="/solicitacao/:stage"
               element={<RequestPage key={location.pathname} />}

@@ -1,24 +1,13 @@
 # Instalação e operação inicial — Re Almeida Kits
 
-Revisão: 05/11/2026. Plugin **1.2.0**, esquema **3**. Pronto para homologação; nenhuma instalação em produção realizada.
+O plugin 1.3.1 mantém o esquema 3. Confira [pré-requisitos, atualização e reversão](wordpress-deployment.md) antes de instalar. Use a atualização nativa pelo ZIP, preservando o plugin e os dados existentes. Depois de atualizar, confira o menu Re Almeida Kits e reabra uma corrida já cadastrada.
 
-## Instalar ou atualizar pelo wp-admin
+## Contas e participantes
 
-1. Prepare homologação e backup restaurável do banco, plugins e uploads. Requer WordPress >= 6.7, PHP >= 8.3 e Fileinfo para PDFs.
-2. Como administrador, abra **Plugins → Adicionar plugin → Enviar plugin**.
-3. Selecione `wordpress/releases/re-almeida-kits.zip` e **Instalar agora**. Na atualização, escolha **Substituir o atual pelo enviado**, mantendo a pasta `re-almeida-kits`. Não desinstale.
-4. Ative e confira versão **1.2.0**, menu **Re Almeida Kits** e bibliotecas de documentos e condições. WooCommerce não é obrigatório para o catálogo.
-5. Reabra uma corrida existente e confira dados/API. Migração automática e incremental preserva IDs e versões anteriores. Em bases maiores, ocorre em lotes de 25 nas próximas requisições. [Detalhes e reversão](wordpress-deployment.md).
-
-## Contas e participantes — Bloco C
-
-1. Instale o ZIP **1.2.0** sem desinstalar o plugin anterior. A migração 3 cria tabelas próprias para identificação, participantes e sessões, preservando corridas/bibliotecas. WooCommerce deve disponibilizar a função customer; o catálogo continua independente.
-2. Abra **Minha conta → Criar minha conta**. O cadastro e a senha são preenchidos no domínio WordPress. Informe nome, CPF, nascimento, telefone com DDD, e-mail e senha de 12–128 caracteres. CPF com dígitos inválidos ou já vinculado a outra conta é recusado, inclusive quando está formatado nos metadados legados.
-3. Clientes existentes entram por e-mail/senha; dados incompletos são solicitados antes de liberar acesso. Não são criadas contas duplicadas nem unidas contas automaticamente. Conflitos legados exigem correção administrativa autorizada.
-4. Em **Minha conta**, edite nome, nascimento e telefone. CPF/e-mail de acesso ficam protegidos; alterações desses identificadores exigem atendimento. A recuperação usa **Esqueci minha senha**, formulário e link de redefinição nativos WordPress, enviados por wp_mail/GoSMTP/Brevo configurados.
-5. Cadastre até 20 participantes distintos, com CPF próprio por registro. Eles ficam privados ao titular e podem ser selecionados nas solicitações futuras; cadastrar participante não cria login para ele. Edições concorrentes antigas recebem conflito e exigem recarregar o cadastro.
-6. Na etapa de participantes, selecione cadastro existente ou preencha e use **Salvar cadastro do participante**. Não é possível avançar com alterações cadastrais ainda não gravadas. Campos de modalidade, distância, retirada e inscrição pertencem à combinação participante/corrida; o pedido/checkout ainda não é enviado.
-7. **Sair da conta** revoga o acesso e encerra a sessão WordPress no retorno. Entrar novamente recupera perfil/participantes do servidor. Recarregar restaura acesso pela sessão nativa WordPress quando válida; nenhum bearer, CPF ou perfil fica em localStorage/sessionStorage. SessionStorage guarda somente PKCE transitório, indicação de sessão e IDs de corridas selecionadas para atravessar o retorno de login.
+1. Em Minha conta no WooCommerce, habilite o formulário nativo de cadastro. Ele solicita nome, CPF, nascimento, telefone e e-mail. O WooCommerce trata senhas e recuperação.
+2. Clientes existentes usam o mesmo cadastro. CPF vinculado é protegido. Conflitos de identidade legados exigem revisão autorizada.
+3. O titular administra até 20 participantes pela área React. Cadastros são privados e não criam login para o participante. Na solicitação, selecione um cadastro existente ou grave um novo antes de continuar.
+4. Use **Editar acesso e senha** para os dados nativos. Consulte a [autenticação](wordpress-authentication.md) para detalhes de sessão e sincronização.
 
 ## Cadastrar e reutilizar documentos
 
@@ -55,20 +44,12 @@ Na lista, **Duplicar como rascunho** reaproveita configurações recorrentes. No
 Consulte na origem de homologação:
 
 ```text
-https://ORIGEM/wp-json/re-almeida/v1/corridas
-https://ORIGEM/wp-json/re-almeida/v1/corridas/SLUG
+https://ORIGEM/app/wp-json/re-almeida/v1/corridas
+https://ORIGEM/app/wp-json/re-almeida/v1/corridas/SLUG
 ```
 
-Lista: `{data,page,totalPages,total}`; detalhe: `{data}`. Rascunhos, privadas e senha não aparecem. Encerradas permanecem consultáveis, sem seleção. Confira documentos, instruções, `requiresUpload`, `purpose`, `version`, `template` e condições/versionamento. Modelo ausente não deve produzir botão de download. URL emitida usa `/wp-admin/admin-post.php?action=rak_public_model&attachment=ID`; abra sem login e confira PDF/download. Não há escrita pública, anexos pessoais nem histórico administrativo na API.
+Lista: `{data,page,totalPages,total}`; detalhe: `{data}`. Rascunhos, privadas e senha não aparecem. Encerradas permanecem consultáveis, sem seleção. Confira documentos, instruções, `requiresUpload`, `purpose`, `version`, `template` e condições/versionamento. Modelo ausente não deve produzir botão de download. URL emitida usa `/app/wp-admin/admin-post.php?action=rak_public_model&attachment=ID`; abra sem login e confira PDF/download. Não há escrita pública, anexos pessoais nem histórico administrativo na API.
 
-## Desenvolvimento React
+## Conferir frontend
 
-Execute somente **pnpm dev**. O catálogo usa diretamente https://app.realmeidakits.com.br/wp-json/re-almeida/v1, definido em src/config/catalog.ts. Não configure fonte demo, modos WordPress ou arquivos .env de teste. As configurações antigas locais foram retiradas do caminho de execução; dados de exemplo permanecem apenas nos testes.
-
-Atualize o plugin para **1.2.0**: a leitura pública permite automaticamente HTTP/HTTPS em localhost, 127.0.0.1 e [::1], portas 5173–5199. Não exige filtro PHP a cada execução. Sem wildcard, credenciais ou permissões de escrita/administração. Nenhum proxy adicionado.
-
-A homologação hospedada do Bloco C exige atualizar este ZIP e conferir login/cadastro/redefinição com os e-mails reais de homologação autorizados. O GoSMTP/Brevo existente é reutilizado. [Resultados locais e limites](qa-block-b.md).
-
-Após atualizar, confira catálogo/detalhe, imagens, preços, modalidades e documentos/condições contra o cadastro. Dados cadastrais vêm da conta e do diretório persistido no WordPress. Opções da solicitação continuam em memória. Envio de arquivo, pedido e pagamento continuam indisponíveis; não há marcadores fictícios nem confirmação de operação inexistente. Modelos públicos em branco têm download funcional.
-
-Worker e versão publicada preservados; sem commit, push, merge ou deploy. Build desta branch representa a integração nova e não deve ser publicado sem autorização.
+Use a [réplica de mesma origem](wordpress-deployment.md#desenvolvimento-e-homologação). Compare catálogo e detalhe HTML com o cadastro, incluindo imagens, valores do serviço, modalidades, modelos e condições. Verifique a atualização após salvar no WordPress e a navegação sem JavaScript. As solicitações continuam como rascunho, com opções em memória.

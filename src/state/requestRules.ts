@@ -70,7 +70,7 @@ export function fieldsReady(item: RaceSelection, race?: Race) {
   if (item.modality === "oficial" && mode?.requireRegistration === false)
     return true;
   const value = item.modality === "appai" ? item.membership : item.registration;
-  return value.trim().length > 0 && value.length <= 80;
+  return value.trim().length > 0;
 }
 export function documentsReady(
   item: RaceSelection,
@@ -78,7 +78,9 @@ export function documentsReady(
   shared: Record<string, string>,
 ) {
   return requiredDocuments(item, race).every((doc) =>
-    Boolean((doc.scope === "personal" ? shared : item.documents)[doc.id]),
+    Boolean(
+      item.documents[doc.id] || (doc.scope === "personal" && shared[doc.id]),
+    ),
   );
 }
 export function responsibleReady(person: Responsible) {
@@ -117,11 +119,15 @@ export function participantDocumentsReady(p: Participant, catalog: Race[]) {
     return !!race && documentsReady(i, race, p.documents);
   });
 }
-export function pendingStage(draft: Draft, catalog: Race[]): string {
+export function pendingStage(
+  draft: Draft,
+  catalog: Race[],
+  limit: number = previewConfig.maxParticipants,
+): string {
   if (
     !draft.prepared ||
     draft.participants.length < 1 ||
-    draft.participants.length > previewConfig.maxParticipants ||
+    draft.participants.length > limit ||
     !draft.selectedRaceIds.length
   )
     return "pedido";

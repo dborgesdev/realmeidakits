@@ -4,7 +4,11 @@ import { selectionEstimate, money, totalPrice } from "../../state/pricing";
 import { participantReady } from "../../state/requestRules";
 import { useCatalog } from "../../state/CatalogContext";
 import { useRequest } from "../../state/RequestContext";
-export default function SelectionSummary() {
+export default function SelectionSummary({
+  publicPage = false,
+}: {
+  publicPage?: boolean;
+}) {
   const { events } = useCatalog();
   const { draft } = useRequest();
   const configured =
@@ -16,11 +20,9 @@ export default function SelectionSummary() {
     ? totalPrice(
         draft.participants.flatMap((p) => p.items),
         events,
-        draft.method,
       )
     : selectionEstimate(
         events.filter((r) => draft.selectedRaceIds.includes(r.id)),
-        draft.method,
       );
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -60,8 +62,7 @@ export default function SelectionSummary() {
           <p>
             {configured ? "Total do serviço" : "Referência a partir de"}{" "}
             {money(estimate.known)}
-            {estimate.pending ? " + valores a confirmar" : ""} · no{" "}
-            {draft.method}.{" "}
+            {estimate.pending ? " + valores a confirmar" : ""} .{" "}
             {configured
               ? "Calculado com os participantes e opções deste pedido."
               : "Referência de uma pessoa por corrida. O total será calculado conforme participantes e opções."}
@@ -75,7 +76,11 @@ export default function SelectionSummary() {
           </ul>
         </details>
       </div>
-      <Link className="button" to="/solicitacao/pedido">
+      <Link
+        className="button"
+        reloadDocument={publicPage}
+        to="/solicitacao/pedido"
+      >
         Finalizar inscrição →
       </Link>
     </aside>

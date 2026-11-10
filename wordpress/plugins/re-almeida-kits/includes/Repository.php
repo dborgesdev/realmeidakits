@@ -9,6 +9,7 @@ final class Repository {
     }
     public static function save(int $id, array $data): void {
         $old = self::get($id);
+        RacePrices::archive($id, $old);
         $history = get_post_meta($id, '_rak_condition_history', true);
         $history = is_array($history) ? $history : [];
         foreach ($old['conditions'] ?? [] as $condition) {

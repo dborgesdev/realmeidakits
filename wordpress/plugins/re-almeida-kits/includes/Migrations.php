@@ -53,6 +53,16 @@ final class Migrations {
             Accounts::install();
             if ((int)get_option('rak_accounts_schema') === 1) update_option('rak_schema_version', 3, false);
         }
+        if ((int) get_option('rak_schema_version') === 3 && KitOrderRepository::install()) {
+            update_option('rak_schema_version', 4, false);
+        }
+        if ((int) get_option('rak_schema_version') >= 4 && !get_option('rak_requests_capability')) {
+            $role = get_role('administrator');
+            if ($role) {
+                $role->add_cap(RequestOperations::CAPABILITY);
+                update_option('rak_requests_capability', 1, false);
+            }
+        }
         if (get_option('rak_plugin_version') !== VERSION) update_option('rak_plugin_version', VERSION, false);
     }
 }

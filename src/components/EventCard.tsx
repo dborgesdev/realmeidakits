@@ -1,12 +1,13 @@
-import { CalendarDays, MapPin, Check, Plus } from "lucide-react";
+import { CalendarDays, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { asset } from "../data/assets";
 import type { Race } from "../types/domain";
 import { useRequest } from "../state/RequestContext";
 import { availabilityLabel, isAvailable } from "../state/selectionRules";
+import RaceSelectionButton from "./RaceSelectionButton";
 import RaceImage from "./RaceImage";
 export default function EventCard({ event }: { event: Race }) {
-  const { draft, toggleRace } = useRequest();
+  const { draft } = useRequest();
   const selected = !draft.order && draft.selectedRaceIds.includes(event.id);
   const available = isAvailable(event);
   return (
@@ -54,22 +55,12 @@ export default function EventCard({ event }: { event: Race }) {
           {event.modalities.map((m) => m.label).join(" · ")}
         </p>
         <div className="card-selection">
-          <button
-            type="button"
-            className={`button ${selected ? "secondary" : ""}`}
-            disabled={!available && !selected}
-            aria-pressed={selected}
-            aria-label={`${selected ? "Remover" : "Selecionar"} ${event.name}`}
-            onClick={() => toggleRace(event)}
+          <RaceSelectionButton event={event} />
+          <Link
+            className="text-link"
+            reloadDocument
+            to={`/corridas/${event.slug}`}
           >
-            {selected ? <Check size={18} /> : <Plus size={18} />}{" "}
-            {selected
-              ? "Selecionada · remover"
-              : available
-                ? "Selecionar corrida"
-                : "Seleção encerrada"}
-          </button>
-          <Link className="text-link" to={`/corridas/${event.slug}`}>
             Conhecer corrida →
           </Link>
         </div>

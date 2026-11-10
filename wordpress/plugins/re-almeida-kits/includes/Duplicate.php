@@ -24,8 +24,8 @@ final class Duplicate {
         if (is_wp_error($copy)) return $copy;
         foreach (['raceDate','raceTime','opensAt','closesAt','location','whatsappUrl'] as $key) $d[$key] = '';
         $d['status'] = 'unavailable';
-        foreach (['officialPix','officialCard','shirtPix','shirtCard','numberPix','numberCard'] as $key) $d[$key] = null;
-        foreach ($d['kits'] as &$kit) { $kit['pix'] = null; $kit['card'] = null; } unset($kit);
+        $d = RacePrices::canonical($d);
+        $d['priceCents'] = $d['officialCents'] = $d['shirtCents'] = $d['numberCents'] = null;
         foreach ($d['pickups'] as &$point) $point['at'] = ''; unset($point);
         Repository::save($copy, $d);
         update_post_meta($copy, '_rak_duplicate_review', 1);

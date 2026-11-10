@@ -1,4 +1,4 @@
-import type { Prices, DocumentRequirement, Modality } from "../types/domain";
+import type { DocumentRequirement, Modality } from "../types/domain";
 export type ApiImage = {
   url: string;
   width: number;
@@ -19,10 +19,7 @@ export type ApiModality = {
   requireMembership: boolean;
   distances: string[];
   pickups: ApiPickup[];
-  kitTypes: { id: string; label: string; prices: Prices }[];
-  prices: Prices;
-  shirtPrices: Prices;
-  numberPrices: Prices;
+  kitTypes: { id: string; label: string; additionalCents?: number }[];
   shirtEnabled: boolean;
   numberEnabled: boolean;
   sizes: string[];
@@ -30,6 +27,12 @@ export type ApiModality = {
   documents: (DocumentRequirement & { required: boolean; guidance: string })[];
 };
 export type ApiRace = {
+  priceCents: number | null;
+  prices?: {
+    official: number | null;
+    shirt: number | null;
+    number: number | null;
+  };
   id: string;
   slug: string;
   name: string;

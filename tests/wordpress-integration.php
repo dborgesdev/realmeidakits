@@ -36,7 +36,7 @@ $d['conditions'] = [['id' => 'condition-demo', 'text' => 'DEMONSTRAÇÃO — tex
 $d['documents'] = [['id' => 'doc-demo', 'label' => 'Documento DEMONSTRAÇÃO', 'scope' => 'personal', 'modality' => 'both', 'required' => true, 'guidance' => 'Não envie documentos reais.']];
 check(!is_wp_error(Schema::validate($d)), 'configuração válida, sem preços inventados');
 foreach ([
-    ['officialPix' => -1], ['officialPix' => 1.2], ['officialPix' => '2600'], ['officialPix' => 100000000],
+    ['officialCents' => -1], ['shirtCents' => 1.2], ['numberCents' => '1200'], ['officialCents' => 100000000],
     ['raceDate' => '2026-02-30'], ['raceTime' => '25:10'], ['opensAt' => '2026-11-02T10:00', 'closesAt' => '2026-11-01T10:00'],
     ['whatsappUrl' => 'javascript:alert(1)'], ['whatsappUrl' => 'https://example.invalid/grupo'],
     ['shirtImageId' => 99999999], ['shirtImageId' => '1'], ['sizes' => ['M', ['bad']]], ['status' => 'fake'],
@@ -44,6 +44,14 @@ foreach ([
     ['shirtEnabled' => true, 'sizes' => []], ['documents' => [['id' => 'bad id']]],
     ['conditions' => [$d['conditions'][0], $d['conditions'][0]]],
 ] as $index => $patch) check(is_wp_error(Schema::validate(array_replace($d, $patch))), 'rejeita entrada inválida #' . ($index + 1));
+$legacy = $d;
+unset($legacy['priceCents'], $legacy['officialCents'], $legacy['shirtCents'], $legacy['numberCents']);
+$legacy['officialPix'] = $legacy['officialCard'] = 1234;
+check(Schema::validate($legacy)['officialCents'] === 1234, 'valor legado comum preservado na modalidade');
+$legacy['officialCard'] = 4567;
+check(Schema::validate($legacy)['priceCents'] === null, 'divergência não escolhe um preço sem revisão');
+$legacy['priceCents'] = 3333;
+check(Schema::validate($legacy)['officialCents'] === 3333, 'preço anterior explicitamente confirmado é preservado');
 $dates = Schema::validate(array_replace($d, ['opensAt' => '2026-11-01T09:00', 'closesAt' => '2026-11-01T10:00']));
 check($dates['opensAt'] === '2026-11-01T09:00:00-03:00', 'converte prazos no fuso WordPress');
 check(Repository::availability($dates, strtotime($dates['opensAt']) - 1) === 'unavailable', 'antes da abertura indisponível');
@@ -106,7 +114,7 @@ try {
     $projected = Rest::project(get_post($id));
     file_put_contents(__DIR__ . '/../.local-tools/contract-race.json', wp_json_encode($projected, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     wp_set_current_user(get_user_by('login', 'rak-local')->ID);
-    $_POST = ['rak_nonce' => wp_create_nonce('rak_save_' . $id), 'rak_payload' => wp_slash(wp_json_encode(array_replace($d, ['officialPix' => -1])))];
+    $_POST = ['rak_nonce' => wp_create_nonce('rak_save_' . $id), 'rak_payload' => wp_slash(wp_json_encode(array_replace($d, ['officialCents' => -1])))];
     wp_update_post(['ID' => $id, 'post_title' => 'DEMONSTRAÇÃO — teste automatizado', 'post_status' => 'publish']);
     check(Repository::get($id)['status'] === 'closed' && get_post($id)->post_status === 'publish', 'salvamento inválido mantém configuração e publicação anteriores');
     check((bool) get_transient('rak_edit_' . get_current_user_id() . '_' . $id), 'erro e tentativa inválida preservados para correção');
