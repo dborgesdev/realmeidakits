@@ -7,9 +7,9 @@ export default function DraftStatus({ stage }: { stage?: string }) {
     if (stage) setStage(stage);
   }, [setStage, stage]);
   if (persistence.status === "loading")
-    return <p role="status">Carregando rascunho…</p>;
+    return <p role="status">Carregando sua solicitação…</p>;
   if (persistence.status === "saving")
-    return <p role="status">Salvando rascunho…</p>;
+    return <p role="status">Salvando sua solicitação…</p>;
   if (persistence.status === "saved")
     return <p role="status">Rascunho salvo.</p>;
   if (persistence.status !== "error") return null;

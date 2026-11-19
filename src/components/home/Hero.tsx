@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileCheck2, UsersRound } from "lucide-react";
+import { CalendarCheck, FileCheck2, PackageCheck } from "lucide-react";
 import { Action } from "../UI";
 import { asset } from "../../data/assets";
 export default function Hero() {
@@ -6,7 +6,7 @@ export default function Hero() {
     <section className="hero">
       <img
         src={asset("hero-running-kit-pickup.webp")}
-        alt="Imagem conceitual de corredoras à beira-mar"
+        alt=""
         width="1672"
         height="941"
         fetchPriority="high"
@@ -14,40 +14,54 @@ export default function Hero() {
       <div className="container hero-content">
         <span className="eyebrow">VOCÊ CORRE. A GENTE FACILITA.</span>
         <h1>
-          Retirada de kits de corrida <em>com mais praticidade.</em>
+          <span>Retirada de</span> <span>kits de corrida</span>{" "}
+          <em>com mais praticidade.</em>
         </h1>
         <p>
-          Solicite a retirada como associado à APPAI ou de um kit já comprado
-          com a organização. Aqui você não compra inscrições oficiais nas
-          corridas.
+          A Re Almeida retira o kit por você. Escolha sua corrida e consulte as
+          opções para quem já tem inscrição oficial ou é associado à APPAI.
         </p>
         <div className="actions">
-          <Action to="/corridas?modalidade=appai">Sou associado à APPAI</Action>
-          <Action to="/corridas?modalidade=oficial" secondary>
-            Já comprei meu kit com a organização
+          <Action to="/corridas">Solicitar meu kit</Action>
+          <Action to="/corridas?modalidade=appai" secondary>
+            Sou associado à APPAI
           </Action>
         </div>
         <div className="hero-benefits">
           <span>
-            <ClipboardCheck />
-            Inscrição
-            <br />
-            passo a passo
+            <CalendarCheck aria-hidden="true" />
+            Solicitação online
           </span>
           <span>
-            <FileCheck2 />
-            Documentos
-            <br />
-            organizados
+            <FileCheck2 aria-hidden="true" />
+            Documentos por participante
           </span>
           <span>
-            <UsersRound />
-            Retirada
-            <br />
-            por evento
+            <PackageCheck aria-hidden="true" />
+            Retirada por corrida
           </span>
         </div>
       </div>
+      <svg
+        className="hero-wave"
+        viewBox="0 0 1440 88"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          fill="#e10600"
+          opacity=".18"
+          d="M0 56C220 15 409 121 686 70S1156 90 1440 0V88H0Z"
+        />
+        <path
+          fill="#c90803"
+          d="M0 63C223 30 428 122 700 75S1197 69 1440 17V88H0Z"
+        />
+        <path
+          fill="#fbf5f5"
+          d="M0 74C221 39 427 122 701 79S1197 82 1440 34V88H0Z"
+        />
+      </svg>
     </section>
   );
 }

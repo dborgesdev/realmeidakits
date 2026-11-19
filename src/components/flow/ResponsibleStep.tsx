@@ -5,7 +5,7 @@ export default function ResponsibleStep() {
   return (
     <>
       <h1>Quem será responsável pelo pedido?</h1>
-      <p>A conta autenticada identifica o titular desta solicitação.</p>
+      <p>Confira os dados da pessoa responsável pela solicitação.</p>
       <fieldset className="form-section">
         <legend>Dados do titular</legend>
         <label>

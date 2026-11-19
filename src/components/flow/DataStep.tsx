@@ -1,11 +1,9 @@
-import { useState } from "react";
 import { useAccount } from "../../state/AccountContext";
 import {
   formatIdentity,
   maskIdentityInput,
   maskedField,
 } from "../../state/identityMasks";
-import { personError } from "../../state/identityRules";
 import { controlId } from "../../state/validationRules";
 import { FieldError, useFlowFeedback } from "./FlowFeedback";
 import { useRequest } from "../../state/RequestContext";
@@ -16,8 +14,6 @@ export default function DataStep({
   participant: Participant;
 }) {
   const account = useAccount();
-  const [saving, setSaving] = useState(false),
-    [error, setError] = useState("");
   const { setDraft, draft } = useRequest();
   const { field } = useFlowFeedback();
   const edit = (key: keyof Person, value: string) =>
@@ -29,42 +25,6 @@ export default function DataStep({
           : p,
       ),
     }));
-  async function save() {
-    const invalid = personError(participant.person);
-    if (invalid) {
-      setError(invalid);
-      return;
-    }
-    setSaving(true);
-    setError("");
-    try {
-      const current = account.participants.find(
-        (p) => p.id === participant.directoryId,
-      );
-      const saved = await account.saveParticipant(
-        participant.person,
-        current?.id,
-        participant.directoryVersion,
-      );
-      setDraft((d) => ({
-        ...d,
-        participants: d.participants.map((p) =>
-          p.id === participant.id
-            ? {
-                ...p,
-                person: saved.person,
-                directoryId: saved.id,
-                directoryVersion: saved.version,
-              }
-            : p,
-        ),
-      }));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Não foi possível salvar.");
-    } finally {
-      setSaving(false);
-    }
-  }
   return (
     <fieldset className="form-section">
       <legend>Dados pessoais</legend>
@@ -146,6 +106,7 @@ export default function DataStep({
         return (
           <label key={input.key}>
             {input.label}
+            {input.key !== "email" ? " (obrigatório)" : " (opcional)"}
             <input
               {...field(id)}
               type={input.type}
@@ -186,23 +147,9 @@ export default function DataStep({
           </label>
         );
       })}
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      <button
-        {...field(controlId("save-person", participant.id))}
-        type="button"
-        className="button secondary"
-        disabled={saving}
-        onClick={save}
-      >
-        {saving ? "Salvando…" : "Salvar cadastro do participante"}
-      </button>
-      <FieldError id={controlId("save-person", participant.id)} />
       <p className="field-help">
-        Dados preenchidos uma vez para as corridas desta pessoa.
+        O cadastro será salvo automaticamente ao continuar. Os dados são
+        preenchidos uma vez para as corridas desta pessoa.
         {draft.responsible.name
           ? ` Responsável: ${draft.responsible.name}.`
           : ""}

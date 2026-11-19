@@ -55,7 +55,7 @@ final class CheckoutInput {
                 $assigned[$race['id']] = true;
                 $total += $amount;
                 $lines[] = [
-                    'raceId' => $race['id'], 'race' => $race['name'], 'participantId' => $id,
+                    'raceId' => $race['id'], 'race' => $race['name'], 'raceDate' => $race['raceDate'] ?? null, 'participantId' => $id,
                     'participant' => $normalized['name'], 'modality' => $item['modality'],
                     'registration' => $item['registration'], 'cpf' => $normalized['cpf'], 'baseCents' => $base,
                     'additionalCents' => $additional, 'kitType' => $item['kitType'], 'size' => $item['size'], 'pickup' => $pickup,

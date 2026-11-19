@@ -1,5 +1,37 @@
 # Re Almeida Kits — projeto e histórico
 
+## Correções funcionais e preparação para produção — 18/11/2026
+
+Entrega local **plugin 1.10.0 / esquema 6**, frontend HostGator e child theme **1.1.0**, na branch `feat/hostgator-unified-architecture`. Preservados o trabalho visual anterior, a Home, o armazenamento privado, as contas e os pedidos. Nenhum commit, push, merge ou deploy nesta rodada. A versão 1.9.0 permanece como referência histórica abaixo.
+
+A duplicidade por CPF/corrida agora usa exclusivamente `RequestQueue::paid()`. Pedidos não pagos não reservam o par e não são cancelados automaticamente. Tentativas idênticas retomáveis reutilizam o pedido, mantendo seu snapshot; rascunhos e pedidos continuam vinculados por chave idempotente. Tentativas encerradas saem da fila corrente, com acesso ao histórico por filtro explícito. Corridas anteriores são ocultadas pelo dia do evento no fuso WordPress, incluindo todo o dia atual.
+
+Participantes são persistidos ao continuar, sem botão obrigatório de salvamento. Falhas preservam campos e vínculos já gravados. A conversão em pedido limpa a seleção temporária/retorno antigo e deixa de exibir rascunho ativo na conta. O histórico distingue pagamento, análise documental, voucher e retirada.
+
+A Central reúne exceções financeiras e permite recebimento externo apenas com confirmação, valor integral, método e referência, capacidades administrativas e auditoria nativa WooCommerce. Utiliza `payment_complete`, sem segunda fonte financeira. Confirmações concorrentes detectadas após retorno do gateway geram bloqueio operacional de voucher e alerta; a conciliação financeira permanece no WooCommerce. Não há cancelamento/estorno automático de transações em trânsito.
+
+O mailer WooCommerce é compartilhado por vouchers e nova fila de notificações. Reenvios manuais exigem confirmação, preservam QR e registram operador/destinatário/resultado. Novos avisos abrangem número de peito, rejeição/pendência, reenvio documental à administração e falhas persistentes. A fila tem chave única, tentativas controladas, resultado incerto sem reenvio cego e recuperação pela auditoria. Os e-mails nativos de pedido/pagamento/cancelamento/reembolso continuam exclusivos do WooCommerce. Links de PDF exigem login e titularidade, preservam o destino e não expõem QR. Links de correção documental abrem o participante correto na conta.
+
+O child theme utiliza os assets da raiz com URLs completas, inclusive Montserrat/Nunito Sans, e templates próprios de página/checkout, mantendo o tema-pai intacto. `/app/` sem parâmetros e o catálogo WooCommerce não utilizado retornam ao site; REST, Ajax, ações, login, checkout e callbacks com parâmetros permanecem acessíveis.
+
+Validados typecheck, lint, 51 testes Node, build HostGator, 55 verificações funcionais PHP/HTTP/Chromium e 43 verificações de vouchers. Conta/checkout exercitados em 320/390/768/1440 px com dados sintéticos, sem cobrança ou entrega real de e-mail.
+
+Roteiro, módulos, migração, resultados e limites da homologação em [correções para produção](wordpress-production-readiness.md). Pacotes destinados à instalação manual; frontend em pasta normal, sem substituir `.htaccess`.
+
+## Ciclo de vouchers e retirada — 18/11/2026
+
+Implementação local **1.9.0 / esquema 5**, em `feat/hostgator-unified-architecture`, preservando as alterações visuais ainda não integradas. A arquitetura continua React estático no Apache e WordPress/WooCommerce em `/app/`, com cookies nativos e nonce REST. Esta seção substitui as pendências históricas abaixo quanto à implementação de vouchers, e-mail e conferência; não declara homologação ou publicação em produção.
+
+Vouchers individuais são reconciliados pelos eventos reais de pagamento/estorno, pela análise/substituição documental e por rotina agendada. A regra usa `RequestQueue::paid()` e aprovações vinculadas à versão do arquivo. A Central permite análise antes do pagamento. Apenas participantes elegíveis são liberados. Cancelamentos, reembolsos inclusive parciais e perda de regularidade impedem novas retiradas; entregas concluídas permanecem auditadas e recebem aviso de exceção administrativa.
+
+O esquema acrescenta a tabela de vouchers, capacidade `confirm_rak_pickups` e papel restrito `rak_pickup_staff`. PDFs são produzidos somente no download autenticado e nunca gravados em diretório público. O QR contém uma referência aleatória de 256 bits no fragmento da URL da conferência; não autoriza acesso público nem registra entrega. Consulta e confirmação são POST protegidos. A confirmação grava estado e auditoria em uma atualização condicional por revisão, sob o bloqueio existente da solicitação. O estado utilizado é projetado na Central e no acompanhamento, sem permitir apagá-lo pelo seletor antigo.
+
+A notificação usa o mailer transacional do WooCommerce, com fila WP-Cron, aquisição exclusiva e até cinco tentativas por série. `sent` significa aceite pelo transporte, não prova de chegada à caixa postal. Interrupções com resultado incerto exigem conferir o transporte antes de autorizar reenvio pela Central; a autorização fica auditada. O e-mail não bloqueia o voucher e não leva anexos privados ou token QR. Não existe garantia de entrega exatamente uma vez entre banco e SMTP; o tratamento explícito de resultado incerto evita reenvios automáticos cegos.
+
+Executados: typecheck, lint, 48 testes Node, build HostGator, sintaxe PHP 8.3, 43 verificações locais de vouchers, HTTP real com sessões sintéticas, dois processos PHP concorrentes, regressões de catálogo (50 verificações), rascunhos (10), Central e histórico documental. Chromium decodificou o QR do PDF renderizado e verificou a interface em 320/390/768/1440 px, incluindo confirmação explícita e falha de conexão com API interceptada. E-mails foram interceptados em QA; nenhuma cobrança foi realizada. Câmera física, Safari/iOS, entrega SMTP, webhook do gateway e concorrência no MySQL/MariaDB da HostGator ainda exigem homologação. A réplica usa SQLite e não comprova comportamento do banco de produção.
+
+Consulte [implementação, matriz de QA, instalação e reversão](wordpress-vouchers.md). Nenhum commit, push, PR, merge ou deploy realizado nesta entrega.
+
 ## Solicitação operacional e preço único
 
 A integração da versão 1.4.0 usa rascunho versionado por titular, documentos privados, solicitações vinculadas a pedidos WooCommerce, acompanhamento e operação administrativa. Cada corrida tem um único preço-base. O checkout nativo escolhe o meio de pagamento. A ativação em ambiente real depende da configuração e homologação do WooCommerce, do armazenamento privado e do Mercado Pago. Consulte o [procedimento operacional](wordpress-requests.md). As seções abaixo registram decisões anteriores.

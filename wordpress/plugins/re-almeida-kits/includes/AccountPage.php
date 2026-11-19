@@ -65,7 +65,7 @@ final class AccountPage {
                     $value=is_string($values[$key]??null)?$values[$key]:'';$readonly=$complete&&($key==='email'||($key==='cpf'&&Identity::cpf($profile['cpf']??'')));
                     echo '<label>'.esc_html($label).'<input required name="'.esc_attr($key).'" type="'.$type.'" maxlength="'.($key==='name'?80:120).'" value="'.esc_attr($value).'"'.($readonly?' readonly':'').($key==='birthDate'?' min="1900-01-01" max="'.esc_attr(current_time('Y-m-d')).'"':'').'></label>';
                 }
-            }else echo '<label>E-mail<input required name="login" type="email" maxlength="120" autocomplete="username"></label>';
+            }else echo '<label>E-mail<input required name="login" type="email" maxlength="120" autocomplete="username" value="'.esc_attr(is_string($values['login']??null)?$values['login']:'').'"></label>';
             if(!$complete)echo '<label>Senha<input required name="password" type="password" '.($register?'minlength="12"':'').' maxlength="128" autocomplete="'.($register?'new-password':'current-password').'"></label>';
             if(!$register&&!$complete)echo '<label><input type="checkbox" name="remember" value="1"> Manter acesso neste dispositivo</label>';
             echo '<button type="submit">'.($complete?'Salvar e continuar':($register?'Criar conta':'Entrar')).'</button></form>';

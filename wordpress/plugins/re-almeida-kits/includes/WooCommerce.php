@@ -21,8 +21,18 @@ final class WooCommerce {
         add_action('template_redirect', [self::class, 'privatePages'], 0);
         add_filter('woocommerce_login_redirect', [self::class, 'returnAfterAuth']);
         add_filter('woocommerce_registration_redirect', [self::class, 'returnAfterAuth']);
+        add_filter('lostpassword_url', static function (string $url): string {
+            $target = self::returnTarget();
+            return $target ? add_query_arg('rak_return', rawurlencode($target), $url) : $url;
+        }, 20);
+        add_filter('woocommerce_cancel_unpaid_order', static fn($cancel, $order) => $order instanceof \WC_Order && $order->get_meta('_rak_request_id') ? false : $cancel, 20, 2);
         add_action('woocommerce_login_form_start', [self::class, 'returnField']);
         add_action('woocommerce_register_form_start', [self::class, 'returnField']);
+        add_action('woocommerce_lostpassword_form', [self::class, 'returnField']);
+        add_action('woocommerce_resetpassword_form', [self::class, 'returnField']);
+        add_action('wp_enqueue_scripts', static function (): void {
+            if (is_account_page() || is_checkout()) wp_enqueue_script('rak-account-fields', plugins_url('assets/account.js', FILE), [], VERSION, true);
+        });
         add_action('woocommerce_register_form', [self::class, 'registrationFields']);
         add_filter('woocommerce_process_registration_errors', [self::class, 'validateRegistration'], PHP_INT_MAX, 4);
         add_action('woocommerce_created_customer', [self::class, 'saveRegistration'], 1);
@@ -42,10 +52,15 @@ final class WooCommerce {
 
     private static function returnTarget(): string {
         $target = self::input('rak_return', $_POST) ?: self::input('rak_return', $_GET);
-        return preg_match('#^/(?:conta|solicitacao/(?:pedido|responsavel|participantes|documentos|condicoes|revisao|pagamento|configuracao|identificacao|dados|confirmacao)|corridas(?:/[a-z0-9-]{1,200})?)$#D', $target) ? $target : '';
+        return ActionLinks::allowed($target) || preg_match('#^/(?:conta|solicitacao/(?:pedido|responsavel|participantes|documentos|condicoes|revisao|pagamento|configuracao|identificacao|dados|confirmacao)|corridas(?:/[a-z0-9-]{1,200})?)$#D', $target) ? $target : '';
     }
 
     public static function privatePages(): void {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && !is_admin() && !wp_doing_ajax() && !wp_doing_cron() && !(defined('REST_REQUEST') && REST_REQUEST) && empty($_GET)) {
+            $path = rtrim(wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '', '/');
+            $root = rtrim(wp_parse_url(site_url(), PHP_URL_PATH) ?? '', '/');
+            if ($path === $root || is_shop() || is_product() || is_product_taxonomy()) { wp_safe_redirect(PublicPages::url('/'), 302); exit; }
+        }
         if (!function_exists('is_account_page') || (!is_account_page() && !is_cart() && !is_checkout())) return;
         if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
         nocache_headers();
@@ -75,8 +90,9 @@ final class WooCommerce {
 
     private static function field(string $key, string $label, string $type, string $value = ''): void {
         printf(
-            '<p class="woocommerce-form-row form-row form-row-wide"><label for="rak_%1$s">%2$s</label><input class="woocommerce-Input input-text" name="rak_%1$s" id="rak_%1$s" type="%3$s" value="%4$s" required></p>',
-            esc_attr($key), esc_html($label), esc_attr($type), esc_attr($value)
+            '<p class="woocommerce-form-row form-row form-row-wide"><label for="rak_%1$s">%2$s <span aria-label="obrigatório">*</span></label><input class="woocommerce-Input input-text" name="rak_%1$s" id="rak_%1$s" type="%3$s" value="%4$s" required aria-required="true" autocomplete="%5$s" %6$s></p>',
+            esc_attr($key), esc_html($label), esc_attr($type), esc_attr($value), esc_attr(['name' => 'name', 'cpf' => 'off', 'birth' => 'bday', 'phone' => 'tel-national'][$key] ?? 'off'),
+            $key === 'birth' ? 'min="1900-01-01" max="' . esc_attr(current_time('Y-m-d')) . '"' : 'maxlength="' . ($key === 'name' ? '80' : ($key === 'phone' ? '32' : '14')) . '"'
         );
     }
 
@@ -176,7 +192,7 @@ final class WooCommerce {
         if ($type !== 'billing') return;
         $data = Accounts::profile($id);
         unset($data['id']);
-        $data['phone'] = Identity::digits(get_user_meta($id, 'billing_phone', true));
+        $data['phone'] = Identity::phone((string) get_user_meta($id, 'billing_phone', true));
         update_user_meta($id, '_rak_profile', $data);
         update_user_meta($id, 'billing_cpf', $data['cpf']);
         update_user_meta($id, 'billing_birthdate', $data['birthDate']);

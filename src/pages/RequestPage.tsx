@@ -1,10 +1,12 @@
 import { useAccount } from "../state/AccountContext";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { persistParticipants } from "../state/persistParticipants";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { useCatalog } from "../state/CatalogContext";
 import { useRequest } from "../state/RequestContext";
 import { pendingStage, stages, stageLabels } from "../state/requestRules";
 import RequestRacePicker from "../components/flow/RequestRacePicker";
+import RequestIntro from "../components/flow/RequestIntro";
 import DraftStatus from "../components/flow/DraftStatus";
 import Progress from "../components/flow/Progress";
 import QuantityStep from "../components/flow/QuantityStep";
@@ -14,11 +16,7 @@ import DocumentsStep from "../components/flow/DocumentsStep";
 import ConditionsStep from "../components/flow/ConditionsStep";
 import ReviewStep from "../components/flow/ReviewStep";
 import PaymentStep from "../components/flow/PaymentStep";
-import {
-  controlId,
-  firstIssue,
-  type FlowIssue,
-} from "../state/validationRules";
+import { firstIssue, type FlowIssue } from "../state/validationRules";
 import {
   FlowFeedback,
   focusControl,
@@ -30,10 +28,11 @@ export default function RequestPage() {
   const { events } = useCatalog();
   const { stage = "pedido" } = useParams();
   const navigate = useNavigate();
-  const { draft, resize, persistence } = useRequest();
+  const { draft, resize, persistence, setDraft } = useRequest();
   const [issue, setIssue] = useState<FlowIssue | null>(null);
   const [navigation, setNavigation] = useState<PanelNavigation | null>(null);
   const [checkingAssignments, setCheckingAssignments] = useState(false);
+  const advancing = useRef(false);
   function navigatePanel(id: string) {
     setIssue(null);
     setNavigation((n) => ({
@@ -112,7 +111,7 @@ export default function RequestPage() {
       ? issue
       : null;
   async function next() {
-    if (checkingAssignments) return;
+    if (checkingAssignments || advancing.current) return;
     setIssue(null);
     if (step === 0) {
       resize(draft.participants.length);
@@ -131,23 +130,44 @@ export default function RequestPage() {
       return;
     }
     if (step === 2) {
-      const unsaved = draft.participants.find(
-        (p) =>
-          !account.participants.some(
-            (saved) =>
-              saved.id === p.directoryId &&
-              Object.entries(saved.person).every(
-                ([key, value]) =>
-                  p.person[key as keyof typeof p.person] === value,
+      advancing.current = true;
+      setCheckingAssignments(true);
+      try {
+        await persistParticipants(
+          draft.participants,
+          account.participants,
+          account.saveParticipant,
+          (slot, saved) => {
+            setDraft((current) => ({
+              ...current,
+              participants: current.participants.map((person) =>
+                person.id === slot
+                  ? {
+                      ...person,
+                      person: saved.person,
+                      directoryId: saved.id,
+                      directoryVersion: saved.version,
+                    }
+                  : person,
               ),
-          ),
-      );
-      if (unsaved) {
+            }));
+          },
+        );
+      } catch (cause) {
+        try {
+          await account.refresh();
+        } catch {
+          /* Keep the entered values when the session/network is unavailable. */
+        }
         setIssue({
-          target: controlId("save-person", unsaved.id),
-          participantId: unsaved.id,
-          message: "Salve o cadastro do participante antes de continuar.",
+          target: "flow-error-summary",
+          message:
+            cause instanceof Error
+              ? cause.message
+              : "Não foi possível salvar os participantes. Seus dados foram preservados.",
         });
+        setCheckingAssignments(false);
+        advancing.current = false;
         return;
       }
       if (persistence.status === "saved") {
@@ -160,7 +180,7 @@ export default function RequestPage() {
             setIssue({
               target: "flow-error-summary",
               message:
-                "Remova apenas a atribuição marcada como já inscrita antes de continuar.",
+                "Já existe um pedido para um dos participantes nesta corrida. Remova essa corrida apenas do participante indicado antes de continuar.",
             });
             return;
           }
@@ -168,8 +188,11 @@ export default function RequestPage() {
           // Checkout repeats the authoritative check if the advisory lookup is unavailable.
         } finally {
           setCheckingAssignments(false);
+          advancing.current = false;
         }
       }
+      setCheckingAssignments(false);
+      advancing.current = false;
     }
     if (step === 6) return;
     navigate(`/solicitacao/${stages[step + 1]}`);
@@ -177,10 +200,12 @@ export default function RequestPage() {
   return (
     <div className="flow-shell">
       <div className="container page flow">
-        <div className="flow-heading">
-          <RequestRacePicker />
-          <span className="badge">{draft.participants.length} pessoa(s)</span>
-        </div>
+        <RequestIntro
+          races={events.filter((race) =>
+            draft.selectedRaceIds.includes(race.id),
+          )}
+          participants={draft.participants.length}
+        />
         <DraftStatus stage={stage} />
         <Progress step={step} />
         <FlowFeedback
@@ -199,13 +224,18 @@ export default function RequestPage() {
               }}
             >
               <span className="eyebrow">{stageLabels[step]}</span>
-              {step === 0 && <QuantityStep />}
-              {step === 1 && <ResponsibleStep />}
-              {step === 2 && <ParticipantsStep />}
-              {step === 3 && <DocumentsStep />}
-              {step === 4 && <ConditionsStep />}
-              {step === 5 && <ReviewStep />}
-              {step === 6 && <PaymentStep />}
+              <fieldset
+                disabled={checkingAssignments}
+                style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+              >
+                {step === 0 && <QuantityStep />}
+                {step === 1 && <ResponsibleStep />}
+                {step === 2 && <ParticipantsStep />}
+                {step === 3 && <DocumentsStep />}
+                {step === 4 && <ConditionsStep />}
+                {step === 5 && <ReviewStep />}
+                {step === 6 && <PaymentStep />}
+              </fieldset>
               {visibleIssue && (
                 <div
                   className="error-summary"
@@ -236,8 +266,16 @@ export default function RequestPage() {
                   ← Voltar
                 </Link>
                 {step < 6 && (
-                  <button className="button" type="submit">
-                    {step === 5 ? "Revisar e finalizar →" : "Continuar →"}
+                  <button
+                    className="button"
+                    type="submit"
+                    disabled={checkingAssignments}
+                  >
+                    {checkingAssignments
+                      ? "Salvando participantes…"
+                      : step === 5
+                        ? "Revisar e finalizar →"
+                        : "Continuar →"}
                   </button>
                 )}
               </div>

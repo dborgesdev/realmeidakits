@@ -81,7 +81,7 @@ export default function SelectionSummary({
         reloadDocument={publicPage}
         to="/solicitacao/pedido"
       >
-        Finalizar inscrição →
+        Continuar solicitação →
       </Link>
     </aside>
   );

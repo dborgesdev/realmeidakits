@@ -20,7 +20,15 @@ export default function AccountPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const target =
-    continuation(params.get("continuar")) ?? rememberedContinuation();
+    continuation(params.get("continuar")) ??
+    (params.has("pedido")
+      ? continuation(
+          window.location.pathname +
+            window.location.search +
+            window.location.hash,
+        )
+      : null) ??
+    rememberedContinuation();
   const next = target && target !== "/conta" ? target : "/corridas";
   async function enter(intent: "login" | "register" | "recover") {
     setBusy(true);
@@ -35,12 +43,19 @@ export default function AccountPage() {
   }
   const resume =
     account.status === "authenticated" &&
+    persistence.loaded &&
+    !persistence.submitted &&
+    draft.selectedRaceIds.length > 0 &&
     !params.has("continuar") &&
     target?.startsWith("/solicitacao/") &&
     rememberedContinuation() === target;
   useEffect(() => {
     if (resume) clearContinuation();
   }, [resume]);
+  useEffect(() => {
+    if (account.status === "authenticated" && params.has("pedido"))
+      clearContinuation();
+  }, [account.status, params]);
   if (account.status === "loading")
     return (
       <div className="container page narrow">
@@ -128,7 +143,11 @@ export default function AccountPage() {
             <Link to="/acompanhamento">Acompanhar pedidos</Link>
           </section>
           <section className="panel">
-            <h2>Solicitação em andamento</h2>
+            <h2>
+              {draft.selectedRaceIds.length && !persistence.submitted
+                ? "Solicitação em andamento"
+                : "Nova solicitação"}
+            </h2>
             <DraftStatus />
             {persistence.loaded && (
               <div className="account-actions">
@@ -166,25 +185,25 @@ export default function AccountPage() {
             )}
           </section>
 
-          <Link
-            className="button"
-            reloadDocument={next.startsWith("/corridas")}
-            to={next}
-            onClick={clearContinuation}
-          >
-            Continuar →
-          </Link>
+          {((target && !target.startsWith("/conta?pedido=")) ||
+            (draft.selectedRaceIds.length > 0 && !persistence.submitted)) && (
+            <Link
+              className="button"
+              reloadDocument={next.startsWith("/corridas")}
+              to={next}
+              onClick={clearContinuation}
+            >
+              Continuar →
+            </Link>
+          )}
         </>
       ) : (
-        <section className="panel narrow">
-          <h2>Acesse seus dados e participantes</h2>
+        <section className="panel account-access" aria-label="Acesso à conta">
           <p>
-            Entre ou crie sua conta para reutilizar seus cadastros nas próximas
-            solicitações. Antes de entrar, a seleção e a quantidade ficam nesta
-            aba por 30 minutos. Dados pessoais ainda não salvos precisam ser
-            preenchidos novamente após trocar de página.
+            Entre ou crie sua conta para solicitar a retirada de kits e
+            acompanhar seus pedidos.
           </p>
-          <div className="account-actions">
+          <div className="account-access-actions">
             <button
               className="button"
               type="button"
@@ -212,12 +231,8 @@ export default function AccountPage() {
             Esqueci minha senha
           </button>
           {!account.registrationEnabled && (
-            <p>O cadastro está indisponível na página Minha conta.</p>
+            <p>A criação de contas está indisponível no momento.</p>
           )}
-          <p className="field-help">
-            O acesso e a recuperação de senha são realizados no WordPress da Re
-            Almeida Kits.
-          </p>
         </section>
       )}
     </div>

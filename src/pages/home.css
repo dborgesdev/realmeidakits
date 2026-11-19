@@ -1,0 +1,397 @@
+.home {
+  background: var(--rak-backdrop);
+}
+.home .section {
+  padding-block: clamp(36px, 6vw, 72px);
+}
+.home .eyebrow {
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+}
+.home .hero {
+  min-height: clamp(560px, 48vw, 680px);
+  background: #f9eeee;
+}
+.home .hero > img {
+  object-position: center 48%;
+}
+.home .hero::after {
+  background: linear-gradient(
+    90deg,
+    #fff8f5 1%,
+    #fff8f5f7 27%,
+    #fff8f5d9 40%,
+    #fff8f543 63%,
+    transparent 79%
+  );
+}
+.home .hero-wave {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  width: 100%;
+  height: clamp(28px, 5vw, 68px);
+  pointer-events: none;
+}
+.home .hero-content {
+  padding-block: clamp(48px, 6vw, 84px) clamp(72px, 8vw, 110px);
+}
+.home .hero h1 {
+  max-width: 43rem;
+  font-size: clamp(2.35rem, 4.4vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+.home .hero h1 span {
+  display: block;
+}
+.home .hero h1 em {
+  color: var(--rak-action);
+}
+.home .hero p {
+  max-width: 42ch;
+  font-size: 1.125rem;
+  margin-top: 20px;
+}
+.home .hero .actions {
+  margin-top: 24px;
+}
+.home .hero-benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin: 28px 0 0;
+  max-width: 44rem;
+}
+.home .hero-benefits span {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 0.9375rem;
+  gap: 8px;
+  font-weight: 750;
+}
+.home .hero-benefits svg {
+  color: var(--rak-action);
+  width: 23px;
+  height: 23px;
+}
+.home .section-heading {
+  gap: 16px 24px;
+}
+.home .section-heading .text-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.home .event-card {
+  display: flex;
+  flex-direction: column;
+}
+.home .event-image {
+  aspect-ratio: 16 / 9;
+}
+.home .event-image-missing {
+  min-height: 100%;
+}
+.home .card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: start;
+  padding: clamp(16px, 2.5vw, 24px);
+}
+.home .card-body h3 {
+  font-size: 1.25rem;
+  margin-bottom: 12px;
+}
+.home .card-body .icon-line {
+  font-size: 1rem;
+  margin-block-start: 10px;
+}
+.home .card-body .availability {
+  font-size: 0.9375rem;
+  margin-bottom: 6px;
+}
+.home .card-selection {
+  padding-top: 20px;
+  margin-top: auto;
+  width: 100%;
+}
+.home .card-selection .button {
+  width: 100%;
+}
+.home #como-funciona {
+  background: linear-gradient(135deg, #fff, #fff4f3);
+}
+.home .steps {
+  padding: 0;
+  list-style: none;
+  line-height: 1.5;
+}
+.home .steps .panel {
+  position: relative;
+  padding: 24px;
+  box-shadow: var(--rak-shadow);
+}
+.home .steps h3 {
+  font-size: 1.1875rem;
+}
+.home .steps p,
+.home .modality-card p,
+.home .guidance p,
+.home .faq p {
+  font-size: 1.0625rem;
+}
+.home .steps .step-top {
+  justify-content: center;
+  margin-bottom: 16px;
+  color: var(--rak-action);
+}
+.home .step-number {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 8px;
+  background: var(--rak-action);
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+.home .step-connector {
+  display: none;
+}
+@media (min-width: 1101px) {
+  .home .step-connector {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    inset: 50% -23px auto auto;
+    color: var(--rak-action);
+    transform: translateY(-50%);
+  }
+}
+.home .modality-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  background: white;
+  border-radius: var(--rak-card-radius);
+  box-shadow: var(--rak-shadow);
+}
+.home .modality-card > img {
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto auto;
+  width: 60%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.46;
+  mask-image: linear-gradient(90deg, transparent, #000 85%);
+}
+.home .modality-card > div {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  padding: clamp(20px, 3vw, 36px);
+  background: linear-gradient(0deg, #fff 10%, #fffffff0 47%, #fff0 100%);
+}
+.home .modality-card p {
+  margin-bottom: 12px;
+  max-width: 32ch;
+}
+.home .modality-card .button {
+  min-height: 44px;
+  padding-inline: 0;
+  margin-top: auto;
+  color: var(--rak-action);
+  background: transparent;
+  border-color: transparent;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.home .modality-card .button:hover {
+  transform: none;
+  color: var(--rak-hover);
+}
+.home .guidance {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  background: white;
+  border-radius: var(--rak-card-radius);
+  box-shadow: var(--rak-shadow);
+}
+.home .guidance-intro {
+  padding: clamp(24px, 4vw, 48px);
+  background: linear-gradient(135deg, #8f0602, var(--rak-action));
+  border-end-end-radius: clamp(32px, 8vw, 120px);
+  color: white;
+}
+.home .guidance-intro :is(p, .eyebrow) {
+  color: white;
+}
+.home .guidance-intro .button {
+  margin-top: 20px;
+}
+.home .document-note {
+  padding: clamp(24px, 4vw, 48px);
+  box-shadow: none;
+}
+.home .document-note p {
+  align-items: center;
+}
+.home .faq {
+  gap: clamp(24px, 5vw, 64px);
+}
+.home .faq details {
+  background: white;
+  border: 1px solid var(--rak-line);
+  border-radius: var(--rak-radius);
+  padding: 0 16px;
+  margin-bottom: 12px;
+}
+.home .faq summary {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 12px;
+  font-size: 1.0625rem;
+  color: var(--rak-ink);
+  list-style: none;
+}
+.home .faq summary::-webkit-details-marker {
+  display: none;
+}
+.home .faq summary svg {
+  color: var(--rak-action);
+}
+.home .faq details[open] summary svg {
+  transform: rotate(180deg);
+}
+.home .faq details p {
+  margin-top: 0;
+  padding-bottom: 16px;
+}
+.home .final-cta {
+  background:
+    linear-gradient(90deg, #76050199, #9f0704 39%, #bc0803),
+    url("/images/home/hero-running-kit-pickup.webp") left 63% / cover;
+  padding-block: clamp(28px, 5vw, 56px);
+}
+.home .final-cta .container {
+  padding-inline-start: clamp(16px, 21vw, 310px);
+}
+.home .final-cta .button {
+  background: white;
+  border-color: white;
+  color: var(--rak-action);
+}
+.home .final-cta .button:hover {
+  background: var(--rak-tint);
+}
+body:has(.home) .header .brand {
+  width: clamp(148px, 17vw, 220px);
+  height: clamp(56px, 6vw, 76px);
+}
+body:has(.home) .nav > a {
+  font-weight: 800;
+}
+@media (min-width: 801px) {
+  body:has(.home) .footer-grid > :first-child {
+    border-inline-end: 1px solid var(--rak-line);
+    padding-inline-end: 24px;
+  }
+}
+body:has(.home) .footer-grid h3 {
+  font-size: 1rem;
+}
+body:has(.home) .footer-grid a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+body:has(.home) .footer-bottom .developer-credit {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+@media (max-width: 800px) {
+  .home .hero::after {
+    background: linear-gradient(
+      90deg,
+      #fff8f5 0%,
+      #fff8f5ed 44%,
+      #fff8f570 80%
+    );
+  }
+  .home .hero > img {
+    object-position: 61% center;
+  }
+}
+@media (max-width: 540px) {
+  .home .hero {
+    min-height: auto;
+  }
+  .home .hero-content {
+    padding-block: 32px 54px;
+  }
+  .home .hero h1 {
+    font-size: clamp(2.15rem, 8.8vw, 3rem);
+  }
+  .home .hero::after {
+    background: linear-gradient(90deg, #fff8f5f5, #fff8f5d9 72%, #fff8f5a8);
+  }
+  .home .hero-benefits {
+    display: grid;
+    gap: 10px;
+  }
+}
+
+.home #corridas .grid:has(> .event-card:nth-child(2):last-child) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.home #corridas .event-card:last-child {
+  grid-column: auto;
+  max-width: none;
+}
+@media (max-width: 540px) {
+  .home #corridas .grid:has(> .event-card:nth-child(2):last-child) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .home .guidance {
+    grid-template-columns: 1fr;
+  }
+  .home .guidance-intro {
+    border-end-end-radius: 52px;
+  }
+  .home .final-cta .container {
+    padding-inline-start: 0;
+  }
+  .home .final-cta {
+    background-image:
+      linear-gradient(90deg, #790603eb, #b40804f0),
+      url("/images/home/hero-running-kit-pickup.webp");
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home .faq summary svg {
+    transition: transform 0.18s ease;
+  }
+}

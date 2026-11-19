@@ -5,9 +5,11 @@ export default ts.config(
   {
     ignores: [
       "dist/**",
+      "wordpress/releases/**",
       "node_modules/**",
       ".local-tools/**",
       ".pnpm-store/**",
+      "wordpress/plugins/re-almeida-kits/assets/jsQR.js",
     ],
   },
   js.configs.recommended,

@@ -83,7 +83,7 @@
     const row = button.closest("tr");
     if (button.hasAttribute("data-save")) {
       void run(async () => {
-        await save(row, Object.fromEntries(["bib", "documentStatus", "pickupStatus"].map((name) => [name, row.querySelector('[name="' + name + '"]').value])));
+        await save(row, Object.fromEntries(["bib", "documentStatus", "pickupStatus", "documentReason"].map((name) => [name, row.querySelector('[name="' + name + '"]').value])));
         return "Alterações salvas.";
       });
     }
@@ -117,6 +117,7 @@
   });
 
   dialog.addEventListener("submit", (event) => {
+    if (event.target.matches('[data-rak-confirm]') && !window.confirm(event.target.dataset.rakConfirm)) { event.preventDefault(); return; }
     if (!event.target.matches("[data-review]")) return;
     event.preventDefault();
     const values = Object.fromEntries(new window.FormData(event.target, event.submitter));

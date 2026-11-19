@@ -20,6 +20,12 @@ test("installable ZIP has one plugin root and exactly the current runtime files"
     ...readdirSync(
       new URL("../wordpress/plugins/re-almeida-kits/assets/", import.meta.url),
     ).map((f) => `assets/${f}`),
+    ...readdirSync(
+      new URL(
+        "../wordpress/plugins/re-almeida-kits/vendor/qr/",
+        import.meta.url,
+      ),
+    ).map((f) => `vendor/qr/${f}`),
   ].sort();
   const entries = [];
   let at = 0;

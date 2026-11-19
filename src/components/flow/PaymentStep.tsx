@@ -29,6 +29,7 @@ export default function PaymentStep() {
         version: persistence.version,
         expectedCents: total.known,
       });
+      persistence.markSubmitted();
       if (result.checkoutUrl)
         location.assign(accountUrl(result.checkoutUrl, ""));
       else setNumber(result.number);
@@ -46,11 +47,8 @@ export default function PaymentStep() {
   return (
     <>
       <h1>Finalizar solicitação de retirada</h1>
-      <p>
-        Escolha o meio de pagamento no checkout do WooCommerce. O valor depende
-        da modalidade e das opções escolhidas.
-      </p>
-      <p className="help-panel">
+      <p>Confira o total e continue para escolher a forma de pagamento.</p>
+      <p className="flow-total">
         Total dos serviços e adicionais{" "}
         <strong>{total.pending ? "A confirmar" : money(total.known)}</strong>
       </p>
@@ -81,7 +79,7 @@ export default function PaymentStep() {
           }
           onClick={() => void finalize()}
         >
-          {busy ? "Validando solicitação…" : "Finalizar e abrir checkout"}
+          {busy ? "Validando solicitação…" : "Continuar para o pagamento"}
         </button>
       )}
     </>

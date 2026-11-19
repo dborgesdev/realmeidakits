@@ -10,7 +10,8 @@ $archive = [System.IO.Compression.ZipArchive]::new($stream, [System.IO.Compressi
 try {
     $files = @('re-almeida-kits.php', 'readme.txt')
     $files += Get-ChildItem -LiteralPath (Join-Path $pluginRoot 'includes') -Filter '*.php' -File | ForEach-Object { 'includes/' + $_.Name }
-    $files += Get-ChildItem -LiteralPath (Join-Path $pluginRoot 'assets') -File | Where-Object { $_.Extension -in '.css', '.js' } | ForEach-Object { 'assets/' + $_.Name }
+    $files += Get-ChildItem -LiteralPath (Join-Path $pluginRoot 'assets') -File | ForEach-Object { 'assets/' + $_.Name }
+    $files += Get-ChildItem -LiteralPath (Join-Path $pluginRoot 'vendor') -File -Recurse | ForEach-Object { $_.FullName.Substring($pluginRoot.Length + 1).Replace('\', '/') }
     foreach ($relative in ($files | Sort-Object)) {
         $entry = $archive.CreateEntry('re-almeida-kits/' + $relative, [System.IO.Compression.CompressionLevel]::Optimal)
         $entry.LastWriteTime = [DateTimeOffset]::new(2026, 10, 27, 0, 0, 0, [TimeSpan]::Zero)

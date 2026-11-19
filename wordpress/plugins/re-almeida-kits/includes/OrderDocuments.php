@@ -79,6 +79,8 @@ final class OrderDocuments {
                 PrivateDocumentStore::remove($owner, $token);
                 return Identity::error('Não foi possível registrar a substituição.', 503);
             }
+            Vouchers::syncLocked($row);
+            NotificationQueue::replacement($row, $index, $requirement, array_replace($line, $patch), $state['version']);
             return ['saved' => true];
         });
     }

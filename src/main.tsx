@@ -7,6 +7,7 @@ import PublicRaceControls from "./PublicRaceControls";
 import { RequestProvider } from "./state/RequestContext";
 import { CatalogProvider } from "./state/CatalogContext";
 import "./styles.css";
+import "./visual.css";
 const publicRoot = document.getElementById("public-races");
 ReactDOM.createRoot(publicRoot ?? document.getElementById("root")!).render(
   <React.StrictMode>

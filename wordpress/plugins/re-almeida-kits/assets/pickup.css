@@ -1,0 +1,8 @@
+.rak-pickup {max-width: 880px;}
+.rak-pickup form {display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:24px 0;}
+.rak-pickup label {display:grid;gap:8px;flex:1;min-width:0;}
+.rak-pickup input {width:100%;min-height:44px;}
+.rak-pickup .button {min-height:44px;white-space:normal;}
+.rak-pickup video {width:100%;max-width:520px;margin-top:16px;}
+.rak-voucher-result {background:white;border:1px solid #757575;padding:20px;margin:16px 0;overflow-wrap:anywhere;}
+.rak-pickup :focus-visible {outline:3px solid #b21620;outline-offset:3px;}

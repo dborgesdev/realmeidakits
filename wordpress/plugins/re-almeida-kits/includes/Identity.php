@@ -20,7 +20,7 @@ final class Identity {
             $data[$key]=trim($input[$key]??'');
         }
         $data['name']=sanitize_text_field($data['name']);
-        $data['cpf']=self::digits($data['cpf']);$data['phone']=self::digits($data['phone']);
+        $data['cpf']=self::digits($data['cpf']);$data['phone']=self::phone($data['phone']);
         $data['email']=strtolower($data['email']);
         $date=\DateTimeImmutable::createFromFormat('!Y-m-d',$data['birthDate']);
         if(mb_strlen($data['name'])<3||mb_strlen($data['name'])>80)return self::error('Informe nome completo entre 3 e 80 caracteres.');
@@ -31,4 +31,8 @@ final class Identity {
         return $data;
     }
     public static function error(string $message,int $status=400): \WP_Error { return new \WP_Error('rak_identity',$message,['status'=>$status]); }
+    public static function phone(string $value): string {
+        $digits = self::digits($value);
+        return str_starts_with($digits, '55') && in_array(strlen($digits), [12, 13], true) ? substr($digits, 2) : $digits;
+    }
 }

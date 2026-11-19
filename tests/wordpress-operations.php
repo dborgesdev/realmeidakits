@@ -4,7 +4,7 @@ $_SERVER['DOCUMENT_ROOT'] = dirname(realpath($argv[1]));
 define('RAK_PRIVATE_DOCUMENT_ROOT', dirname($_SERVER['DOCUMENT_ROOT']) . '/private-documents');
 require $argv[1] . '/wp-load.php';
 if (wp_parse_url(home_url(), PHP_URL_HOST) !== '127.0.0.1') exit(1);
-use ReAlmeida\Kits\{Accounts, KitOrderRepository, Repository, RequestOperations, RequestQueue, RequestExport, Schema};
+use ReAlmeida\Kits\{Accounts, KitOrderRepository, Repository, RequestOperations, RequestQueue, RequestExport, Schema, Vouchers, VoucherRepository};
 global $wpdb;
 if (($argv[2] ?? '') === 'xlsx') {
     $path = $argv[3];
@@ -64,7 +64,7 @@ try {
     $search = array_replace($filters, ['q' => 'QA1']);
     if (count(iterator_to_array(RequestQueue::entries($search))) !== 1) throw new RuntimeException('Filtro por inscrição falhou.');
     $row = KitOrderRepository::get($id);
-    $patch = ['bib' => '0008', 'documentStatus' => 'not_required', 'pickupStatus' => 'collected'];
+    $patch = ['bib' => '0008', 'documentStatus' => 'not_required', 'pickupStatus' => 'pending'];
     if (is_wp_error(RequestOperations::update($row, 1, 0, $patch))) throw new RuntimeException('Edição falhou.');
     $state = RequestOperations::read($row);
     if ($state['lines'][1]['bib'] !== '0008' || $state['audit'][0]['actor'] !== $admin ||
@@ -86,6 +86,8 @@ try {
     echo "OK fila, múltiplos participantes, filtros, edição, auditoria, concorrência e reversão\n";
 } finally {
     if ($id) {
+        foreach ($wpdb->get_col($wpdb->prepare('SELECT id FROM ' . Accounts::table('vouchers') . ' WHERE request_id=%d', $id)) as $voucherId) wp_clear_scheduled_hook('rak_voucher_mail', [(int) $voucherId]);
+        $wpdb->delete(Accounts::table('vouchers'), ['request_id' => $id]);
         $wpdb->delete(Accounts::table('requests'), ['id' => $id]);
         delete_user_meta($admin, '_rak_request_ops_' . $id);
     }

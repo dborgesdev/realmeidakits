@@ -66,13 +66,14 @@ final class RequestExport {
         if (!$handle) throw new \RuntimeException('Falha ao criar a planilha.');
         try {
             self::write($handle, '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>');
-            self::row($handle, ['Corrida', 'Participante', 'Titular', 'Modalidade', 'Inscrição', 'Número de peito', 'Documentos', 'Retirada', 'Pagamento confirmado', 'Tamanho']);
+            self::row($handle, ['Corrida', 'Participante', 'Titular', 'Modalidade', 'Inscrição', 'Número de peito', 'Documentos', 'Retirada', 'Pagamento confirmado', 'Tamanho', 'Voucher', 'Retirada UTC', 'Funcionário', 'Operação']);
             foreach ($entries as $entry) {
                 $line = $entry['line'];
                 self::row($handle, [
                     $line['race'], $line['participant'], $entry['holder'], $line['modality'], $entry['registration'], $line['bib'] ?? '',
                     RequestOperations::DOCUMENTS[$line['documentStatus']], RequestOperations::PICKUP[$line['pickupStatus']],
                     $entry['order']->get_date_paid()?->date_i18n('d/m/Y H:i') ?? '', $entry['item']['size'] ?? '',
+                    Vouchers::STATES[$entry['voucher']->state ?? 'blocked'], $entry['voucher']->collected_at ?? '', $entry['voucher']->collected_by ?? '', $entry['voucher']->operation_id ?? '',
                 ]);
             }
             self::write($handle, '</sheetData></worksheet>');

@@ -13,6 +13,7 @@ type Order = {
   paid: boolean;
   refunded: number;
   checkoutUrl: string | null;
+  paymentNotice?: string | null;
   lines: {
     raceId: string;
     race: string;
@@ -25,6 +26,13 @@ type Order = {
     bib: string | null;
     documentLine?: number;
     documents?: OrderDocument[];
+    voucher?: {
+      state: string;
+      label: string;
+      reason: string;
+      pdfUrl: string | null;
+      collectedAt?: string | null;
+    };
   }[];
 };
 
@@ -36,6 +44,8 @@ function financialStatus(order: Order) {
   if (order.paymentStatus === "failed") return "Pagamento falhou";
   if (Number(order.refunded) > 0) return "Reembolso parcial";
   if (order.paid) return "Pago";
+  if (["processing", "completed"].includes(order.paymentStatus))
+    return "Confirmação financeira em conferência";
   if (order.paymentStatus === "on-hold") return "Em análise no WooCommerce";
   return "Aguardando pagamento";
 }
@@ -76,6 +86,21 @@ function OrdersForSession() {
       active = false;
     };
   }, [status, request, attempt]);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("pedido");
+    if (result && id && /^[1-9][0-9]*$/.test(id)) {
+      const line = new URLSearchParams(window.location.search).get(
+        "documentos",
+      );
+      const target =
+        line !== null && /^[0-9]+$/.test(line)
+          ? "pedido-" + id + "-participante-" + line
+          : "pedido-" + id;
+      window.requestAnimationFrame(() =>
+        document.getElementById(target)?.scrollIntoView({ block: "start" }),
+      );
+    }
+  }, [result]);
 
   if (status === "loading") return <p role="status">Verificando a sessão…</p>;
   if (status !== "authenticated")
@@ -106,7 +131,15 @@ function OrdersForSession() {
     <ul className="form-section">
       {result.orders.map((order) => (
         <li key={order.id}>
-          <details>
+          <details
+            id={"pedido-" + order.id}
+            open={
+              new URLSearchParams(window.location.search).get("pedido") ===
+              String(order.id)
+                ? true
+                : undefined
+            }
+          >
             <summary>
               {order.number
                 ? "Pedido " + order.number
@@ -125,7 +158,15 @@ function OrdersForSession() {
             </p>
             <ul>
               {order.lines.map((line) => (
-                <li key={line.raceId + "-" + line.participantId}>
+                <li
+                  id={
+                    "pedido-" +
+                    order.id +
+                    "-participante-" +
+                    (line.documentLine ?? 0)
+                  }
+                  key={line.raceId + "-" + line.participantId}
+                >
                   <strong>
                     {line.race} · {line.participant}
                   </strong>
@@ -153,6 +194,30 @@ function OrdersForSession() {
                     .
                   </p>
                   {line.bib && <p>Número de peito {line.bib}</p>}
+                  {line.voucher && (
+                    <div>
+                      <p>
+                        Voucher: <strong>{line.voucher.label}</strong> ·{" "}
+                        {line.voucher.reason}
+                      </p>
+                      {line.voucher.collectedAt && (
+                        <p>
+                          Retirada em{" "}
+                          {new Date(
+                            line.voucher.collectedAt.replace(" ", "T"),
+                          ).toLocaleString("pt-BR")}
+                        </p>
+                      )}
+                      {line.voucher.pdfUrl && (
+                        <a
+                          className="button secondary"
+                          href={accountUrl(line.voucher.pdfUrl, "")}
+                        >
+                          Baixar voucher PDF
+                        </a>
+                      )}
+                    </div>
+                  )}
                   <OrderDocumentList
                     order={order.id}
                     line={line.documentLine ?? 0}
@@ -167,6 +232,20 @@ function OrdersForSession() {
                 Abrir checkout WooCommerce
               </a>
             )}
+            {order.paymentNotice && <p role="status">{order.paymentNotice}</p>}
+            {!order.checkoutUrl &&
+              !order.paid &&
+              [
+                "pending",
+                "failed",
+                "cancelled",
+                "refunded",
+                "on-hold",
+              ].includes(order.paymentStatus) && (
+                <Link reloadDocument to="/corridas">
+                  Iniciar nova solicitação para uma corrida aberta
+                </Link>
+              )}
           </details>
         </li>
       ))}

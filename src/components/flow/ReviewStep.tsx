@@ -13,8 +13,8 @@ export default function ReviewStep() {
   );
   return (
     <>
-      <h1>Confira seu pedido</h1>
-      <p className="help-panel">
+      <h1>Confira sua solicitação</h1>
+      <p className="flow-total">
         Total do serviço{" "}
         <strong>
           {money(total.known)}

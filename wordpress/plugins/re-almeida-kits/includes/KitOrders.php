@@ -79,6 +79,7 @@ final class KitOrders {
                 return Identity::error('O checkout do serviço ainda não foi habilitado neste ambiente.', 503);
             }
             $existing = KitOrderRepository::find($owner, $current['key']);
+            if (!$existing) $existing = KitOrderRepository::get((int) get_user_meta($owner, '_rak_draft_order_' . $current['key'], true));
             if ($existing) return self::resume($owner, $existing);
             if ($current['version'] !== $version || !$current['draft']) return Identity::error('O rascunho mudou. Confira a versão salva.', 409);
             $product = self::product();
@@ -89,8 +90,13 @@ final class KitOrders {
             if ($quote['total'] !== $expected) return Identity::error('O preço mudou. Recarregue para conferir o valor atualizado.', 409);
             return RaceRegistrations::locked(static function () use ($quote, $owner, $current, $product) {
                 $conflicts = RaceRegistrations::conflicts($quote['lines'], true);
-                if ($conflicts) return Identity::error(sprintf('%s já possui uma solicitação válida ou aguardando pagamento para %s.',
+                if ($conflicts) return Identity::error(sprintf('%s já possui pagamento confirmado e válido para %s.',
                     $conflicts[0]['participant'], $conflicts[0]['race']), 409);
+                $pending = RequestFinance::pending($owner, $quote);
+                if ($pending) {
+                    update_user_meta($owner, '_rak_draft_order_' . $current['key'], (int) $pending->id);
+                    return self::resume($owner, $pending);
+                }
                 return self::create($owner, $current['key'], $product, $quote);
             });
         });
@@ -135,10 +141,12 @@ final class KitOrders {
             $actual = preg_match('/^(\d+)(?:\.(\d{1,2}))?$/D', $total, $parts)
                 ? (int) $parts[1] * 100 + (int) str_pad($parts[2] ?? '', 2, '0') : null;
             if ($actual !== $quote['total'] || !$order->get_id() || !KitOrderRepository::attach($id, $order->get_id())) {
+                NotificationQueue::alert('order-create:' . $id, 'Solicitação ' . $id . ' exige conciliação do vínculo WooCommerce. Não recriar ou cobrar sem conferir.', $id);
                 return Identity::error('O pedido aguarda conferência. Nenhum novo pedido será criado em outra tentativa.', 409);
             }
             return self::result($order, $id);
         } catch (\Throwable) {
+            NotificationQueue::alert('order-create:' . $id, 'Solicitação ' . $id . ' interrompida durante a criação do pedido. Conferir o WooCommerce antes de nova cobrança.', $id);
             // A reserved request is never retried blindly after an uncertain WooCommerce write.
             return Identity::error('O pedido aguarda conferência. Nenhum novo pedido será criado em outra tentativa.', 409);
         }
@@ -153,10 +161,13 @@ final class KitOrders {
     }
 
     private static function result(\WC_Order $order, int $requestId): array {
+        $row = KitOrderRepository::get($requestId);
+        $payable = $row && RequestFinance::payable($row, $order);
         return [
             'id' => $requestId,
             'number' => $order->get_order_number(),
-            'checkoutUrl' => $order->needs_payment() ? $order->get_checkout_payment_url() : null,
+            'checkoutUrl' => $payable ? $order->get_checkout_payment_url() : null,
+            'paymentNotice' => !$payable && !RequestQueue::paid($order) ? 'Este pedido não está disponível para retomar pagamento. O histórico foi preservado. Para corridas abertas, inicie uma nova solicitação; se houve pagamento, procure atendimento para conferência.' : null,
         ];
     }
 
@@ -181,7 +192,7 @@ final class KitOrders {
                 'total' => $order->get_total(),
                 'currency' => $order->get_currency(),
                 'paymentStatus' => $order->get_status(),
-                'paid' => $order->is_paid(),
+                'paid' => RequestQueue::paid($order),
                 'refunded' => $order->get_total_refunded(),
                 'lines' => self::historyLines($row, $snapshot ?: [], RequestQueue::paid($order)),
             ];
@@ -190,9 +201,11 @@ final class KitOrders {
     }
 
     private static function historyLines(object $row, array $snapshot, bool $editable): array {
+        Vouchers::sync($row);
         $lines = RequestOperations::lines($row, $snapshot);
         return array_map(static fn(array $line, int $index) =>
-            OrderDocuments::describe((int) $row->owner_id, $snapshot, $line, $index, $editable),
+            OrderDocuments::describe((int) $row->owner_id, $snapshot, $line, $index, $editable) +
+                ['voucher' => Vouchers::describe(VoucherRepository::get((int) $row->id, $index))],
             $lines, array_keys($lines));
     }
 }

@@ -32,8 +32,10 @@ $availability = static fn(array $entry): string => $entry['status'] === 'open' ?
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
     <?php endif; ?>
     <link rel="icon" href="/brand/logo-corredor-original.jpg">
+    <link rel="stylesheet" href="/design/tokens.css">
     <?php foreach ($assets['css'] ?? [] as $css): ?><link rel="stylesheet" href="<?= esc_url('/' . $css) ?>"><?php endforeach; ?>
     <?php if (!empty($assets['file'])): ?><script type="module" src="<?= esc_url('/' . $assets['file']) ?>"></script><?php endif; ?>
+    <script defer src="/design/whatsapp.js"></script>
 </head>
 <body>
 <div id="public-header">
@@ -72,17 +74,13 @@ $availability = static fn(array $entry): string => $entry['status'] === 'open' ?
                             <?php endif; ?>
                         </div>
                         <div class="card-body">
-                            <h2><?= esc_html($entry['name']) ?></h2>
+                            <h2><a class="event-card-link" href="<?= esc_url('/corridas/' . $entry['slug']) ?>"><?= esc_html($entry['name']) ?></a></h2>
                             <span class="availability <?= $availability($entry) ?>"><?= esc_html(PublicPages::availability($entry)) ?></span>
-                            <p class="icon-line"><?= esc_html(PublicPages::date($entry['raceDate'] ?? '', 'd/m/Y') ?: 'Data a confirmar') ?></p>
-                            <?php if (!empty($entry['closesAt'])): ?>
-                                <p class="caption">Prazo <?= esc_html(PublicPages::date($entry['closesAt'], 'd/m/Y H:i')) ?> (Brasília)</p>
-                            <?php endif; ?>
+                            <p class="icon-line"><?= esc_html(PublicPages::date($entry['raceDate'] ?? '', 'd/m/Y') ?: 'Data a confirmar') ?><?= empty($entry['raceTime']) ? '' : esc_html(' · ' . $entry['raceTime']) ?></p>
                             <p class="icon-line"><?= esc_html(($entry['location'] ?? '') ?: 'Local a confirmar') ?></p>
                             <p class="caption"><?= esc_html(implode(' · ', array_column($entry['modalities'] ?? [], 'label'))) ?></p>
                             <div class="card-selection">
                                 <div data-race-selection="<?= esc_attr($entry['id']) ?>"></div>
-                                <a class="text-link" href="<?= esc_url('/corridas/' . $entry['slug']) ?>">Conhecer corrida →</a>
                             </div>
                         </div>
                     </article>
