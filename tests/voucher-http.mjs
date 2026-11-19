@@ -60,6 +60,15 @@ try {
   assert.equal(response.status, 200);
   assert.equal((await response.json()).state, "released");
   assert.match(response.headers.get("cache-control"), /no-store/);
+  response = await post("lookup", data.otherCookie, data.otherNonce, {
+    code: data.code,
+  });
+  assert.equal(response.status, 403);
+  response = await post("lookup", data.ownerCookie, data.ownerNonce, {
+    code: data.code,
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).token, data.token);
   response = await post("search", data.ownerCookie, data.ownerNonce, {
     q: String(data.request),
   });

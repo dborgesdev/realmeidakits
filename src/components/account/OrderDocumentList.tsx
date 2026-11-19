@@ -59,7 +59,7 @@ export default function OrderDocumentList({
 
   if (!documents.length) return null;
   return (
-    <ul className="form-section" aria-busy={!!busy}>
+    <ul className="account-order-documents" aria-busy={!!busy}>
       {documents.map((document) => (
         <li key={document.id}>
           <strong>{document.label}</strong> ·{" "}
@@ -76,11 +76,7 @@ export default function OrderDocumentList({
                   ? "Enviar documento"
                   : "Enviar novo arquivo para esta solicitação"
               }
-              accept={
-                document.id === "rak-personal-identity"
-                  ? ".jpg,.jpeg,.png"
-                  : ".pdf,.jpg,.jpeg,.png"
-              }
+              accept=".pdf,.jpg,.jpeg,.png"
               disabled={!!busy}
               onFile={(file) => void replace(document, file)}
             />

@@ -112,7 +112,7 @@ export default function PrivateDocumentField({
     <div {...field(target)} tabIndex={-1} aria-busy={!!operation}>
       <FilePicker
         label={(token ? "Substituir " : "Anexar ") + document.label}
-        accept={personal ? ".jpg,.jpeg,.png" : ".pdf,.jpg,.jpeg,.png"}
+        accept=".pdf,.jpg,.jpeg,.png"
         disabled={!editable}
         onFile={(file) => void run("Enviando documento…", () => upload(file))}
       />
@@ -156,7 +156,7 @@ export default function PrivateDocumentField({
       )}
       {configuration?.enabled && (
         <p className="field-help">
-          {personal ? "JPG ou PNG" : "PDF, JPG ou PNG"}, até{" "}
+          PDF, JPG ou PNG, até{" "}
           {(configuration.maxBytes / (1024 * 1024)).toLocaleString("pt-BR")} MB.
         </p>
       )}

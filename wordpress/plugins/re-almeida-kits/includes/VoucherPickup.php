@@ -44,7 +44,7 @@ final class VoucherPickup {
         $voucher = VoucherRepository::get((int) $row->id, (int) $voucher->line_index);
         $snapshot = json_decode($row->snapshot, true) ?: [];
         $line = $snapshot['lines'][$voucher->line_index] ?? [];
-        return ['token' => $voucher->token, 'request' => (int) $row->id, 'participant' => $line['participant'] ?? '',
+        return ['token' => $voucher->token, 'code' => VoucherRepository::code($voucher), 'request' => (int) $row->id, 'participant' => $line['participant'] ?? '',
             'race' => $line['race'] ?? '', 'modality' => ($line['modality'] ?? '') === 'appai' ? 'APPAI' : 'Kit Oficial',
             'state' => $voucher->state, 'label' => Vouchers::STATES[$voucher->state], 'reason' => $voucher->reason,
             'collectedAt' => $voucher->collected_at ? $voucher->collected_at . 'Z' : null,
@@ -52,8 +52,12 @@ final class VoucherPickup {
     }
 
     public static function lookup(\WP_REST_Request $request) {
-        $token = $request->get_json_params()['token'] ?? '';
-        $voucher = is_string($token) ? VoucherRepository::token($token) : null;
+        $params = $request->get_json_params();
+        $token = $params['token'] ?? '';
+        $code = $params['code'] ?? null;
+        if (is_string($code) && !self::allowSearch()) return self::rateError();
+        $voucher = is_string($code) ? VoucherRepository::byCode(trim($code))
+            : (is_string($token) ? VoucherRepository::token($token) : null);
         return $voucher ? self::payload($voucher) : Identity::error('Código inexistente ou inválido.', 404);
     }
 
@@ -68,10 +72,20 @@ final class VoucherPickup {
     public static function search(\WP_REST_Request $request) {
         $query = $request->get_json_params()['q'] ?? '';
         if (!is_string($query) || mb_strlen(trim($query)) < 2 || mb_strlen($query) > 100) return Identity::error('Informe ao menos dois caracteres (solicitação, participante ou corrida).');
+        if (!self::allowSearch()) return self::rateError();
+        $query = trim($query);
+        if (preg_match('/^V-[0-9]+$/iD', $query)) {
+            $voucher = VoucherRepository::byCode($query);
+            if (!$voucher) return ['results' => []];
+            $result = self::payload($voucher);
+            return is_wp_error($result) ? $result : ['results' => [$result]];
+        }
+        $cpf = preg_match('/^(?:[0-9]{11}|[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2})$/D', $query) ? Identity::digits($query) : '';
+        if ($cpf !== '' && !Identity::cpf($cpf)) return Identity::error('Informe um CPF válido.');
         global $wpdb;
         $table = Accounts::table('requests');
-        $like = '%' . $wpdb->esc_like($query) . '%';
-        $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table WHERE order_id IS NOT NULL AND (id=%d OR snapshot LIKE %s) ORDER BY id DESC LIMIT 30", absint($query), $like));
+        $like = '%' . $wpdb->esc_like($cpf ?: $query) . '%';
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table WHERE order_id IS NOT NULL AND (id=%d OR snapshot LIKE %s) ORDER BY id DESC LIMIT 30", $cpf ? 0 : absint($query), $like));
         $results = [];
         foreach ($rows as $row) {
             $snapshot = json_decode($row->snapshot, true) ?: [];
@@ -79,13 +93,26 @@ final class VoucherPickup {
             if (is_wp_error($synced)) return $synced;
             foreach ($synced as $index => $voucher) {
                 $line = $snapshot['lines'][$index];
-                $text = remove_accents($line['participant'] . ' ' . $line['race']);
-                if ((string) $row->id !== $query && !str_contains(mb_strtolower($text), mb_strtolower(remove_accents($query)))) continue;
+                if ($cpf !== '') {
+                    [$person] = RequestQueue::item($snapshot, $line);
+                    if (Identity::digits($line['cpf'] ?? $person['cpf'] ?? '') !== $cpf) continue;
+                } else {
+                    $text = remove_accents($line['participant'] . ' ' . $line['race']);
+                    if ((string) $row->id !== $query && !str_contains(mb_strtolower($text), mb_strtolower(remove_accents($query)))) continue;
+                }
                 $results[] = self::payload($voucher);
                 if (count($results) >= 30) break 2;
             }
         }
         return ['results' => $results];
+    }
+
+    private static function allowSearch(): bool {
+        return AccountAuth::throttle('pickup-search-' . get_current_user_id(), 60, 300);
+    }
+
+    private static function rateError(): \WP_Error {
+        return Identity::error('Muitas consultas. Aguarde alguns minutos antes de tentar novamente.', 429);
     }
 
     public static function render(): void {
@@ -95,6 +122,6 @@ final class VoucherPickup {
         printf('<div class="wrap rak-pickup" data-api="%s" data-nonce="%s"><h1>Conferência de retirada</h1><p>A leitura consulta o voucher. Confirme a retirada somente após conferir os dados.</p>', esc_url(rest_url('re-almeida/v1/pickup/')), esc_attr(wp_create_nonce('wp_rest')));
         echo '<button class="button" type="button" id="rak-camera">Abrir câmera</button> <button class="button" type="button" id="rak-stop" hidden>Fechar câmera</button><video id="rak-video" playsinline muted hidden></video>';
         echo '<form id="rak-code"><label>Código do voucher ou URL do QR Code<input id="rak-token" autocomplete="off" required maxlength="2048"></label><button class="button">Consultar código</button></form>';
-        echo '<form id="rak-search"><label>Solicitação, participante ou corrida<input id="rak-query" type="search" minlength="2" maxlength="100" required></label><button class="button">Pesquisar</button></form><p role="status" aria-live="polite" id="rak-status"></p><div id="rak-results"></div></div>';
+        echo '<form id="rak-search"><label>CPF, nome do participante, solicitação ou corrida<input id="rak-query" type="search" autocomplete="off" minlength="2" maxlength="100" required></label><button class="button">Pesquisar</button></form><p role="status" aria-live="polite" id="rak-status"></p><div id="rak-results"></div></div>';
     }
 }

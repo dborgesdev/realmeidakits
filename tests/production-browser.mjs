@@ -95,6 +95,84 @@ try {
   await call("Runtime.enable");
   await call("Network.enable");
   await call("Network.clearBrowserCookies");
+  const widths = [320, 375, 768, 1024, 1440];
+  const baseline = new Map();
+  async function capture(name, route, reference = false) {
+    for (const width of widths) {
+      await call("Emulation.setDeviceMetricsOverride", {
+        width,
+        height: 1100,
+        deviceScaleFactor: 1,
+        mobile: width < 500,
+      });
+      await evaluate(`document.fonts.ready`);
+      const layout = await evaluate(`(() => {
+        const header = document.querySelector('.rak-site-header');
+        const logo = header.querySelector('.brand');
+        const inner = header.querySelector('.header-inner');
+        const footer = document.querySelector('.rak-site-footer');
+        const credit = footer.querySelector('.developer-credit');
+        return {
+          overflow: document.documentElement.scrollWidth > innerWidth,
+          header: [header.offsetHeight, logo.offsetWidth, logo.offsetHeight],
+          container: [inner.offsetWidth, inner.getBoundingClientRect().left, document.documentElement.clientWidth],
+          links: [...header.querySelectorAll('nav a')].map(a => a.textContent.trim()),
+          active: header.querySelector('[aria-current]')?.textContent.trim(),
+          credit: [credit.textContent.trim(), credit.getAttribute('href'), credit.target, credit.rel],
+          icon: [...document.querySelectorAll('link[rel=icon]')].map(link => link.getAttribute('href')),
+        };
+      })()`);
+      assert.equal(layout.overflow, false, name + " overflow at " + width);
+      const [container, left, available] = layout.container;
+      assert.equal(
+        container,
+        Math.min(
+          1192,
+          available - (width <= 520 ? 32 : width <= 800 ? 40 : 64),
+        ),
+      );
+      assert.ok(
+        Math.abs(left - (available - container) / 2) <= 1,
+        name + " header off center",
+      );
+      assert.deepEqual(layout.links, [
+        "Início",
+        "Solicitar kit",
+        "Meus pedidos",
+        "Minha conta",
+      ]);
+      assert.equal(layout.active, route);
+      assert.deepEqual(layout.icon, ["/favicon.ico"]);
+      assert.deepEqual(layout.credit, [
+        "Desenvolvido por Douglas Borges - Smart Local",
+        "https://smartlocal.com.br",
+        "_blank",
+        "noopener noreferrer",
+      ]);
+      if (reference) baseline.set(width, layout.header);
+      else
+        assert.deepEqual(
+          layout.header,
+          baseline.get(width),
+          name + " header at " + width,
+        );
+      const shot = await call("Page.captureScreenshot", {
+        format: "png",
+        captureBeyondViewport: true,
+      });
+      writeFileSync(
+        resolve(
+          ".local-tools/production-qa/chrome-" + name + "-" + width + ".png",
+        ),
+        Buffer.from(shot.data, "base64"),
+      );
+    }
+  }
+  await call("Page.navigate", { url: "http://127.0.0.1:8097/" });
+  await until(
+    `document.readyState==='complete' && !!document.querySelector('.home .hero')`,
+  );
+  await capture("home", "Início", true);
   await call("Page.navigate", { url: data.loginUrl });
   await until(
     `document.readyState==='complete'&&document.querySelector('#rak_phone')`,
@@ -124,27 +202,60 @@ try {
     ),
     "true",
   );
-  for (const width of [320, 390, 768, 1440]) {
-    await call("Emulation.setDeviceMetricsOverride", {
-      width,
-      height: 1100,
-      deviceScaleFactor: 1,
-      mobile: width < 500,
-    });
-    assert.equal(
-      await evaluate(`document.documentElement.scrollWidth<=innerWidth`),
-      true,
-      "Native account overflow at " + width,
-    );
-    const shot = await call("Page.captureScreenshot", {
-      format: "png",
-      captureBeyondViewport: true,
-    });
-    writeFileSync(
-      resolve(".local-tools/production-qa/login-" + width + ".png"),
-      Buffer.from(shot.data, "base64"),
-    );
-  }
+  await capture("login", "Minha conta");
+  const recovery = await evaluate(
+    `document.querySelector('a[href*="lost-password"]').href`,
+  );
+  await call("Page.navigate", { url: recovery });
+  await until(
+    `document.readyState==='complete' && document.querySelector('.lost_reset_password')`,
+  );
+  await capture("recuperacao", "Minha conta");
+  await call("Emulation.setDeviceMetricsOverride", {
+    width: 375,
+    height: 900,
+    deviceScaleFactor: 1,
+    mobile: true,
+  });
+  await until(`innerWidth === 375 && document.querySelector('.rak-site-header.menu-ready') &&
+    getComputedStyle(document.querySelector('.rak-site-header button')).display === 'grid'`);
+  await evaluate(`document.querySelector('.rak-site-header button').focus()`);
+  assert.ok(
+    await evaluate(`document.activeElement.classList.contains('menu-toggle')`),
+  );
+  await call("Input.dispatchKeyEvent", {
+    type: "rawKeyDown",
+    key: " ",
+    code: "Space",
+    windowsVirtualKeyCode: 32,
+  });
+  await call("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: " ",
+    code: "Space",
+    windowsVirtualKeyCode: 32,
+  });
+  assert.ok(
+    await evaluate(
+      `document.querySelector('.rak-site-header button').getAttribute('aria-expanded') === 'true'`,
+    ),
+  );
+  await evaluate(`document.querySelector('.rak-site-header nav a').focus()`);
+  await call("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    key: "Escape",
+    code: "Escape",
+    windowsVirtualKeyCode: 27,
+  });
+  assert.ok(
+    await evaluate(
+      `document.activeElement.classList.contains('menu-toggle') && document.activeElement.getAttribute('aria-expanded') === 'false' && getComputedStyle(document.activeElement).outlineStyle !== 'none'`,
+    ),
+  );
+  await call("Page.navigate", { url: data.loginUrl });
+  await until(
+    `document.readyState==='complete'&&document.querySelector('#rak_phone')`,
+  );
   for (const pair of data.cookie.split("; ")) {
     const at = pair.indexOf("=");
     await call("Network.setCookie", {
@@ -165,27 +276,32 @@ try {
     true,
     "Checkout must use official header",
   );
-  for (const width of [320, 390, 768, 1440]) {
-    await call("Emulation.setDeviceMetricsOverride", {
-      width,
-      height: 1100,
-      deviceScaleFactor: 1,
-      mobile: width < 500,
-    });
-    assert.equal(
-      await evaluate(`document.documentElement.scrollWidth<=innerWidth`),
-      true,
-      "Order-pay overflow at " + width,
-    );
-    const shot = await call("Page.captureScreenshot", {
-      format: "png",
-      captureBeyondViewport: true,
-    });
-    writeFileSync(
-      resolve(".local-tools/production-qa/checkout-" + width + ".png"),
-      Buffer.from(shot.data, "base64"),
-    );
-  }
+  await capture("checkout", "Solicitar kit");
+  await call("Page.navigate", { url: data.receivedUrl });
+  await until(
+    `document.readyState==='complete'&&document.querySelector('.rak-order-next')`,
+  );
+  assert.ok(
+    await evaluate(
+      `document.querySelector('main').textContent.includes('O pagamento foi confirmado.')`,
+    ),
+  );
+  assert.equal(
+    await evaluate(`!!document.querySelector('.rak-site-header') && !!document.querySelector('.rak-site-footer') &&
+      !!document.querySelector('.rak-order-next a[href$="pedido=${data.request}"]')`),
+    true,
+    "Order confirmation must show the official header, footer and order action",
+  );
+  await capture("confirmacao", "Meus pedidos");
+  await call("Page.navigate", { url: data.pendingReceivedUrl });
+  await until(
+    `document.readyState==='complete'&&document.querySelector('.rak-order-next')`,
+  );
+  assert.ok(
+    await evaluate(`document.querySelector('main').textContent.includes('Acompanhe a situação do pagamento') &&
+      !document.querySelector('main').textContent.includes('O pagamento foi confirmado.')`),
+    "Pending order was displayed as paid",
+  );
   assert.deepEqual(errors, [], "JavaScript exceptions on native pages");
   await call("Page.navigate", {
     url: "http://127.0.0.1:8097/solicitacao/participantes",
@@ -231,6 +347,40 @@ try {
     false,
     "Converted order still appears as active draft",
   );
+  await capture("conta", "Minha conta");
+  const ordersUrl = "http://127.0.0.1:8097/acompanhamento";
+  await call("Page.navigate", { url: ordersUrl });
+  await until(`document.querySelector('.account-order-race')`);
+  await capture("pedidos-fechado", "Meus pedidos");
+  await evaluate(
+    `document.querySelector('#pedido-${data.request} summary').focus()`,
+  );
+  await call("Input.dispatchKeyEvent", {
+    type: "rawKeyDown",
+    key: " ",
+    code: "Space",
+    windowsVirtualKeyCode: 32,
+  });
+  await call("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: " ",
+    code: "Space",
+    windowsVirtualKeyCode: 32,
+  });
+  assert.ok(
+    await evaluate(`document.querySelector('#pedido-${data.request}').open`),
+  );
+  await call("Page.navigate", { url: ordersUrl + "?pedido=" + data.request });
+  await until(
+    `document.querySelector('#pedido-${data.request}[open] .account-order-groups')`,
+  );
+  assert.deepEqual(
+    await evaluate(
+      `[...document.querySelectorAll('#pedido-${data.request} .account-order-groups h3')].map(title => title.textContent)`,
+    ),
+    ["Participante", "Documentação", "Voucher", "Retirada"],
+  );
+  await capture("pedidos-expandido", "Meus pedidos");
   const documentTarget =
     "/conta?pedido=" + data.request + "&documentos=0#pedido-" + data.request;
   await call("Page.navigate", {
@@ -278,7 +428,7 @@ try {
   );
   assert.deepEqual(errors, [], "JavaScript exceptions in React flow");
   console.log(
-    "OK Chromium: child theme, máscaras/erros, conta/checkout 320/390/768/1440, salvamento automático real e pedido convertido sem rascunho ativo. Nenhum pagamento enviado.",
+    "OK Chromium: 40 capturas em 320/375/768/1024/1440, paridade de cabeçalho, rodapé e favicon, menu e pedidos por teclado, sessão, máscaras e salvamento automático. Nenhum pagamento enviado.",
   );
 } finally {
   ws?.close();

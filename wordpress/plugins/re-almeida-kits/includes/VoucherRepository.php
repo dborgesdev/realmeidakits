@@ -3,6 +3,18 @@ namespace ReAlmeida\Kits;
 defined('ABSPATH') || exit;
 
 final class VoucherRepository {
+    public static function code(object $voucher): string {
+        return 'V-' . $voucher->id;
+    }
+
+    public static function byCode(string $code): ?object {
+        if (!preg_match('/^V-([1-9][0-9]{0,18})$/iD', $code, $match)) return null;
+        $id = filter_var($match[1], FILTER_VALIDATE_INT);
+        if ($id === false) return null;
+        global $wpdb;
+        $table = Accounts::table('vouchers');
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d", $id));
+    }
     public static function install(): bool {
         global $wpdb;
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';

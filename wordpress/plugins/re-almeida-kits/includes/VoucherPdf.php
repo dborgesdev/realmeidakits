@@ -47,7 +47,8 @@ final class VoucherPdf {
         $streams = [];
         $pickup = $line['pickup'] ?? null;
         $location = is_array($pickup) ? implode(' · ', array_filter([$pickup['label'] ?? '', $pickup['address'] ?? ''])) : (string) $pickup;
-        $texts = ['VOUCHER DE RETIRADA', 'Participante: ' . $line['participant'], 'Corrida: ' . $line['race']];
+        $texts = ['VOUCHER DE RETIRADA', 'Código de conferência: ' . VoucherRepository::code($voucher),
+            'Participante: ' . $line['participant'], 'Corrida: ' . $line['race']];
         if (!empty($line['raceDate'])) $texts[] = 'Data da corrida: ' . $line['raceDate'];
         $texts[] = 'Modalidade: ' . ($line['modality'] === 'appai' ? 'APPAI' : 'Kit Oficial');
         if ($location) $texts[] = 'Local de retirada: ' . $location;

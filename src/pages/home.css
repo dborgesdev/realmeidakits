@@ -298,37 +298,6 @@
 .home .final-cta .button:hover {
   background: var(--rak-tint);
 }
-body:has(.home) .header .brand {
-  width: clamp(148px, 17vw, 220px);
-  height: clamp(56px, 6vw, 76px);
-}
-body:has(.home) .nav > a {
-  font-weight: 800;
-}
-@media (min-width: 801px) {
-  body:has(.home) .footer-grid > :first-child {
-    border-inline-end: 1px solid var(--rak-line);
-    padding-inline-end: 24px;
-  }
-}
-body:has(.home) .footer-grid h3 {
-  font-size: 1rem;
-}
-body:has(.home) .footer-grid a {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  margin-top: 0;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-body:has(.home) .footer-bottom .developer-credit {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
 @media (max-width: 800px) {
   .home .hero::after {
     background: linear-gradient(

@@ -77,7 +77,11 @@ try {
     $logged=wp_generate_auth_cookie($owner,time()+600,'logged_in',$session);$_COOKIE[LOGGED_IN_COOKIE]=$logged;wp_set_current_user($owner);
     $input=['cookie'=>AUTH_COOKIE.'='.wp_generate_auth_cookie($owner,time()+600,'auth',$session).'; '.LOGGED_IN_COOKIE.'='.$logged,'nonce'=>wp_create_nonce('wp_rest'),'request'=>(int)$row->id,'login'=>$person['email'],'password'=>$password,'voucherUrl'=>ActionLinks::voucher((int)$row->id,0)];
     $preview=wc_create_order(['customer_id'=>$owner]);$preview->set_billing_email($person['email']);$item=new WC_Order_Item_Product();$item->set_name('DEMONSTRAÇÃO — serviço');$item->set_quantity(1);$item->set_subtotal(30);$item->set_total(30);$preview->add_item($item);$preview->calculate_totals();$preview->save();$orders[]=$preview;
-    $input['checkoutUrl']=$preview->get_checkout_payment_url();$input['browser']=true;
+    $input['checkoutUrl']=$preview->get_checkout_payment_url();
+    $input['receivedUrl']=$order->get_checkout_order_received_url();
+    [, $pendingConfirmation] = $seed();
+    $input['pendingReceivedUrl']=$pendingConfirmation->get_checkout_order_received_url();
+    $input['browser']=true;
     $draftPerson=$person;unset($draftPerson['password']);
     clean_post_cache($race);
     $racePost=get_post($race);prod_check($racePost&&$racePost->post_type==='corrida'&&$racePost->post_status==='publish','Fixture corrida: '.wp_json_encode(['id'=>$race,'type'=>$racePost->post_type??null,'status'=>$racePost->post_status??null]));
@@ -118,7 +122,7 @@ try {
     $beforeRecovery=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $notificationTable WHERE request_id=%d",$row->id));
     NotificationQueue::recover();NotificationQueue::recover();
     prod_check((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $notificationTable WHERE request_id=%d",$row->id))===$beforeRecovery,'Recuperação repetida duplicou notificações/alertas.');
-    echo "OK $count verificações funcionais 1.10.0 (DEMONSTRAÇÃO).\n";
+    echo "OK $count verificações funcionais " . \ReAlmeida\Kits\VERSION . " (DEMONSTRAÇÃO).\n";
 } finally {
     switch_theme($previousTheme);update_option('woocommerce_enable_myaccount_registration',$registrationOption);
     update_option('rak_notifications_since',$cutoff);
@@ -129,5 +133,10 @@ try {
     foreach($orders as$order)$order->delete(true);
     if($race)wp_delete_post($race,true);
     if(isset($token)&&is_file(RAK_PRIVATE_DOCUMENT_ROOT.'/'.$token))unlink(RAK_PRIVATE_DOCUMENT_ROOT.'/'.$token);
-    if($owner&&!is_wp_error($owner)){require_once ABSPATH.'wp-admin/includes/user.php';wp_delete_user($owner);}
+    if($owner&&!is_wp_error($owner)){
+        wp_cache_delete($owner,'user_meta');
+        $identity = get_user_meta($owner, '_rak_personal_identity', true);
+        if ($identity) \ReAlmeida\Kits\PrivateDocumentStore::remove($owner, $identity);
+        require_once ABSPATH.'wp-admin/includes/user.php';wp_delete_user($owner);
+    }
 }

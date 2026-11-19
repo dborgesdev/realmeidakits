@@ -9,7 +9,7 @@ final class PersonalDocuments {
 
     public static function requirement(string $modality): array {
         return ['id' => self::ID, 'label' => 'RG ou CNH com foto', 'scope' => 'personal', 'modality' => $modality,
-            'required' => true, 'guidance' => 'Envie apenas um documento de identificação com foto, em JPG ou PNG.',
+            'required' => true, 'guidance' => 'Envie apenas um documento de identificação com foto, em PDF, JPG ou PNG.',
             'requiresUpload' => true, 'purpose' => 'Identificação pessoal', 'version' => 1, 'template' => null];
     }
 
@@ -47,7 +47,7 @@ final class PersonalDocuments {
         }
         if (self::ownerForCpf($cpf) !== $owner) return Identity::error('Confirme o CPF no cadastro do titular antes de enviar.', 409);
         $file = $request->get_file_params()['file'] ?? null;
-        if (!is_array($file) || !self::photo($file)) return Identity::error('Envie uma foto do RG ou da CNH em JPG ou PNG.', 415);
+        if (!is_array($file)) return Identity::error('Envie o RG ou a CNH em PDF, JPG ou PNG.', 415);
         return Accounts::locked('personal_document_' . $owner, static function () use ($owner, $file, $cpf) {
             $token = PrivateDocumentStore::put($owner, $file, ['kind' => self::ID, 'cpf' => $cpf]);
             if (is_wp_error($token)) return $token;
@@ -58,10 +58,6 @@ final class PersonalDocuments {
             // Old identity files may be referenced by grants in other accounts.
             return ['registered' => true, 'status' => 'received', 'maxBytes' => PrivateDocumentStore::limit()];
         });
-    }
-
-    public static function photo(array $file): bool {
-        return is_string($file['name'] ?? null) && preg_match('/\.(?:jpe?g|png)$/iD', $file['name']);
     }
 
     private static function rejected(int $owner, string $token): bool {

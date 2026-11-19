@@ -1545,12 +1545,6 @@ main {
   gap: 12px;
   align-items: center;
 }
-footer .developer-credit {
-  margin: 0 !important;
-  font-size: 0.7rem !important;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
 .progress li {
   min-width: 0;
 }

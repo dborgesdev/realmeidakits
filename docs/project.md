@@ -1,5 +1,17 @@
 # Re Almeida Kits — projeto e histórico
 
+## Meus Pedidos e identidade compartilhada — 19/11/2026
+
+Frontend **1.11.1** e child theme **1.3.0**. O histórico apresenta corrida, pedido, data, valor e pagamento no acordeão fechado. A expansão agrupa participante, documentação, voucher e retirada. React e WordPress usam `/design/chrome.css` para as dimensões, tipografia, navegação e rodapé. O menu começa em Início e as páginas usam o arquivo existente `/favicon.ico`. O plugin **1.11.1 / esquema 6** atualiza o favicon e a navegação de contingência no HTML público das corridas.
+
+No child theme, as partes com slug `header` ou `footer` são resolvidas pelos arquivos da marca durante a renderização. Uma versão salva no Editor do Site pode substituir o template completo e ainda precisa manter essas referências. A publicação coordenada deve incluir o CSS compartilhado e o favicon na raiz, o ZIP do child theme e o ZIP do plugin. O pacote estático mantém o manifesto Vite e as regras Apache permanecem na hospedagem.
+
+Em Chromium local foram capturadas oito telas ou estados em 320, 375, 768, 1024 e 1440 px. A comparação verificou dimensões e centralização do cabeçalho, item ativo, crédito exato, favicon, ausência de overflow e teclado. O contraste calculado dos indicadores de estado, do item ativo e do foco ficou entre 5,97:1 e 9,18:1 nos fundos previstos. As capturas DEMONSTRAÇÃO estão em `.local-tools/production-qa/`. O checkout foi exercitado com o WooCommerce da réplica, sem gateway.
+
+## Auditoria publicada e refinamentos locais — 19/11/2026
+
+Plugin local **1.11.0 / esquema 6**, frontend HostGator e child theme **1.2.0**. Ordenação pela data do evento, RG/CNH em PDF pelo armazenamento privado, código de conferência no voucher, busca autenticada por CPF e ajustes de conta e confirmação. A auditoria publicada chegou ao rascunho salvo na etapa Documentos com a conta de demonstração. Resultados, limites, instalação, reversão e limpeza em [auditoria E2E de produção](production-e2e-audit.md).
+
 ## Correções funcionais e preparação para produção — 18/11/2026
 
 Entrega local **plugin 1.10.0 / esquema 6**, frontend HostGator e child theme **1.1.0**, na branch `feat/hostgator-unified-architecture`. Preservados o trabalho visual anterior, a Home, o armazenamento privado, as contas e os pedidos. Nenhum commit, push, merge ou deploy nesta rodada. A versão 1.9.0 permanece como referência histórica abaixo.

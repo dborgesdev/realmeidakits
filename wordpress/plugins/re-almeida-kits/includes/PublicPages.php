@@ -65,6 +65,9 @@ final class PublicPages {
             ? array_filter(array_map([Rest::class, 'project'], self::posts()),
                 static fn(array $entry): bool => empty($entry['raceDate']) || $entry['raceDate'] >= $today)
             : [];
+        usort($catalog, static fn(array $a, array $b): int =>
+            ((($a['raceDate'] ?? '') ?: '9999-12-31') <=> (($b['raceDate'] ?? '') ?: '9999-12-31'))
+            ?: ((int) $a['id'] <=> (int) $b['id']));
         $canonical = $found ? self::url(rtrim($path, '/')) : '';
         $title = $race['name'] ?? ($found ? 'Escolha suas corridas' : 'Corrida não encontrada');
         $description = $race

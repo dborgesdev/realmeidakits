@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { accountUrl } from "../../data/accountClient";
-import OrderDocumentList, { type OrderDocument } from "./OrderDocumentList";
+import OrderParticipant, { type OrderLine } from "./OrderParticipant";
+import { ChevronDown } from "lucide-react";
 import { useAccount } from "../../state/AccountContext";
 
 type Order = {
@@ -14,39 +15,20 @@ type Order = {
   refunded: number;
   checkoutUrl: string | null;
   paymentNotice?: string | null;
-  lines: {
-    raceId: string;
-    race: string;
-    participantId: number;
-    participant: string;
-    modality: string;
-    documentStatus:
-      "pending_review" | "not_required" | "pending_documents" | "approved";
-    pickupStatus: "pending" | "ready" | "collected";
-    bib: string | null;
-    documentLine?: number;
-    documents?: OrderDocument[];
-    voucher?: {
-      state: string;
-      label: string;
-      reason: string;
-      pdfUrl: string | null;
-      collectedAt?: string | null;
-    };
-  }[];
+  lines: OrderLine[];
 };
 
 function financialStatus(order: Order) {
   if (order.paymentStatus === "unavailable")
-    return "Vínculo financeiro em conferência";
+    return "Em conferência";
   if (order.paymentStatus === "refunded") return "Reembolsado";
   if (order.paymentStatus === "cancelled") return "Cancelado";
   if (order.paymentStatus === "failed") return "Pagamento falhou";
   if (Number(order.refunded) > 0) return "Reembolso parcial";
   if (order.paid) return "Pago";
   if (["processing", "completed"].includes(order.paymentStatus))
-    return "Confirmação financeira em conferência";
-  if (order.paymentStatus === "on-hold") return "Em análise no WooCommerce";
+    return "Em conferência";
+  if (order.paymentStatus === "on-hold") return "Em análise";
   return "Aguardando pagamento";
 }
 
@@ -128,7 +110,7 @@ function OrdersForSession() {
   if (!result.orders.length)
     return <p>Nenhum pedido de retirada registrado.</p>;
   return (
-    <ul className="form-section">
+    <ul className="account-order-list">
       {result.orders.map((order) => (
         <li key={order.id}>
           <details
@@ -141,111 +123,82 @@ function OrdersForSession() {
             }
           >
             <summary>
-              {order.number
-                ? "Pedido " + order.number
-                : "Solicitação " + order.id}{" "}
-              · {financialStatus(order)} ·{" "}
-              {Number(order.total).toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })}
-            </summary>
-            <p>
-              Data{" "}
-              {new Date(
-                order.createdAt.replace(" ", "T") + "Z",
-              ).toLocaleDateString("pt-BR")}
-            </p>
-            <ul>
-              {order.lines.map((line) => (
-                <li
-                  id={
-                    "pedido-" +
-                    order.id +
-                    "-participante-" +
-                    (line.documentLine ?? 0)
+              <span className="account-order-heading">
+                <strong className="account-order-race">
+                  {[
+                    ...new Set(
+                      order.lines.map((line) => line.race).filter(Boolean),
+                    ),
+                  ].join(" · ") || "Retirada de kit"}
+                </strong>
+                <span className="account-order-meta">
+                  {order.number
+                    ? "Pedido " + order.number
+                    : "Solicitação " + order.id}
+                  {" · "}
+                  {new Date(
+                    order.createdAt.replace(" ", "T") + "Z",
+                  ).toLocaleDateString("pt-BR")}
+                </span>
+              </span>
+              <span className="account-order-finance">
+                <strong>
+                  {Number(order.total).toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </strong>
+                <span
+                  className="account-order-status"
+                  data-state={
+                    order.paid && !Number(order.refunded)
+                      ? "success"
+                      : order.paymentStatus
                   }
-                  key={line.raceId + "-" + line.participantId}
                 >
-                  <strong>
-                    {line.race} · {line.participant}
-                  </strong>
-                  <p>
-                    Modalidade{" "}
-                    {line.modality === "appai" ? "APPAI" : "Kit Oficial"}
-                  </p>
-                  <p>
-                    {
-                      {
-                        pending_review: "Documentos aguardando análise",
-                        not_required: "Sem arquivo exigido",
-                        pending_documents: "Documentos pendentes",
-                        approved: "Documentos aprovados",
-                      }[line.documentStatus]
-                    }
-                    .{" "}
-                    {
-                      {
-                        pending: "Retirada pendente",
-                        ready: "Kit liberado",
-                        collected: "Kit retirado",
-                      }[line.pickupStatus]
-                    }
-                    .
-                  </p>
-                  {line.bib && <p>Número de peito {line.bib}</p>}
-                  {line.voucher && (
-                    <div>
-                      <p>
-                        Voucher: <strong>{line.voucher.label}</strong> ·{" "}
-                        {line.voucher.reason}
-                      </p>
-                      {line.voucher.collectedAt && (
-                        <p>
-                          Retirada em{" "}
-                          {new Date(
-                            line.voucher.collectedAt.replace(" ", "T"),
-                          ).toLocaleString("pt-BR")}
-                        </p>
-                      )}
-                      {line.voucher.pdfUrl && (
-                        <a
-                          className="button secondary"
-                          href={accountUrl(line.voucher.pdfUrl, "")}
-                        >
-                          Baixar voucher PDF
-                        </a>
-                      )}
-                    </div>
-                  )}
-                  <OrderDocumentList
+                  {financialStatus(order)}
+                </span>
+              </span>
+              <ChevronDown
+                className="account-order-chevron"
+                size={20}
+                aria-hidden="true"
+              />
+            </summary>
+            <div className="account-order-body">
+              {order.checkoutUrl && (
+                <a className="button" href={accountUrl(order.checkoutUrl, "")}>
+                  Continuar pagamento
+                </a>
+              )}
+              <ul className="account-order-lines">
+                {order.lines.map((line) => (
+                  <OrderParticipant
+                    key={line.raceId + "-" + line.participantId}
                     order={order.id}
-                    line={line.documentLine ?? 0}
-                    documents={line.documents ?? []}
+                    line={line}
+                    multiple={order.lines.length > 1}
                     refresh={() => setAttempt((value) => value + 1)}
                   />
-                </li>
-              ))}
-            </ul>
-            {order.checkoutUrl && (
-              <a href={accountUrl(order.checkoutUrl, "")}>
-                Abrir checkout WooCommerce
-              </a>
-            )}
-            {order.paymentNotice && <p role="status">{order.paymentNotice}</p>}
-            {!order.checkoutUrl &&
-              !order.paid &&
-              [
-                "pending",
-                "failed",
-                "cancelled",
-                "refunded",
-                "on-hold",
-              ].includes(order.paymentStatus) && (
-                <Link reloadDocument to="/corridas">
-                  Iniciar nova solicitação para uma corrida aberta
-                </Link>
+                ))}
+              </ul>
+              {order.paymentNotice && (
+                <p role="status">{order.paymentNotice}</p>
               )}
+              {!order.checkoutUrl &&
+                !order.paid &&
+                [
+                  "pending",
+                  "failed",
+                  "cancelled",
+                  "refunded",
+                  "on-hold",
+                ].includes(order.paymentStatus) && (
+                  <Link reloadDocument to="/corridas">
+                    Iniciar nova solicitação para uma corrida aberta
+                  </Link>
+                )}
+            </div>
           </details>
         </li>
       ))}

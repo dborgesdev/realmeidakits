@@ -2,14 +2,14 @@
 /**
  * Plugin Name: Re Almeida Kits
  * Description: Cadastro administrativo e catálogo público de serviços de retirada de kits.
- * Version: 1.10.0
+ * Version: 1.11.1
  * Requires at least: 6.7
  * Requires PHP: 8.3
  * Text Domain: re-almeida-kits
  */
 namespace ReAlmeida\Kits;
 defined('ABSPATH') || exit;
-const VERSION = '1.10.0';
+const VERSION = '1.11.1';
 const SCHEMA_VERSION = 6;
 const CAPABILITY = 'manage_re_almeida_kits';
 const FILE = __FILE__;
