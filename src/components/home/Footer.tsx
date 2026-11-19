@@ -5,7 +5,7 @@ export default function Footer({
   publicPage?: boolean;
 }) {
   return (
-    <footer>
+    <footer className="rak-chrome rak-site-footer">
       <div className="container footer-grid">
         <div>
           <img

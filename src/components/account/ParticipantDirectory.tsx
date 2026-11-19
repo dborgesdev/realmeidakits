@@ -23,7 +23,7 @@ export default function ParticipantDirectory() {
     }
   }
   return (
-    <section className="panel">
+    <section className="panel" id="participantes">
       <h2>Meus participantes</h2>
       <p>
         {participants.length} de {participantLimit} participantes. O cadastro de

@@ -66,7 +66,11 @@ export async function loadWordpressRaces(
     new Set(races.map((r) => r.slug)).size !== races.length
   )
     throw new CatalogError("A API retornou corridas duplicadas.");
-  return races;
+  return races.sort((a, b) => {
+    const first = a.raceDate || "9999-12-31";
+    const second = b.raceDate || "9999-12-31";
+    return first.localeCompare(second);
+  });
 }
 export async function loadWordpressRace(
   apiUrl: string,

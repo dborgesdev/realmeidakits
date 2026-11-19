@@ -1,5 +1,7 @@
 # Correções funcionais — 1.10.0
 
+A rodada local 1.11.0 está descrita em [auditoria E2E de produção](production-e2e-audit.md), com os procedimentos atualizados de instalação e reversão.
+
 Entrega local de 18/11/2026, branch `feat/hostgator-unified-architecture`. Não houve acesso de escrita à produção, alteração de dados reais, commit, push, PR, merge ou deploy. A documentação anterior de vouchers continua válida, com as mudanças abaixo.
 
 ## Auditoria e decisões
@@ -72,7 +74,7 @@ As fixtures, contas, credenciais transitórias, imagens sintéticas, logs e scre
 1. Faça backup do plugin, tema ativo/child theme, frontend, banco, regras Apache e arquivos privados. Registre a versão atual e mantenha a janela de reversão. Não copie `.local-tools`, testes ou fixtures.
 2. Substitua o plugin usando `wordpress/releases/re-almeida-kits.zip`. Confira SHA-256, versão 1.10.0 e esquema 6 após a migração automática. Não altere o banco manualmente. Verifique a nova tabela e que os pedidos/vouchers anteriores permanecem vinculados.
 3. Atualize o diretório `wordpress/themes/re-almeida-kits` na hospedagem. Requer o tema-pai Twenty Twenty-Five instalado. Se o child theme ainda não estiver ativo, ative-o em homologação e confira templates personalizados salvos no Editor do Site: eles podem sobrepor arquivos do tema. Preserve/revise personalizações; não exclua registros do banco automaticamente. Confira idioma pt_BR e traduções do WooCommerce; a réplica tem textos nativos em inglês.
-4. Copie o conteúdo da pasta `wordpress/releases/frontend-hostgator-1.10.0` à raiz, incluindo `.vite/manifest.json`. Ela não contém `.htaccess`, `/app/` ou plugin. Preserve as regras existentes e os assets antigos durante a janela de reversão. `dist/.htaccess` permanece como referência para comparação, sem substituição automática.
+4. Use o pacote vigente do frontend conforme o [procedimento atualizado](production-e2e-audit.md). Preserve as regras Apache existentes e os assets antigos na hospedagem durante a janela de reversão. `dist/.htaccess` permanece como referência.
 5. Confirme arquivos `/design/` e fontes na raiz, cache excluído de conta/checkout/REST/downloads, HTTPS, PHP/iconv/mbstring, remetente/SMTP e cron. As URLs de login/PDF usam a origem configurada em WordPress, que deve permanecer `https://realmeidakits.com.br/app`.
 6. Renata precisa das capacidades existentes `manage_rak_requests` e `manage_woocommerce` para recebimento externo. Confira contas individuais dos funcionários e que não receberam acesso financeiro. Use o e-mail administrativo correto em Configurações do WordPress.
 7. Homologue login incorreto, recuperação real de senha, sessão expirada e retorno ao PDF/documentos. Verifique recebimento dos novos e-mails, spam, tentativas e recuperação com o SMTP/cron reais. Não considere envio interceptado como entrega comprovada.

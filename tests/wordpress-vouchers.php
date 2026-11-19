@@ -17,13 +17,15 @@ add_user_meta($admin, '_rak_private_document_' . $documentToken, ['mime' => 'app
 $ids = $orders = [];
 $mailCalls = 0;
 $mailSuccess = false;
+// Mathematically valid synthetic value, used only in the loopback fixture.
+$testCpf = '98765432100';
 add_filter('pre_wp_mail', static function ($result, $args) use (&$mailCalls, &$mailSuccess) {
     if (!str_contains($args['subject'], 'Seu voucher de retirada')) return false;
     $mailCalls++;
     check(!str_contains($args['message'], '#voucher=') && !str_contains($args['message'], 'CPF'), 'E-mail expôs token ou CPF.');
     return $mailSuccess;
 }, 999, 2);
-$seed = static function () use ($admin, $race, $documentToken, &$ids, &$orders) {
+$seed = static function () use ($admin, $race, $documentToken, $testCpf, &$ids, &$orders) {
     $order = wc_create_order(['customer_id' => $admin]);
     $order->set_billing_email('demonstracao@example.invalid');
     $order->set_billing_first_name('DEMONSTRAÇÃO');
@@ -35,7 +37,7 @@ $seed = static function () use ($admin, $race, $documentToken, &$ids, &$orders) 
         $lines[] = ['raceId' => (string) $race, 'race' => 'DEMONSTRAÇÃO — corrida QA', 'participantId' => $i + 1,
             'participant' => 'DEMONSTRAÇÃO ' . $i, 'modality' => 'oficial', 'raceDate' => '2026-12-01',
             'documentRequirements' => $i === 2 ? [['id' => 'qa-doc', 'required' => true, 'requiresUpload' => true]] : [], 'documentStatus' => $i === 2 ? 'pending_review' : 'not_required', 'pickupStatus' => 'pending'];
-        $people[] = ['directoryId' => $i + 1, 'person' => [], 'items' => [['raceId' => (string) $race, 'modality' => 'oficial', 'documents' => $i === 2 ? ['qa-doc' => $documentToken] : []]]];
+        $people[] = ['directoryId' => $i + 1, 'person' => $i === 0 ? ['cpf' => $testCpf] : [], 'items' => [['raceId' => (string) $race, 'modality' => 'oficial', 'documents' => $i === 2 ? ['qa-doc' => $documentToken] : []]]];
     }
     $id = KitOrderRepository::reserve($admin, wp_generate_uuid4(), ['responsible' => ['name' => 'DEMONSTRAÇÃO'], 'lines' => $lines, 'draft' => ['participants' => $people]]);
     check($id && KitOrderRepository::attach($id, $order->get_id()), 'Não vinculou pedido.');
@@ -75,6 +77,19 @@ try {
     check(count(json_decode(VoucherRepository::get((int) $row->id, 2)->audit, true)) === $auditCount, 'Evento documental repetiu emissão.');
     $snapshot = json_decode($row->snapshot, true);
     $pdf = VoucherPdf::generate($first, $snapshot['lines'][0]);
+    $manual = VoucherRepository::code($first);
+    check(VoucherRepository::byCode(strtolower($manual))->token === $first->token, 'Código manual não aponta para o QR original.');
+    check(str_contains($pdf, $manual) && !str_contains($pdf, $first->token), 'PDF sem código manual ou com token exposto em texto.');
+    $search = new WP_REST_Request('POST');
+    $search->set_header('Content-Type', 'application/json');
+    foreach ([$testCpf, '987.654.321-00'] as $query) {
+        $search->set_body(wp_json_encode(['q' => $query]));
+        $results = VoucherPickup::search($search)['results'];
+        check(count($results) === 1 && $results[0]['code'] === $manual && !str_contains(wp_json_encode($results), $testCpf),
+            'Busca exata não localizou o participante ou expôs CPF.');
+    }
+    $search->set_body(wp_json_encode(['token' => $manual]));
+    check(is_wp_error(VoucherPickup::confirm($search)), 'Confirmação aceitou código manual como token.');
     check(is_string(VoucherPdf::content((int) $row->id, 0)), 'Titular sem PDF autenticado.');
     $other = wp_insert_user(['user_login' => 'qa-voucher-' . wp_generate_uuid4(), 'user_email' => 'qa-voucher-' . wp_generate_uuid4() . '@example.invalid', 'user_pass' => wp_generate_password(32), 'role' => 'customer']);
     wp_set_current_user($other);
@@ -94,7 +109,7 @@ try {
         if ($key === 'owner') $sessionData['pdfUrl'] = Vouchers::describe($first)['pdfUrl'];
     }
     wp_set_current_user($admin);
-    $sessionData += ['token' => $first->token, 'request' => (int) $row->id,
+    $sessionData += ['token' => $first->token, 'code' => $manual, 'request' => (int) $row->id,
         'pdfUrl' => add_query_arg(['action' => 'rak_voucher_pdf', 'request' => $row->id, 'line' => 0, '_wpnonce' => $sessionData['ownerPdfNonce']], admin_url('admin-post.php'))];
     $httpProcess = proc_open(['node', __DIR__ . '/voucher-http.mjs'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $httpPipes);
     fwrite($httpPipes[0], json_encode($sessionData)); fclose($httpPipes[0]);
@@ -153,6 +168,10 @@ try {
     $history = VoucherRepository::get((int) $row->id, 0);
     check($history->state === 'used' && $history->operation_id === $used->operation_id && str_contains($history->reason, 'administrativa'), 'Estorno apagou entrega.');
     [$second, $secondOrder] = $seed();
+    $search->set_body(wp_json_encode(['q' => $testCpf]));
+    $matches = VoucherPickup::search($search)['results'];
+    check(count($matches) === 2 && in_array($manual, array_column($matches, 'code'), true),
+        'Busca por CPF não retornou os dois vouchers do participante.');
     check(!is_wp_error(RequestOperations::update($second, 2, 0, $patch)), 'Aprovação antes de pagar bloqueada.');
     check(VoucherRepository::get((int) $second->id, 2)->state === 'blocked', 'Aprovação sem pagamento liberou.');
     $secondOrder->payment_complete();

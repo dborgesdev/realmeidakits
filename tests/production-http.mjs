@@ -111,6 +111,42 @@ try {
     "PDF destination was lost after native login",
   );
   if (data.mode !== "pdf") {
+    const identityUrl =
+      "http://127.0.0.1:8097/app/wp-json/re-almeida/v1/account/identity-document";
+    const identityHeaders = { Cookie: data.cookie, "X-WP-Nonce": data.nonce };
+    const identity = new FormData();
+    identity.set(
+      "file",
+      new Blob(["DEMONSTRAÇÃO"], { type: "application/pdf" }),
+      "DEMONSTRACAO.pdf",
+    );
+    response = await request(identityUrl, {
+      method: "POST",
+      headers: identityHeaders,
+      body: identity,
+    });
+    assert.equal(
+      response.status,
+      415,
+      "Identity upload accepted false PDF MIME",
+    );
+    identity.set(
+      "file",
+      new Blob(
+        [
+          "%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\nxref\n0 3\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \ntrailer\n<< /Root 1 0 R /Size 3 >>\nstartxref\n110\n%%EOF\n",
+        ],
+        { type: "application/pdf" },
+      ),
+      "DEMONSTRACAO.pdf",
+    );
+    response = await request(identityUrl, {
+      method: "POST",
+      headers: identityHeaders,
+      body: identity,
+    });
+    assert.equal(response.status, 200, "Identity upload rejected PDF");
+    assert.equal((await response.json()).registered, true);
     const upload = new FormData();
     upload.set("line", "0");
     upload.set("requirement", "qa-doc");
@@ -161,6 +197,8 @@ try {
       JSON.stringify({
         loginUrl: login.href,
         checkoutUrl: data.checkoutUrl,
+        receivedUrl: data.receivedUrl,
+        pendingReceivedUrl: data.pendingReceivedUrl,
         cookie: data.cookie,
         request: data.request,
       }),
@@ -181,7 +219,9 @@ try {
     "OK HTTP real: PDF direto " +
       expected +
       ", login WooCommerce preservando destino, " +
-      (data.mode === "pdf" ? "PDF liberado inline" : "reenvio multipart") +
+      (data.mode === "pdf"
+        ? "PDF liberado inline"
+        : "RG/CNH em PDF, MIME inválido e reenvio multipart") +
       ", /app/ redirecionado e REST/Ajax preservados.",
   );
 } finally {

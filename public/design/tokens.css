@@ -64,7 +64,7 @@
   outline-offset: 4px;
 }
 body:has(.rak-whatsapp) { padding-bottom: calc(64px + var(--selection-space, 0px)); }
-body:has(#root :is(.account-page, .flow-shell, form)) .rak-whatsapp {
+body:has(#root :is(.account-page, .account-order-list, .flow-shell, form)) .rak-whatsapp {
   position: relative;
   inset: auto;
   margin: 0 max(12px, env(safe-area-inset-right)) 0 auto;

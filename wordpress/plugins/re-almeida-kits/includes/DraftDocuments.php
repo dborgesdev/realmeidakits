@@ -158,9 +158,6 @@ final class DraftDocuments {
                     $valid = DraftInput::clean($owner, $draft);
                     if (is_wp_error($valid)) return $valid;
                     if (!self::required($item, $requirement)) return Identity::error('A exigência não está disponível.');
-                    if (!$reuse && $requirement === PersonalDocuments::ID && !PersonalDocuments::photo($file)) {
-                        return Identity::error('Envie uma foto do RG ou da CNH em JPG ou PNG.', 415);
-                    }
                     $token = $reuse ? PersonalDocuments::confirm($owner, $person, $item) : PrivateDocumentStore::put($owner, $file, $context);
                     if (is_wp_error($token)) return $token;
                     $created = $token;

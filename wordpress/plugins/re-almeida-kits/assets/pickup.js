@@ -50,6 +50,7 @@
       card.className = 'rak-voucher-result';
       card.append(text('h2', voucher.participant), text('p', voucher.race + ' · ' + voucher.modality),
         text('p', 'Solicitação ' + voucher.request), text('strong', voucher.label), text('p', voucher.reason));
+      if (voucher.code) card.append(text('p', 'Código de conferência: ' + voucher.code));
       if (voucher.collectedAt) card.append(text('p', new Date(voucher.collectedAt.replace(' ', 'T')).toLocaleString('pt-BR') + ' · Funcionário ' + voucher.actor + ' · Operação ' + voucher.operation));
       if (voucher.state === 'released') {
         const button = text('button', 'Confirmar retirada');
@@ -73,7 +74,11 @@
     if (!/^[a-f0-9]{64}$/.test(token || '')) throw new Error('Código de voucher inválido.');
     return token;
   }
-  const lookup = value => run(async () => show([await request('lookup', {token: tokenFrom(value)})]));
+  const lookup = value => run(async () => {
+    const code = value.trim();
+    const query = /^V-[0-9]+$/i.test(code) ? {code} : {token: tokenFrom(value)};
+    show([await request('lookup', query)]);
+  });
   document.querySelector('#rak-code').addEventListener('submit', event => {
     event.preventDefault(); stop(); void lookup(document.querySelector('#rak-token').value);
   });

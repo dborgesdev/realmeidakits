@@ -2,7 +2,7 @@
 Theme Name: Re Almeida Kits
 Description: Identidade pública do serviço de retirada de kits.
 Template: twentytwentyfive
-Version: 1.1.0
+Version: 1.3.0
 Text Domain: re-almeida-kits-theme
 */
 
@@ -55,32 +55,19 @@ body.rak-native {
   outline: 3px solid var(--rak-focus, #165a99);
   outline-offset: 3px;
 }
-.rak-native .rak-site-header,
-.rak-native .rak-site-footer {
-  background: var(--rak-white, #fff);
-  padding: 16px clamp(16px, 4vw, 48px);
-}
-.rak-native .rak-site-header {
-  border-bottom: 1px solid var(--rak-line, #d8d8d8);
-}
-.rak-native .rak-site-footer {
-  border-top: 1px solid var(--rak-line, #d8d8d8);
-}
-.rak-site-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 24px;
-  flex-wrap: wrap;
-}
-.rak-site-nav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-.rak-site-nav img {
-  width: 180px;
-  height: auto;
+.rak-native .wp-site-blocks > .rak-chrome { margin-block: 0; }
+.rak-chrome .menu-toggle[aria-expanded="true"] .menu-icon,
+.rak-chrome .menu-toggle[aria-expanded="false"] .close-icon { display: none; }
+@media (max-width: 800px) {
+  [data-native-menu]:not(.menu-ready) .header-inner { flex-wrap: wrap; }
+  [data-native-menu]:not(.menu-ready) .menu-toggle { display: none; }
+  [data-native-menu]:not(.menu-ready) .nav {
+    display: flex;
+    flex-wrap: wrap;
+    position: static;
+    padding: 0 0 12px;
+    box-shadow: none;
+  }
 }
 .rak-native
   :is(
@@ -90,7 +77,9 @@ body.rak-native {
     .woocommerce-MyAccount-content,
     .woocommerce-checkout-review-order,
     .wc-block-checkout__sidebar,
-    .woocommerce-order
+    .woocommerce-order,
+    .rak-order-next,
+    .wc-block-order-confirmation-totals-wrapper
   ) {
   box-sizing: border-box;
   min-width: 0;
@@ -129,6 +118,7 @@ body.rak-native {
   :is(
     .woocommerce .button,
     .woocommerce button.button.alt,
+    .rak-order-next .button,
     .wc-block-components-button.contained
   ) {
   min-height: var(--rak-control, 52px);
@@ -144,6 +134,7 @@ body.rak-native {
   :is(
     .woocommerce .button,
     .woocommerce button.button.alt,
+    .rak-order-next .button,
     .wc-block-components-button.contained
   ):hover {
   background: var(--rak-hover, #a80703);
@@ -185,10 +176,24 @@ body.rak-native {
   float: none;
   margin: 0 0 12px;
 }
+.rak-native .rak-order-next {
+  margin-block: 24px;
+}
+.rak-native .rak-order-next :is(h2, ul) {
+  margin-block-start: 0;
+}
+.rak-native .rak-order-next .button {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+body.rak-native.woocommerce-order-received .rak-whatsapp {
+  position: relative;
+  inset: auto;
+  margin: 0 max(12px, env(safe-area-inset-right)) 0 auto;
+}
 @media (max-width: 640px) {
-  .rak-site-nav {
-    justify-content: start;
-  }
   .rak-native .woocommerce form .form-row {
     width: 100%;
     float: none;

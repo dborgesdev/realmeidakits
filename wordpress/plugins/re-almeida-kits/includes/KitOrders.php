@@ -15,9 +15,21 @@ final class KitOrders {
         });
         add_action('woocommerce_thankyou', static function (int $id): void {
             $order = wc_get_order($id);
-            if ($order && $order->get_customer_id() === get_current_user_id() && $order->get_meta('_rak_request_id')) {
-                echo '<p><a href="/acompanhamento">Acompanhar solicitação na Re Almeida Kits</a></p>';
+            $request = $order ? (int) $order->get_meta('_rak_request_id') : 0;
+            if (!$request || !is_user_logged_in() || (int) $order->get_customer_id() !== get_current_user_id()) return;
+            $row = KitOrderRepository::get($request);
+            if (!$row || (int) $row->order_id !== $id || (int) $row->owner_id !== get_current_user_id()) return;
+            $snapshot = json_decode($row->snapshot, true) ?: [];
+            echo '<section class="rak-order-next"><h2>Sua solicitação de retirada</h2><ul>';
+            foreach ($snapshot['lines'] ?? [] as $line) {
+                printf('<li><strong>%s</strong> · %s</li>', esc_html($line['race']), esc_html($line['participant']));
             }
+            echo '</ul>';
+            echo RequestQueue::paid($order)
+                ? '<p>Consulte a situação dos documentos e a liberação do voucher em Meus pedidos.</p>'
+                : '<p>Consulte a situação do pagamento e as opções disponíveis em Meus pedidos.</p>';
+            printf('<a class="button" href="%s">Acompanhar pedido</a></section>',
+                esc_url(PublicPages::url('/acompanhamento?pedido=' . $request)));
         });
         add_action('rest_api_init', static function (): void {
             $permission = [RequestDrafts::class, 'permission'];

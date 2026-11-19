@@ -31,8 +31,9 @@ $availability = static fn(array $entry): string => $entry['status'] === 'open' ?
             'name' => $title, 'description' => $description, 'url' => $canonical,
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
     <?php endif; ?>
-    <link rel="icon" href="/brand/logo-corredor-original.jpg">
+    <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="stylesheet" href="/design/tokens.css">
+    <link rel="stylesheet" href="/design/chrome.css">
     <?php foreach ($assets['css'] ?? [] as $css): ?><link rel="stylesheet" href="<?= esc_url('/' . $css) ?>"><?php endforeach; ?>
     <?php if (!empty($assets['file'])): ?><script type="module" src="<?= esc_url('/' . $assets['file']) ?>"></script><?php endif; ?>
     <script defer src="/design/whatsapp.js"></script>
@@ -40,10 +41,12 @@ $availability = static fn(array $entry): string => $entry['status'] === 'open' ?
 <body>
 <div id="public-header">
     <a class="skip" href="#conteudo">Pular para o conteúdo</a>
-    <header class="header">
-        <nav class="container header-inner" aria-label="Navegação principal">
+    <header class="header rak-chrome rak-site-header">
+        <nav class="container header-inner rak-fallback-nav" aria-label="Navegação principal">
             <a href="/"><img class="brand" src="/brand/logo-corredor-original.jpg" width="180" height="65" alt="Re Almeida Kits, início"></a>
-            <a href="/corridas">Corridas</a>
+            <a href="/">Início</a>
+            <a href="/corridas" aria-current="location">Solicitar kit</a>
+            <a href="/acompanhamento">Meus pedidos</a>
             <a href="/conta">Minha conta</a>
         </nav>
     </header>

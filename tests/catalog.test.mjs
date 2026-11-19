@@ -231,3 +231,30 @@ test("races stay listed through the local race day", () => {
     false,
   );
 });
+
+test("catalog orders races by event day across pages, with undated entries last", async (t) => {
+  const race = (id, raceDate) => ({
+    ...fixture,
+    id: String(id),
+    slug: "demonstracao-" + id,
+    raceDate,
+  });
+  const pages = [
+    [race(1, "2030-12-31"), race(2, "")],
+    [race(3, "2027-01-01"), race(4, "2027-01-01")],
+  ];
+  t.mock.method(globalThis, "fetch", async (url) => {
+    const page = Number(new URL(url).searchParams.get("page"));
+    return Response.json({
+      data: pages[page - 1],
+      page,
+      totalPages: 2,
+      total: 4,
+    });
+  });
+  const results = await loadWordpressRaces("https://example.invalid");
+  assert.deepEqual(
+    results.map(({ id }) => id),
+    ["3", "4", "1", "2"],
+  );
+});

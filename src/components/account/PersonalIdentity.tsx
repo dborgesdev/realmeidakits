@@ -33,9 +33,9 @@ export default function PersonalIdentity() {
       !identity ||
       file.size < 1 ||
       file.size > identity.maxBytes ||
-      !/\.(jpe?g|png)$/i.test(file.name)
+      !/\.(pdf|jpe?g|png)$/i.test(file.name)
     ) {
-      setError("Envie uma foto JPG ou PNG dentro do limite indicado.");
+      setError("Envie um PDF, JPG ou PNG dentro do limite indicado.");
       return;
     }
     setBusy(true);
@@ -61,7 +61,7 @@ export default function PersonalIdentity() {
   }
 
   return (
-    <section className="panel" aria-busy={busy}>
+    <section className="panel" aria-busy={busy} id="identificacao">
       <h2>Meu RG ou CNH</h2>
       <p>
         Cadastre uma foto do seu RG ou da sua CNH. A identificação pode ser
@@ -83,14 +83,14 @@ export default function PersonalIdentity() {
             ? "Substituir identificação"
             : "Enviar identificação"
         }
-        accept=".jpg,.jpeg,.png"
+        accept=".pdf,.jpg,.jpeg,.png"
         disabled={busy || !identity}
         onFile={(file) => void upload(file)}
       />
       {identity && (
         <p className="field-help">
-          JPG ou PNG até {(identity.maxBytes / 1048576).toLocaleString("pt-BR")}{" "}
-          MB.
+          PDF, JPG ou PNG até{" "}
+          {(identity.maxBytes / 1048576).toLocaleString("pt-BR")} MB.
         </p>
       )}
       {busy && <p role="status">Enviando identificação…</p>}

@@ -46,9 +46,6 @@ final class OrderDocuments {
         $requirement = $params['requirement'] ?? null;
         $file = $request->get_file_params()['file'] ?? null;
         if ($index === false || !is_string($requirement) || !is_array($file)) return Identity::error('Envie o documento e sua inscrição.');
-        if ($requirement === PersonalDocuments::ID && !PersonalDocuments::photo($file)) {
-            return Identity::error('Envie uma foto do RG ou da CNH em JPG ou PNG.', 415);
-        }
         return Accounts::locked('request_ops_' . $id, static function () use ($owner, $row, $index, $requirement, $file) {
             if (!RequestQueue::paid(RequestQueue::order($row))) return Identity::error('O pedido não está na fila operacional.', 409);
             $snapshot = json_decode($row->snapshot, true);

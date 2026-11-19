@@ -90,7 +90,14 @@ export default function AccountPage() {
       )}
       {account.profile ? (
         <>
-          <section className="panel">
+          <nav className="account-sections" aria-label="Seções da minha conta">
+            <a href="#dados-titular">Dados do titular</a>
+            <a href="#identificacao">RG ou CNH</a>
+            <a href="#participantes">Participantes</a>
+            <a href="#pedidos-recentes">Pedidos recentes</a>
+            <a href="#solicitacao-atual">Solicitação</a>
+          </nav>
+          <section className="panel" id="dados-titular">
             <div className="account-actions">
               <h2>Dados do titular</h2>
               {account.editUrl && (
@@ -137,12 +144,14 @@ export default function AccountPage() {
           </section>
           <PersonalIdentity key={account.profile.id} />
           <ParticipantDirectory />
-          <section className="panel">
+          <section className="panel" id="pedidos-recentes">
             <h2>Pedidos recentes</h2>
             <OrderHistory key={account.profile.id} />
-            <Link to="/acompanhamento">Acompanhar pedidos</Link>
+            <Link className="button secondary" to="/acompanhamento">
+              Ver meus pedidos
+            </Link>
           </section>
-          <section className="panel">
+          <section className="panel" id="solicitacao-atual">
             <h2>
               {draft.selectedRaceIds.length && !persistence.submitted
                 ? "Solicitação em andamento"

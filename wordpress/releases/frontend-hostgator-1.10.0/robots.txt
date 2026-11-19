@@ -1,7 +1,0 @@
-User-agent: *
-Disallow: /app/
-Disallow: /conta
-Disallow: /solicitacao
-Disallow: /acompanhamento
-Disallow: /conclusao
-Sitemap: https://realmeidakits.com.br/sitemap.xml

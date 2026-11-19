@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { CalendarDays, List, Menu, UserRound, X } from "lucide-react";
+import { CalendarDays, House, List, Menu, UserRound, X } from "lucide-react";
 import { useAccount } from "../../state/AccountContext";
 
 export default function Header({
@@ -23,7 +23,7 @@ export default function Header({
       <a className="skip" href="#conteudo">
         Pular para o conteúdo
       </a>
-      <header className="header">
+      <header className="header rak-chrome rak-site-header">
         <div className="container header-inner">
           <Link
             reloadDocument={publicPage}
@@ -61,11 +61,20 @@ export default function Header({
               }
             }}
           >
+            <NavLink
+              end
+              reloadDocument={publicPage}
+              to="/"
+              onClick={() => setOpen(false)}
+            >
+              <House aria-hidden="true" size={21} /> Início
+            </NavLink>
             <Link
               reloadDocument
               to="/corridas"
-              className={requesting || pathname === "/" ? "active" : undefined}
+              className={requesting ? "active" : undefined}
               aria-current={requesting ? "location" : undefined}
+              onClick={() => setOpen(false)}
             >
               <CalendarDays aria-hidden="true" size={21} /> Solicitar kit
             </Link>
@@ -81,8 +90,7 @@ export default function Header({
               to={accountPath}
               onClick={() => setOpen(false)}
             >
-              <UserRound aria-hidden="true" size={21} />{" "}
-              {profile ? "Minha conta" : "Entrar"}
+              <UserRound aria-hidden="true" size={21} /> Minha conta
             </NavLink>
           </nav>
         </div>

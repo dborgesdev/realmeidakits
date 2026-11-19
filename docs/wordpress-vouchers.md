@@ -1,5 +1,7 @@
 # Vouchers e conferência — versão 1.9.0
 
+Na versão local 1.11.0, o PDF gerado sob demanda exibe o código de conferência `V-<id>`. A busca da equipe também aceita o CPF inteiro com ou sem máscara e pode retornar vários vouchers sem exibir o CPF. O QR e o token originais continuam associados à mesma ficha. Consulte a [auditoria E2E de produção](production-e2e-audit.md).
+
 Implementação local de 18/11/2026. Aprovada tecnicamente nos testes indicados abaixo; requer homologação na hospedagem antes de operar com clientes.
 
 ## Auditoria e decisões
