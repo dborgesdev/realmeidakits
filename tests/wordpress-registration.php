@@ -12,7 +12,7 @@ $line = ['cpf' => $cpf, 'raceId' => '987654123', 'participantId' => 1];
 try {
     $request = KitOrderRepository::reserve(1, wp_generate_uuid4(), ['lines' => [$line]]);
     if (!$request || !KitOrderRepository::attach($request, $order->get_id())) throw new RuntimeException('Falha no vínculo sintético.');
-    if (!RaceRegistrations::conflicts([$line], false)) throw new RuntimeException('Pedido pendente recente precisa reservar o par.');
+    if (RaceRegistrations::conflicts([$line], false)) throw new RuntimeException('Pedido pendente não pode bloquear o par.');
     if (RaceRegistrations::conflicts([array_replace($line, ['raceId' => '987654124'])], false)) throw new RuntimeException('Outra corrida bloqueada.');
     if (RaceRegistrations::conflicts([array_replace($line, ['cpf' => '11111111111'])], false)) throw new RuntimeException('Outro CPF bloqueado.');
     $order->update_status('cancelled');
@@ -20,8 +20,8 @@ try {
     $order->set_status('pending');
     $order->set_date_created(time() - 7 * DAY_IN_SECONDS);
     $order->save();
-    if (RaceRegistrations::conflicts([$line], true) || !wc_get_order($order->get_id())->has_status('cancelled')) {
-        throw new RuntimeException('Pedido pendente expirado não foi liberado com segurança.');
+    if (RaceRegistrations::conflicts([$line], true) || !wc_get_order($order->get_id())->has_status('pending')) {
+        throw new RuntimeException('Pedido pendente deve liberar o par sem cancelamento automático.');
     }
     $order->set_status('pending');
     $order->save();

@@ -44,23 +44,25 @@ final class RaceRegistrations {
         return ['conflicts' => array_values(array_map(static fn($line) => ['slot' => $line['slot'], 'raceId' => $line['raceId']], $blocked))];
     }
 
-    /** Caller holds the global reservation lock while expiring old unpaid orders and creating the next order. */
-    public static function conflicts(array $lines, bool $expire): array {
+    /** Caller holds the checkout lock. Unpaid attempts are never cancelled by this lookup. */
+    public static function conflicts(array $lines, bool $expire, int $exclude = 0): array {
         if (!$lines || !KitOrderRepository::ready() || !function_exists('wc_get_order')) return [];
         global $wpdb;
         $table = Accounts::table('requests');
+        $lines = array_values(array_filter($lines, static fn($line) => !empty($line['cpf']) && !empty($line['raceId'])));
+        if (!$lines) return [];
         $pairs = [];
         foreach ($lines as $line) $pairs[$line['cpf'] . ':' . $line['raceId']] = $line;
         $cpfs = array_unique(array_column($lines, 'cpf'));
         $before = PHP_INT_MAX;
         $blocked = [];
-        $expiry = max(1, (int) (get_option('woocommerce_hold_stock_minutes', 60) ?: 60)) * MINUTE_IN_SECONDS;
         $clauses = implode(' OR ', array_fill(0, count($cpfs), 'snapshot LIKE %s'));
         $values = array_map(static fn($cpf) => '%' . $wpdb->esc_like('"' . $cpf . '"') . '%', $cpfs);
         do {
             $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table WHERE id<%d AND ($clauses) ORDER BY id DESC LIMIT 100", $before, ...$values));
             foreach ($rows as $row) {
                 $before = (int) $row->id;
+                if ((int) $row->id === $exclude) continue;
                 $snapshot = json_decode($row->snapshot, true) ?: [];
                 $matches = [];
                 foreach ($snapshot['lines'] ?? [] as $old) {
@@ -70,27 +72,8 @@ final class RaceRegistrations {
                 }
                 if (!$matches) continue;
                 $order = $row->order_id ? wc_get_order((int) $row->order_id) : null;
-                if (!$order && !$row->order_id) {
-                    // An interrupted WooCommerce write must be reconciled before these participants can be reserved again.
-                    $blocked += $matches;
-                    continue;
-                }
                 if (!$order || (int) $order->get_customer_id() !== (int) $row->owner_id) continue;
-                if ($order->is_paid() || $order->get_date_paid() && !$order->has_status(['cancelled', 'failed', 'refunded']) ||
-                    $order->has_status('on-hold')) {
-                    $blocked += $matches;
-                } elseif ($order->has_status('pending')) {
-                    $created = $order->get_date_created();
-                    if (!$created || $created->getTimestamp() + $expiry > time()) {
-                        $blocked += $matches;
-                    } elseif ($expire) {
-                        try {
-                            if (!$order->update_status('cancelled', 'Prazo de pagamento expirado.')) $blocked += $matches;
-                        } catch (\Throwable) {
-                            $blocked += $matches;
-                        }
-                    }
-                }
+                if (RequestQueue::paid($order)) $blocked += $matches;
             }
         } while (count($rows) === 100 && count($blocked) < count($pairs));
         return array_values($blocked);

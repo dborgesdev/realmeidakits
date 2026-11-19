@@ -1,3 +1,4 @@
+import FilePicker from "../FilePicker";
 import { useState } from "react";
 import { useAccount } from "../../state/AccountContext";
 
@@ -69,25 +70,20 @@ export default function OrderDocumentList({
           </p>
           {document.reason && <p>Motivo: {document.reason}</p>}
           {document.canReplace && (
-            <label>
-              {document.status === "missing"
-                ? "Enviar documento"
-                : "Enviar novo arquivo para esta solicitação"}
-              <input
-                type="file"
-                accept={
-                  document.id === "rak-personal-identity"
-                    ? ".jpg,.jpeg,.png"
-                    : ".pdf,.jpg,.jpeg,.png"
-                }
-                disabled={!!busy}
-                onChange={(event) => {
-                  const file = event.currentTarget.files?.[0];
-                  event.currentTarget.value = "";
-                  if (file) void replace(document, file);
-                }}
-              />
-            </label>
+            <FilePicker
+              label={
+                document.status === "missing"
+                  ? "Enviar documento"
+                  : "Enviar novo arquivo para esta solicitação"
+              }
+              accept={
+                document.id === "rak-personal-identity"
+                  ? ".jpg,.jpeg,.png"
+                  : ".pdf,.jpg,.jpeg,.png"
+              }
+              disabled={!!busy}
+              onFile={(file) => void replace(document, file)}
+            />
           )}
         </li>
       ))}

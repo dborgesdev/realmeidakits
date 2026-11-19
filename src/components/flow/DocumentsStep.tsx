@@ -72,7 +72,7 @@ export default function DocumentsStep() {
                 <fieldset className="form-section" key={race.id}>
                   <legend>{race.name}</legend>
                   {docs.map((doc) => (
-                    <div key={doc.id}>
+                    <div className="document-block" key={doc.id}>
                       <DocumentRequirementInfo document={doc} />
                       {doc.requiresUpload !== false && (
                         <PrivateDocumentField

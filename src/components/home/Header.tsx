@@ -1,18 +1,23 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { CalendarDays, List, Menu, UserRound, X } from "lucide-react";
 import { useAccount } from "../../state/AccountContext";
-import { Menu, X } from "lucide-react";
+
 export default function Header({
   publicPage = false,
 }: {
   publicPage?: boolean;
 }) {
   const { profile } = useAccount();
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+  const requesting =
+    pathname.startsWith("/corridas") || pathname.startsWith("/solicitacao");
   const accountPath =
     publicPage && !profile
-      ? "/conta?continuar=" + encodeURIComponent(location.pathname)
+      ? "/conta?continuar=" + encodeURIComponent(pathname)
       : "/conta";
-  const [open, setOpen] = useState(false);
+
   return (
     <>
       <a className="skip" href="#conteudo">
@@ -30,39 +35,55 @@ export default function Header({
               src="/brand/logo-corredor-original.jpg"
               width="180"
               height="65"
-              alt="Re Almeida — marca original com corredor"
+              alt=""
             />
           </Link>
           <button
+            type="button"
             className="menu-toggle"
             aria-label={open ? "Fechar menu" : "Abrir menu"}
             aria-expanded={open}
+            aria-controls="main-navigation"
             onClick={() => setOpen(!open)}
           >
-            {open ? <X /> : <Menu />}
+            {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
           </button>
           <nav
+            id="main-navigation"
             className={open ? "nav open" : "nav"}
             aria-label="Navegação principal"
-            onClick={() => setOpen(false)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && open) {
+                setOpen(false);
+                event.currentTarget.parentElement
+                  ?.querySelector("button")
+                  ?.focus();
+              }
+            }}
           >
-            <NavLink reloadDocument={publicPage} to="/">
-              Início
+            <Link
+              reloadDocument
+              to="/corridas"
+              className={requesting || pathname === "/" ? "active" : undefined}
+              aria-current={requesting ? "location" : undefined}
+            >
+              <CalendarDays aria-hidden="true" size={21} /> Solicitar kit
+            </Link>
+            <NavLink
+              reloadDocument={publicPage}
+              to="/acompanhamento"
+              onClick={() => setOpen(false)}
+            >
+              <List aria-hidden="true" size={21} /> Meus pedidos
             </NavLink>
-            <NavLink reloadDocument to="/corridas">
-              Corridas
-            </NavLink>
-            <a href="/#como-funciona">Como funciona</a>
-            <a href="/#modalidades">Modalidades</a>
-            <NavLink reloadDocument={publicPage} to={accountPath}>
+            <NavLink
+              reloadDocument={publicPage}
+              to={accountPath}
+              onClick={() => setOpen(false)}
+            >
+              <UserRound aria-hidden="true" size={21} />{" "}
               {profile ? "Minha conta" : "Entrar"}
             </NavLink>
-            <Link reloadDocument={publicPage} to="/orientacoes">
-              Orientações
-            </Link>
-            <Link className="button small" reloadDocument to="/corridas">
-              Ver corridas <span aria-hidden="true">↗</span>
-            </Link>
           </nav>
         </div>
       </header>

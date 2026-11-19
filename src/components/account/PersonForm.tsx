@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useId } from "react";
 import {
   formatIdentity,
   maskIdentityInput,
@@ -6,12 +6,7 @@ import {
   normalizeIdentity,
 } from "../../state/identityMasks";
 import type { Person } from "../../types/domain";
-import {
-  personError,
-  validCpf,
-  validEmail,
-  validPhone,
-} from "../../state/identityRules";
+import { personError, personFieldErrors } from "../../state/identityRules";
 export const emptyPerson = (): Person => ({
   name: "",
   cpf: "",
@@ -42,6 +37,8 @@ export default function PersonForm({
     [busy, setBusy] = useState(false),
     [success, setSuccess] = useState(false);
   const message = useRef<HTMLParagraphElement>(null);
+  const fieldId = useId();
+  const fieldErrors = error ? personFieldErrors(submitted, owner) : {};
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSuccess(false);
@@ -75,11 +72,17 @@ export default function PersonForm({
     }
   }
   return (
-    <form onSubmit={submit} className="form-section" aria-busy={busy}>
+    <form
+      noValidate
+      onSubmit={submit}
+      className="form-section"
+      aria-busy={busy}
+    >
       <div className="form-grid">
         {fields.map((input) => (
           <label key={input.key}>
             {input.label}
+            {input.key !== "email" || owner ? " (obrigatório)" : " (opcional)"}
             <input
               name={input.key}
               type={input.type}
@@ -109,13 +112,9 @@ export default function PersonForm({
                   ? formatIdentity(input.key, initial[input.key])
                   : initial[input.key]
               }
-              aria-invalid={
-                !!error &&
-                ((input.key === "cpf" && !validCpf(submitted.cpf)) ||
-                  (input.key === "phone" && !validPhone(submitted.phone)) ||
-                  (input.key === "email" &&
-                    (owner || !!submitted.email) &&
-                    !validEmail(submitted.email)))
+              aria-invalid={!!fieldErrors[input.key]}
+              aria-describedby={
+                fieldErrors[input.key] ? fieldId + input.key : undefined
               }
               onInput={(event) => {
                 if (maskedField(input.key))
@@ -124,6 +123,11 @@ export default function PersonForm({
                 setError("");
               }}
             />
+            {fieldErrors[input.key] && (
+              <span className="error" id={fieldId + input.key}>
+                {fieldErrors[input.key]}
+              </span>
+            )}
           </label>
         ))}
       </div>

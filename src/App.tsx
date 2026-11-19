@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/home/Header";
 import Footer from "./components/home/Footer";
@@ -15,11 +15,15 @@ import CatalogStatus from "./components/CatalogStatus";
 export default function App() {
   const { status } = useCatalog();
   const location = useLocation();
+  const previousPath = useRef(location.pathname);
   useEffect(() => {
-    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Solicitação de retirada" : location.pathname === "/conclusao" ? "Solicitação de retirada" : location.pathname === "/acompanhamento" ? "Acompanhar pedido" : "Conheça a plataforma"} | Re Almeida Kits`;
+    const navigated = previousPath.current !== location.pathname;
+    previousPath.current = location.pathname;
+    document.title = `${location.pathname === "/" ? "Retirada de kits com praticidade" : location.pathname.startsWith("/solicitacao") ? "Solicitação de retirada" : location.pathname === "/conclusao" ? "Solicitação de retirada" : location.pathname === "/acompanhamento" ? "Meus pedidos" : location.pathname.startsWith("/conta") ? "Minha conta" : location.pathname === "/privacidade" ? "Privacidade" : location.pathname === "/orientacoes" ? "Orientações para retirada" : "Página não encontrada"} | Re Almeida Kits`;
     if (!location.hash) {
       window.scrollTo(0, 0);
-      document.getElementById("conteudo")?.focus({ preventScroll: true });
+      if (navigated)
+        document.getElementById("conteudo")?.focus({ preventScroll: true });
     } else
       requestAnimationFrame(() =>
         document.getElementById(location.hash.slice(1))?.scrollIntoView(),

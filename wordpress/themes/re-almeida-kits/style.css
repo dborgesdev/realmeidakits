@@ -1,0 +1,204 @@
+/*
+Theme Name: Re Almeida Kits
+Description: Identidade pública do serviço de retirada de kits.
+Template: twentytwentyfive
+Version: 1.1.0
+Text Domain: re-almeida-kits-theme
+*/
+
+body.rak-native {
+  color: var(--rak-ink, #111);
+  background: var(--rak-backdrop, #f5f5f5);
+  font: 1.0625rem/1.55 var(--rak-body, system-ui);
+}
+.rak-native-main {padding:clamp(20px,4vw,48px) clamp(16px,4vw,32px); margin-inline:auto; min-height:50vh;}
+.rak-native .wp-site-blocks {padding:0;}
+.rak-native .woocommerce {width:100%;min-width:0;}
+.rak-native .woocommerce form .form-row label {display:block;margin-bottom:6px;}
+.rak-native .woocommerce form .form-row {margin-bottom:18px;}
+.rak-native :is(table,.wc-block-checkout) {max-width:100%;overflow-wrap:anywhere;}
+.rak-native :is(.woocommerce-notices-wrapper,.woocommerce-error,.woocommerce-message,.woocommerce-info) {border-radius:12px;line-height:1.5;}
+.rak-native .rak-field-error {display:block;color:#821a13;font-size:.95rem;margin-top:6px;}
+.rak-native input[aria-invalid=true] {border-color:#a20e0b;}
+.rak-native .woocommerce-MyAccount-content {margin-bottom:24px;}
+.rak-native.woocommerce-order-pay #payment {background:#fff;border:1px solid var(--rak-line,#d8d8d8);border-radius:20px;box-shadow:var(--rak-shadow);}
+@media(max-width:768px){
+  .rak-native .woocommerce :is(.woocommerce-MyAccount-navigation,.woocommerce-MyAccount-content,.col2-set,.col-1,.col-2) {float:none;width:100%;box-sizing:border-box;}
+  .rak-native .woocommerce table.shop_table {font-size:.95rem;}
+  .rak-native .woocommerce form :is(input,select,button) {max-width:100%;}
+  .rak-native.woocommerce-order-pay table.shop_table {table-layout:fixed;width:100%;font-size:.9rem;}
+  .rak-native.woocommerce-order-pay table.shop_table :is(th,td) {padding:10px 6px;}
+  .rak-native.woocommerce-order-pay table.shop_table .product-quantity {width:18%;}
+  .rak-native.woocommerce-order-pay table.shop_table .product-total {width:34%;white-space:nowrap;}
+  .rak-native.woocommerce-order-pay table.shop_table tfoot td {white-space:nowrap;}
+  .rak-native.woocommerce-order-pay #payment .form-row {padding:16px;box-sizing:border-box;}
+}
+.rak-native :is(h1, h2, h3) {
+  font-family: var(--rak-heading, system-ui);
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.rak-native h1 {
+  font-size: clamp(1.85rem, 4vw, 2.5rem);
+}
+.rak-native h2 {
+  font-size: clamp(1.45rem, 3vw, 1.875rem);
+}
+.rak-native h3 {
+  font-size: clamp(1.15rem, 2vw, 1.375rem);
+}
+.rak-native :where(a) {
+  color: var(--rak-action, #c90803);
+  text-underline-offset: 0.2em;
+}
+.rak-native :is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--rak-focus, #165a99);
+  outline-offset: 3px;
+}
+.rak-native .rak-site-header,
+.rak-native .rak-site-footer {
+  background: var(--rak-white, #fff);
+  padding: 16px clamp(16px, 4vw, 48px);
+}
+.rak-native .rak-site-header {
+  border-bottom: 1px solid var(--rak-line, #d8d8d8);
+}
+.rak-native .rak-site-footer {
+  border-top: 1px solid var(--rak-line, #d8d8d8);
+}
+.rak-site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  flex-wrap: wrap;
+}
+.rak-site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.rak-site-nav img {
+  width: 180px;
+  height: auto;
+}
+.rak-native
+  :is(
+    .woocommerce form.login,
+    .woocommerce form.register,
+    .woocommerce .lost_reset_password,
+    .woocommerce-MyAccount-content,
+    .woocommerce-checkout-review-order,
+    .wc-block-checkout__sidebar,
+    .woocommerce-order
+  ) {
+  box-sizing: border-box;
+  min-width: 0;
+  background: var(--rak-white, #fff);
+  border: 1px solid var(--rak-line, #d8d8d8);
+  border-radius: var(--rak-card-radius, 20px);
+  padding: clamp(12px, 3vw, 32px);
+  box-shadow: var(--rak-shadow);
+  overflow-wrap: anywhere;
+}
+.rak-native :is(.woocommerce form, .wc-block-checkout) label {
+  font-weight: 700;
+}
+.rak-native .woocommerce form :is(.input-text, select) {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--rak-control, 52px);
+  border: 1px solid var(--rak-input, #777);
+  border-radius: var(--rak-radius, 12px);
+  padding: 10px 12px;
+  background: var(--rak-white, #fff);
+  color: var(--rak-ink, #111);
+  font: inherit;
+}
+.rak-native .wc-block-checkout .wc-block-components-text-input input {
+  min-height: var(--rak-control, 52px);
+  border-color: var(--rak-input, #777);
+  border-radius: var(--rak-radius, 12px);
+}
+.rak-native input:is([type="checkbox"], [type="radio"]) {
+  accent-color: var(--rak-action, #c90803);
+  min-width: 20px;
+  min-height: 20px;
+}
+.rak-native
+  :is(
+    .woocommerce .button,
+    .woocommerce button.button.alt,
+    .wc-block-components-button.contained
+  ) {
+  min-height: var(--rak-control, 52px);
+  border: 1px solid var(--rak-action, #c90803);
+  border-radius: var(--rak-radius, 12px);
+  padding: 12px 20px;
+  background: var(--rak-action, #c90803);
+  color: var(--rak-white, #fff);
+  font: 800 1rem/1.35 var(--rak-body, system-ui);
+  white-space: normal;
+}
+.rak-native
+  :is(
+    .woocommerce .button,
+    .woocommerce button.button.alt,
+    .wc-block-components-button.contained
+  ):hover {
+  background: var(--rak-hover, #a80703);
+  color: var(--rak-white, #fff);
+}
+.rak-native :is(.woocommerce .button, .wc-block-components-button)[disabled] {
+  background: #ececec;
+  color: #555;
+  border-color: #aaa;
+}
+.rak-native .woocommerce-MyAccount-navigation ul {
+  padding-inline-start: 0;
+  list-style: none;
+}
+.rak-native .woocommerce-MyAccount-navigation a {
+  display: block;
+  padding: 10px 12px;
+}
+.rak-native .woocommerce-MyAccount-navigation .is-active a {
+  background: var(--rak-tint, #fff0f0);
+  font-weight: 800;
+}
+.rak-native .woocommerce-info {
+  background: var(--rak-info-bg, #edf6fd);
+  color: var(--rak-info, #15456a);
+}
+.rak-native .woocommerce-message {
+  background: var(--rak-success-bg, #edf7ef);
+  color: var(--rak-success, #1d623a);
+}
+.rak-native .woocommerce-error {
+  background: var(--rak-tint, #fff0f0);
+  color: #821a13;
+}
+.rak-native .woocommerce-order-overview {
+  padding-inline-start: 0;
+}
+.rak-native .woocommerce-order-overview li {
+  float: none;
+  margin: 0 0 12px;
+}
+@media (max-width: 640px) {
+  .rak-site-nav {
+    justify-content: start;
+  }
+  .rak-native .woocommerce form .form-row {
+    width: 100%;
+    float: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rak-native *,
+  .rak-native *::before,
+  .rak-native *::after {
+    transition-duration: 0s;
+    animation-duration: 0s;
+  }
+}

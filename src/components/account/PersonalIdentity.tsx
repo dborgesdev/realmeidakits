@@ -1,3 +1,4 @@
+import FilePicker from "../FilePicker";
 import { useEffect, useState } from "react";
 import { useAccount } from "../../state/AccountContext";
 
@@ -76,21 +77,16 @@ export default function PersonalIdentity() {
               : "Nenhuma identificação cadastrada."}
         </p>
       )}
-      <label>
-        {identity?.registered
-          ? "Substituir identificação"
-          : "Enviar identificação"}
-        <input
-          type="file"
-          accept=".jpg,.jpeg,.png"
-          disabled={busy || !identity}
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            event.currentTarget.value = "";
-            if (file) void upload(file);
-          }}
-        />
-      </label>
+      <FilePicker
+        label={
+          identity?.registered
+            ? "Substituir identificação"
+            : "Enviar identificação"
+        }
+        accept=".jpg,.jpeg,.png"
+        disabled={busy || !identity}
+        onFile={(file) => void upload(file)}
+      />
       {identity && (
         <p className="field-help">
           JPG ou PNG até {(identity.maxBytes / 1048576).toLocaleString("pt-BR")}{" "}

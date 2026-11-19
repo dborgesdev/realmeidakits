@@ -63,6 +63,15 @@ final class Migrations {
                 update_option('rak_requests_capability', 1, false);
             }
         }
+        if ((int) get_option('rak_schema_version') === 4 && VoucherRepository::install()) {
+            get_role('administrator')?->add_cap(Vouchers::CAPABILITY);
+            add_role('rak_pickup_staff', 'Conferência de retirada', ['read' => true, Vouchers::CAPABILITY => true]);
+            update_option('rak_schema_version', 5, false);
+        }
+        if ((int) get_option('rak_schema_version') === 5 && NotificationQueue::install()) {
+            update_option('rak_notifications_since', gmdate('c'), false);
+            update_option('rak_schema_version', 6, false);
+        }
         if (get_option('rak_plugin_version') !== VERSION) update_option('rak_plugin_version', VERSION, false);
     }
 }

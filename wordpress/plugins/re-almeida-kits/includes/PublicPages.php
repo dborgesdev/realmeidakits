@@ -60,7 +60,11 @@ final class PublicPages {
         }
 
         $race = $found && $post ? Rest::project($post) : null;
-        $catalog = $found && !$post ? array_map([Rest::class, 'project'], self::posts()) : [];
+        $today = self::date('now', 'Y-m-d');
+        $catalog = $found && !$post
+            ? array_filter(array_map([Rest::class, 'project'], self::posts()),
+                static fn(array $entry): bool => empty($entry['raceDate']) || $entry['raceDate'] >= $today)
+            : [];
         $canonical = $found ? self::url(rtrim($path, '/')) : '';
         $title = $race['name'] ?? ($found ? 'Escolha suas corridas' : 'Corrida não encontrada');
         $description = $race
@@ -121,8 +125,8 @@ final class PublicPages {
 
     public static function availability(array $race): string {
         return match ($race['status']) {
-            'open' => 'Inscrições abertas',
-            'closed' => 'Inscrições encerradas',
+            'open' => 'Solicitações abertas',
+            'closed' => 'Solicitações encerradas',
             default => 'Indisponível',
         };
     }

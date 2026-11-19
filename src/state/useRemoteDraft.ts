@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import type { Draft, Race } from "../types/domain";
 import { useAccount } from "./AccountContext";
-import { AccountError } from "../data/accountClient";
+import { AccountError, clearContinuation } from "../data/accountClient";
+import { clearStoredDraft } from "./draftStorage";
 import { raceOptions } from "./catalogRules";
+import { initialDraft } from "./draft";
 
 type Payload = Omit<Draft, "responsible" | "order"> & { stage: string };
 type Remote = { version: number; draft: Payload | null; submitted?: boolean };
@@ -118,6 +120,16 @@ export function useRemoteDraft(
       .then(async (remote) => {
         if (!active) return;
         if (remote.submitted) {
+          const requested =
+            window.location.pathname.startsWith("/solicitacao/") ||
+            new URLSearchParams(window.location.search)
+              .get("continuar")
+              ?.startsWith("/solicitacao/");
+          if (!requested) {
+            clearStoredDraft();
+            clearContinuation();
+            restore({ ...initialDraft(), stage: "pedido" }, owner);
+          }
           try {
             remote = await request<Remote>("/account/draft/reset", "POST", {
               version: remote.version,
@@ -278,6 +290,13 @@ export function useRemoteDraft(
   }
 
   return {
+    markSubmitted: () => {
+      clearStoredDraft();
+      clearContinuation();
+      setLoaded((previous) =>
+        previous ? { ...previous, submitted: true, saved: null } : previous,
+      );
+    },
     reset,
     version: current?.version ?? 0,
     submitted: current?.submitted === true,

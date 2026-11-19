@@ -1,0 +1,133 @@
+<?php
+/** DEMONSTRAÇÃO: disposable loopback WordPress/WooCommerce only. All mail intercepted; no gateway. */
+$_SERVER['DOCUMENT_ROOT'] = dirname(realpath($argv[1]));
+define('RAK_PRIVATE_DOCUMENT_ROOT', dirname($_SERVER['DOCUMENT_ROOT']) . '/private-documents');
+require $argv[1] . '/wp-load.php';
+if (wp_parse_url(home_url(), PHP_URL_HOST) !== '127.0.0.1' || !function_exists('wc_get_order')) exit(2);
+use ReAlmeida\Kits\{Accounts, ActionLinks, DraftInput, Identity, KitOrderRepository, NotificationQueue, RaceRegistrations, Repository, RequestDrafts, RequestFinance, RequestOperations, RequestQueue, Schema, TransactionalMail, VoucherMail, VoucherRepository, Vouchers, WooCommerce};
+global $wpdb;
+$count=0;
+function prod_check($ok, string $message): void { global $count; if (!$ok) throw new RuntimeException($message); $count++; }
+function prod_cpf(int $seed): string { $cpf=str_pad((string)$seed,9,'0',STR_PAD_LEFT);for($l=9;$l<11;$l++){ $sum=0;for($i=0;$i<$l;$i++)$sum+=(int)$cpf[$i]*($l+1-$i);$d=$sum*10%11;$cpf.=$d===10?0:$d;}return $cpf; }
+$admin=(int)get_users(['role'=>'administrator','number'=>1,'fields'=>'ID'])[0];wp_set_current_user($admin);
+$owner=0;$race=0;$requests=[];$orders=[];$sessions=[];$mailCount=0;$transport=true;
+$cutoff=get_option('rak_notifications_since');
+$previousTheme=get_option('stylesheet');$registrationOption=get_option('woocommerce_enable_myaccount_registration');
+// Ensure recovery scans only the events created by this suite.
+update_option('rak_notifications_since',gmdate('c'));
+add_filter('pre_wp_mail',static function($value,$mail)use(&$mailCount,&$transport){if(str_contains($mail['subject'],'Re Almeida Kits'))$mailCount++;return $transport;},999,2);
+$notificationTable=Accounts::table('notifications');
+$lastNotification=(int)$wpdb->get_var("SELECT MAX(id) FROM $notificationTable");
+try {
+    switch_theme('re-almeida-kits');update_option('woocommerce_enable_myaccount_registration','yes');
+    prod_check((int)get_option('rak_schema_version')===6,'Migração 6 ausente.');
+    $password=wp_generate_password(32);
+    $person=['name'=>'DEMONSTRAÇÃO — titular QA','cpf'=>prod_cpf(481237),'birthDate'=>'1990-01-01','phone'=>'21999990001','email'=>'qa-'.wp_generate_uuid4().'@example.invalid','password'=>$password];
+    $owner=Accounts::create($person);prod_check(!is_wp_error($owner),'Conta sintética não criada.');
+    $race=wp_insert_post(['post_type'=>'corrida','post_status'=>'publish','post_title'=>'DEMONSTRAÇÃO — produção QA']);
+    $config=Schema::validate(['status'=>'open','priceCents'=>3000,'officialEnabled'=>true,'raceDate'=>wp_date('Y-m-d',time()+10*DAY_IN_SECONDS),'sizes'=>[],'shirtImageId'=>0,'distances'=>[['id'=>'qa-distance','label'=>'DEMONSTRAÇÃO','modality'=>'oficial']]]);
+    prod_check(!is_wp_error($config),'Configuração sintética inválida.');Repository::save($race,$config);wp_update_post(['ID'=>$race,'post_status'=>'publish']);
+    $token=bin2hex(random_bytes(16));file_put_contents(RAK_PRIVATE_DOCUMENT_ROOT.'/'.$token,'DEMONSTRAÇÃO — anexo sem dados pessoais');add_user_meta($owner,'_rak_private_document_'.$token,['mime'=>'application/pdf'],true);
+    $line=['raceId'=>(string)$race,'race'=>'DEMONSTRAÇÃO — produção QA','raceDate'=>$config['raceDate'],'participantId'=>1,'participant'=>'DEMONSTRAÇÃO — participante','cpf'=>$person['cpf'],'modality'=>'oficial','documentStatus'=>'pending_review','pickupStatus'=>'pending','bib'=>null,'documentRequirements'=>[['id'=>'qa-doc','label'=>'DEMONSTRAÇÃO — documento','required'=>true,'requiresUpload'=>true]]];
+    $snapshot=['responsible'=>$person,'lines'=>[$line],'total'=>3000,'draft'=>['participants'=>[['directoryId'=>1,'person'=>['cpf'=>$person['cpf']],'items'=>[['raceId'=>(string)$race,'modality'=>'oficial','documents'=>['qa-doc'=>$token]]]]]]];
+    unset($snapshot['responsible']['password']);
+    $seed=static function()use($owner,$snapshot,&$orders,&$requests){$o=wc_create_order(['customer_id'=>$owner]);$o->set_total(30);$o->set_billing_email($snapshot['responsible']['email']);$o->set_billing_first_name('DEMONSTRAÇÃO');$o->save();$key=wp_generate_uuid4();$id=KitOrderRepository::reserve($owner,$key,$snapshot);KitOrderRepository::attach($id,$o->get_id());$o->update_meta_data('_rak_request_id',$id);$o->save();$orders[]=$o;$requests[]=$id;return[KitOrderRepository::get($id),$o];};
+    [$row,$order]=$seed();
+    prod_check(!RaceRegistrations::conflicts([$line],false),'Pendente bloqueou CPF/corrida.');
+    prod_check(RequestFinance::payable($row,$order),'Pendente aberto não retomável.');
+    prod_check(RequestFinance::pending($owner,$snapshot)->id===$row->id,'Mesma tentativa não reutilizada.');
+    $order->update_status('failed');prod_check(!RaceRegistrations::conflicts([$line],false),'Recusado bloqueou CPF.');
+    $order->update_status('on-hold');prod_check(!RaceRegistrations::conflicts([$line],false),'Em espera bloqueou CPF.');
+    $order->set_status('pending');$order->set_date_created(time()-7*DAY_IN_SECONDS);$order->save();
+    RaceRegistrations::conflicts([$line],true);prod_check(wc_get_order($order->get_id())->has_status('pending'),'Pendente foi cancelado automaticamente.');
+    $filters=RequestQueue::filters(['race'=>(string)$race]);
+    prod_check(count(iterator_to_array(RequestQueue::entries($filters,true)))===1,'Pendente não apareceu nas exceções.');
+    $config['closesAt']=wp_date('c',time()-60);Repository::save($race,$config);
+    prod_check(!RequestFinance::payable($row,$order),'Pedido fora do período ainda retomável.');
+    prod_check(count(iterator_to_array(RequestQueue::entries($filters,true)))===0,'Pendente encerrado permaneceu corrente.');
+    prod_check(count(iterator_to_array(RequestQueue::entries(array_replace($filters,['finance_history'=>'1']),true)))===1,'Pendente encerrado desapareceu do histórico.');
+    $config['closesAt']=null;Repository::save($race,$config);
+    prod_check(!RequestQueue::past(['raceId'=>$race,'raceDate'=>current_time('Y-m-d')]),'Ocultou corrida no dia do evento.');
+    prod_check(RequestQueue::past(['raceId'=>$race,'raceDate'=>wp_date('Y-m-d',time()-DAY_IN_SECONDS)]),'Não ocultou no dia seguinte.');
+    $patch=['bib'=>'DEMO-102','documentStatus'=>'pending_review','pickupStatus'=>'pending','review'=>['id'=>'qa-doc','status'=>'rejected','reason'=>'DEMONSTRAÇÃO: imagem ilegível.']];
+    prod_check(!is_wp_error(RequestOperations::update($row,0,0,$patch)),'Rejeição antes de pagar falhou.');
+    $notifications=$wpdb->get_results($wpdb->prepare("SELECT * FROM $notificationTable WHERE request_id=%d ORDER BY id",$row->id));
+    prod_check(count($notifications)===2,'Número/rejeição não geraram exatamente duas notificações.');
+    prod_check(!is_wp_error(RequestOperations::update($row,0,1,$patch)),'Repetição de revisão falhou.');
+    prod_check((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $notificationTable WHERE request_id=%d",$row->id))===2,'Salvamento repetiu notificação.');
+    foreach($notifications as $mail){NotificationQueue::send((int)$mail->id);NotificationQueue::send((int)$mail->id);}
+    prod_check($mailCount===2,'Notificações foram enviadas mais de uma vez.');
+    prod_check(!str_contains(TransactionalMail::safeReason('CPF 123.456.789-01 ilegível'),'123.456'),'Motivo expôs identificação.');
+    prod_check(is_wp_error(RequestFinance::regularize((int)$row->id,'30','DEMONSTRAÇÃO','QA',false)),'Recebimento sem confirmação aceito.');
+    prod_check(is_wp_error(RequestFinance::regularize((int)$row->id,'29','DEMONSTRAÇÃO','QA',true)),'Recebimento de valor diferente aceito.');
+    wp_set_current_user($owner);prod_check(is_wp_error(RequestFinance::regularize((int)$row->id,'30','DEMONSTRAÇÃO','QA',true)),'Titular conseguiu regularizar financeiramente.');wp_set_current_user($admin);
+    prod_check(!is_wp_error(RequestFinance::regularize((int)$row->id,'30','DEMONSTRAÇÃO externo','QA-externo',true)),'Regularização externa falhou.');
+    $order=wc_get_order($order->get_id());prod_check(RequestQueue::paid($order),'WooCommerce não confirmou pagamento externo.');
+    prod_check((bool)$order->get_meta('_rak_external_receipt') && $order->get_transaction_id()==='QA-externo','Auditoria/integração financeira ausente.');
+    prod_check((bool)RaceRegistrations::conflicts([$line],false),'Pagamento válido não bloqueou duplicidade.');
+    prod_check(is_wp_error(RequestFinance::regularize((int)$row->id,'30','DEMONSTRAÇÃO','QA',true)),'Duplicou regularização.');
+    [$duplicate,$dupeOrder]=$seed();$dupeOrder->payment_complete();
+    prod_check((bool)wc_get_order($dupeOrder->get_id())->get_meta('_rak_payment_conflict'),'Pagamento concorrente não foi sinalizado.');
+    prod_check(count(iterator_to_array(RequestQueue::entries($filters,true)))===1,'Conflito pago não apareceu nas exceções.');
+    $order->update_meta_data('_rak_payment_conflict',gmdate('c'));$order->save();
+    $dupeOrder->update_status('refunded');Vouchers::sync($row);
+    prod_check(!wc_get_order($order->get_id())->get_meta('_rak_payment_conflict'),'Conciliação não retirou bloqueio após resolver duplicidade no WooCommerce.');
+    // Real HTTP: login roundtrip, session PDF, upload with a genuine multipart request.
+    $session=WP_Session_Tokens::get_instance($owner)->create(time()+600);$sessions[]=[$owner,$session];
+    $logged=wp_generate_auth_cookie($owner,time()+600,'logged_in',$session);$_COOKIE[LOGGED_IN_COOKIE]=$logged;wp_set_current_user($owner);
+    $input=['cookie'=>AUTH_COOKIE.'='.wp_generate_auth_cookie($owner,time()+600,'auth',$session).'; '.LOGGED_IN_COOKIE.'='.$logged,'nonce'=>wp_create_nonce('wp_rest'),'request'=>(int)$row->id,'login'=>$person['email'],'password'=>$password,'voucherUrl'=>ActionLinks::voucher((int)$row->id,0)];
+    $preview=wc_create_order(['customer_id'=>$owner]);$preview->set_billing_email($person['email']);$item=new WC_Order_Item_Product();$item->set_name('DEMONSTRAÇÃO — serviço');$item->set_quantity(1);$item->set_subtotal(30);$item->set_total(30);$preview->add_item($item);$preview->calculate_totals();$preview->save();$orders[]=$preview;
+    $input['checkoutUrl']=$preview->get_checkout_payment_url();$input['browser']=true;
+    $draftPerson=$person;unset($draftPerson['password']);
+    clean_post_cache($race);
+    $racePost=get_post($race);prod_check($racePost&&$racePost->post_type==='corrida'&&$racePost->post_status==='publish','Fixture corrida: '.wp_json_encode(['id'=>$race,'type'=>$racePost->post_type??null,'status'=>$racePost->post_status??null]));
+    $draftData=['selectedRaceIds'=>[(string)$race],'prepared'=>true,'stage'=>'participantes','participants'=>[['id'=>'p1','person'=>$draftPerson,'items'=>[['raceId'=>(string)$race,'modality'=>'oficial','distance'=>'DEMONSTRAÇÃO','kit'=>'numero','registration'=>'DEMONSTRACAO-REG','documents'=>[]]]]]];
+    $savedDraft=RequestDrafts::mutate($owner,0,static fn()=>DraftInput::clean($owner,$draftData));prod_check(!is_wp_error($savedDraft),'Rascunho do QA React inválido: '.(is_wp_error($savedDraft)?$savedDraft->get_error_message():''));
+    $proc=proc_open(['node',__DIR__.'/production-http.mjs'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);fwrite($pipes[0],json_encode($input));fclose($pipes[0]);$stdout=stream_get_contents($pipes[1]);$stderr=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);$exit=proc_close($proc);unset($_COOKIE[LOGGED_IN_COOKIE]);wp_set_current_user($admin);
+    prod_check($exit===0,'HTTP produção falhou: '.$stderr);echo $stdout;
+    wp_cache_delete($owner,'user_meta');
+    prod_check(count(Accounts::participants($owner))===1,'Continuar não persistiu exatamente um participante no cadastro.');
+    $state=RequestOperations::read($row);prod_check($state['lines'][0]['documentStatus']==='pending_review','Reenvio foi confundido com aprovação.');
+    $mail=$wpdb->get_row($wpdb->prepare("SELECT * FROM $notificationTable WHERE request_id=%d ORDER BY id DESC LIMIT 1",$row->id));
+    prod_check(str_contains($mail->subject,'reenviado') && $mail->recipient===get_option('admin_email'),'Reenvio não notificou administração.');
+    $approve=['bib'=>'DEMO-102','documentStatus'=>'pending_review','pickupStatus'=>'pending','review'=>['id'=>'qa-doc','status'=>'approved','reason'=>'']];
+    prod_check(!is_wp_error(RequestOperations::update($row,0,$state['version'],$approve)),'Aprovação do reenvio falhou.');
+    $voucher=VoucherRepository::get((int)$row->id,0);prod_check($voucher->state==='released','Regularização não liberou voucher.');
+    $input['mode']='pdf';$input['browser']=false;
+    $proc=proc_open(['node',__DIR__.'/production-http.mjs'],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);fwrite($pipes[0],json_encode($input));fclose($pipes[0]);$stdout=stream_get_contents($pipes[1]);$stderr=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);prod_check(proc_close($proc)===0,'HTTP PDF liberado falhou: '.$stderr);echo $stdout;
+    VoucherMail::send((int)$voucher->id);$mailBefore=$mailCount;
+    $operation=wp_generate_uuid4();$manual=VoucherMail::manual((int)$row->id,0,$operation,true);
+    prod_check(!is_wp_error($manual)&&$manual>0,'Reenvio manual após envio automático falhou.');
+    prod_check(VoucherMail::manual((int)$row->id,0,$operation,true)===$manual,'Reenvio do mesmo formulário duplicou evento.');
+    NotificationQueue::send($manual);NotificationQueue::send($manual);
+    prod_check($mailCount===$mailBefore+1,'Reenvio manual duplicou entrega.');
+    prod_check(VoucherRepository::get((int)$row->id,0)->token===$voucher->token,'Reenvio alterou QR.');
+    $mail=$wpdb->get_row($wpdb->prepare("SELECT * FROM $notificationTable WHERE id=%d",$manual));prod_check((int)$mail->actor===$admin&&$mail->recipient===$person['email']&&$mail->status==='sent','Auditoria do reenvio incompleta.');
+    prod_check(str_contains($mail->body,'Visualizar meu voucher')&&!str_contains($mail->body,$voucher->token),'CTA/segurança do e-mail incorretos.');
+    $direct=ActionLinks::voucher((int)$row->id,0);$path=wp_parse_url($direct,PHP_URL_PATH).'?'.wp_parse_url($direct,PHP_URL_QUERY);
+    $_GET['rak_return']=$path;prod_check(WooCommerce::returnAfterAuth('/conta')===$path,'Login não preservou PDF.');$_GET['rak_return']='https://example.invalid/steal';prod_check(WooCommerce::returnAfterAuth('/conta')==='/conta','Redirecionamento externo aceito.');unset($_GET['rak_return']);
+    $fail=NotificationQueue::enqueue('DEMONSTRACAO-failure-'.wp_generate_uuid4(),(int)$row->id,$person['email'],'DEMONSTRAÇÃO falha — Re Almeida Kits','<p>DEMONSTRAÇÃO</p>');$transport=false;
+    for($i=0;$i<5;$i++)NotificationQueue::send($fail);
+    $failure=$wpdb->get_row($wpdb->prepare("SELECT * FROM $notificationTable WHERE id=%d",$fail));prod_check($failure->status==='failed'&&(int)$failure->attempts===5,'Falha persistente não foi controlada.');
+    $transport=true;
+    $pendingManual=VoucherMail::manual((int)$row->id,0,wp_generate_uuid4(),true);
+    $order->update_status('refunded');prod_check(!RaceRegistrations::conflicts([$line],false),'Estornado integral bloqueou nova solicitação.');
+    NotificationQueue::send($pendingManual);prod_check($wpdb->get_var($wpdb->prepare("SELECT status FROM $notificationTable WHERE id=%d",$pendingManual))==='suppressed','Reenvio anunciou voucher invalidado.');
+    prod_check(is_wp_error(VoucherMail::manual((int)$row->id,0,wp_generate_uuid4(),true)),'Voucher invalidado reenviado.');
+    prod_check($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $notificationTable WHERE request_id=%d AND subject LIKE %s",$row->id,'%Intervenção necessária%'))>=1,'Falha crítica não alertou a administração.');
+    $beforeRecovery=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $notificationTable WHERE request_id=%d",$row->id));
+    NotificationQueue::recover();NotificationQueue::recover();
+    prod_check((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $notificationTable WHERE request_id=%d",$row->id))===$beforeRecovery,'Recuperação repetida duplicou notificações/alertas.');
+    echo "OK $count verificações funcionais 1.10.0 (DEMONSTRAÇÃO).\n";
+} finally {
+    switch_theme($previousTheme);update_option('woocommerce_enable_myaccount_registration',$registrationOption);
+    update_option('rak_notifications_since',$cutoff);
+    foreach($sessions as[$actor,$session])WP_Session_Tokens::get_instance($actor)->destroy($session);
+    foreach($wpdb->get_col($wpdb->prepare("SELECT id FROM $notificationTable WHERE id>%d",$lastNotification))as$id)wp_clear_scheduled_hook('rak_notification_send',[(int)$id]);
+    $wpdb->query($wpdb->prepare("DELETE FROM $notificationTable WHERE id>%d",$lastNotification));
+    foreach($requests as$id){foreach($wpdb->get_col($wpdb->prepare('SELECT id FROM '.Accounts::table('vouchers').' WHERE request_id=%d',$id))as$v)wp_clear_scheduled_hook('rak_voucher_mail',[(int)$v]);$wpdb->delete(Accounts::table('vouchers'),['request_id'=>$id]);$wpdb->delete(Accounts::table('requests'),['id'=>$id]);}
+    foreach($orders as$order)$order->delete(true);
+    if($race)wp_delete_post($race,true);
+    if(isset($token)&&is_file(RAK_PRIVATE_DOCUMENT_ROOT.'/'.$token))unlink(RAK_PRIVATE_DOCUMENT_ROOT.'/'.$token);
+    if($owner&&!is_wp_error($owner)){require_once ABSPATH.'wp-admin/includes/user.php';wp_delete_user($owner);}
+}

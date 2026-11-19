@@ -88,6 +88,13 @@ export function accountRequest<T>(
 }
 
 export function continuation(path: string | null) {
+  if (
+    path &&
+    /^\/conta\?pedido=[1-9][0-9]*(?:&documentos=[0-9]+)?(?:#pedido-[1-9][0-9]*)?$/.test(
+      path,
+    )
+  )
+    return path;
   return path &&
     path.trim() === path &&
     /^\/(?:conta|solicitacao\/(?:pedido|responsavel|participantes|documentos|condicoes|revisao|pagamento|configuracao|identificacao|dados|confirmacao)|corridas(?:\/[a-z0-9-]+)?)$/.test(

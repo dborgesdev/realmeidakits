@@ -4,11 +4,11 @@ export default function FinalCTA() {
     <section className="final-cta">
       <div className="container">
         <div>
-          <span className="eyebrow">MENOS ETAPAS FORA DA PISTA</span>
-          <h2>Tudo pronto para o próximo passo?</h2>
-          <p>Conheça a experiência de solicitar sua retirada.</p>
+          <span className="eyebrow">ESCOLHA SUA CORRIDA</span>
+          <h2>Solicite a retirada do seu kit</h2>
+          <p>Encontre sua corrida e confira as opções de retirada.</p>
         </div>
-        <Action to="/corridas">Começar agora</Action>
+        <Action to="/corridas">Solicitar kit</Action>
       </div>
     </section>
   );

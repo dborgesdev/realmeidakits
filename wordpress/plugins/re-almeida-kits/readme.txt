@@ -1,12 +1,16 @@
 === Re Almeida Kits ===
 Requires at least: 6.7
 Requires PHP: 8.3
-Stable tag: 1.8.1
+Stable tag: 1.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Cadastro de corridas no wp-admin, páginas públicas, API e integração com contas WooCommerce.
 Inclui rascunhos, documentos privados e integração opcional de pedidos com o checkout WooCommerce.
+Vouchers individuais automáticos, PDF/QR local, fila de e-mails e conferência com retirada atômica.
+Versão 1.10.0: retomada sem reserva por pedido não pago, regularização externa auditada,
+notificações operacionais, reenvio manual, acesso autenticado direto ao PDF e filtros de histórico.
+Migração incremental para esquema 6, com tabela de notificações; dados anteriores preservados.
 
 == Instalação ==
 1. Plugins > Adicionar plugin > Enviar plugin.

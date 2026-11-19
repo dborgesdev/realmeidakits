@@ -9,7 +9,11 @@ import {
   loadWordpressRaces,
   loadWordpressRace,
 } from "../src/data/wordpressClient.ts";
-import { makeSelection, isAvailable } from "../src/state/selectionRules.ts";
+import {
+  makeSelection,
+  isAvailable,
+  isPubliclyListed,
+} from "../src/state/selectionRules.ts";
 import { itemPrice } from "../src/state/pricing.ts";
 import {
   optionsReady,
@@ -212,5 +216,18 @@ test("the relative API accepts local media and WordPress models from the browser
   assert.equal(
     result.modalities[0].documents[0].template.url,
     doc.template.url,
+  );
+});
+
+test("races stay listed through the local race day", () => {
+  const race = { status: "closed", raceDate: "2026-11-10" };
+  const beforeMidnight = new Date("2026-11-11T02:59:59Z");
+  const atMidnight = new Date("2026-11-11T03:00:00Z");
+  assert.equal(isPubliclyListed(race, beforeMidnight), true);
+  assert.equal(isPubliclyListed(race, atMidnight), false);
+  assert.equal(isPubliclyListed({ status: "closed" }, atMidnight), true);
+  assert.equal(
+    isPubliclyListed({ ...race, status: "open" }, atMidnight),
+    false,
   );
 });

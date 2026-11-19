@@ -44,7 +44,7 @@ final class RequestQueue {
 
     public static function filters(array $input): array {
         $result = [];
-        foreach (['q', 'race', 'modality', 'documents', 'pickup'] as $key) {
+        foreach (['q', 'race', 'modality', 'documents', 'pickup', 'voucher', 'previous', 'finance_history', 'request'] as $key) {
             $result[$key] = is_string($input[$key] ?? null) ? sanitize_text_field(wp_unslash($input[$key])) : '';
         }
         return $result;
@@ -52,6 +52,9 @@ final class RequestQueue {
 
     public static function matches(array $entry, array $filters): bool {
         $line = $entry['line'];
+        if (($filters['request'] ?? '') !== '' && (int) $filters['request'] !== (int) $entry['row']->id) return false;
+        if (($filters['previous'] ?? '') !== '1' && self::past($line)) return false;
+        if (($filters['voucher'] ?? '') !== '' && $filters['voucher'] !== ($entry['voucher']->state ?? 'blocked')) return false;
         foreach (['race' => 'raceId', 'modality' => 'modality', 'documents' => 'documentStatus', 'pickup' => 'pickupStatus'] as $filter => $field) {
             if ($filters[$filter] !== '' && $filters[$filter] !== (string) $line[$field]) return false;
         }
@@ -63,7 +66,12 @@ final class RequestQueue {
             ($digits !== '' && preg_match('/^[\d.\s-]+$/D', $query) && str_contains($entry['cpf'], $digits));
     }
 
-    public static function entries(array $filters, bool $exceptions = false): \Generator {
+    public static function past(array $line): bool {
+        $date = $line['raceDate'] ?? (Repository::get((int) $line['raceId'])['raceDate'] ?? '');
+        return is_string($date) && $date !== '' && substr($date, 0, 10) < current_time('Y-m-d');
+    }
+
+    public static function entries(array $filters, bool $exceptions = false, bool $awaiting = false): \Generator {
         if (!function_exists('wc_get_orders')) return;
         global $wpdb;
         $table = Accounts::table('requests');
@@ -77,19 +85,29 @@ final class RequestQueue {
             update_meta_cache('user', array_unique(array_map('intval', array_column($rows, 'owner_id'))));
             foreach ($rows as $row) {
                 $order = $orders[(int) $row->order_id] ?? null;
-                if (!$order || (int) $order->get_customer_id() !== (int) $row->owner_id) continue;
+                if (!$order || (int) $order->get_customer_id() !== (int) $row->owner_id) {
+                    NotificationQueue::alert('order-link:' . $row->id, 'Solicitação ' . $row->id . ' apresenta vínculo WooCommerce indisponível ou titular divergente. Conferir o histórico antes de cobrar ou entregar.', (int) $row->id);
+                    continue;
+                }
                 $paid = self::paid($order);
-                if (!$paid && (!$exceptions || (!$order->get_date_paid() && !$order->get_total_refunded()))) continue;
-                if ($paid && $exceptions) continue;
+                $financialException = !$paid || (bool) $order->get_meta('_rak_payment_conflict');
+                if ($awaiting) {
+                    if ($paid || $order->has_status(['cancelled', 'refunded', 'failed']) || (float) $order->get_total_refunded() > 0) continue;
+                } elseif (!$exceptions && $financialException) continue;
+                if (!$financialException && $exceptions) continue;
                 $snapshot = json_decode($row->snapshot, true) ?: [];
                 $operations = RequestOperations::read($row);
+                Vouchers::sync($row);
                 foreach ($snapshot['lines'] ?? [] as $index => $original) {
                     $line = array_replace($original, $operations['lines'][$index] ?? []);
+                    if (!$paid && !$order->get_date_paid() && !(float) $order->get_total_refunded() && ($filters['finance_history'] ?? '') !== '1' && !RequestFinance::open($line)) continue;
+                    $voucher = VoucherRepository::get((int) $row->id, $index);
+                    if ($voucher && $voucher->state === 'used') $line['pickupStatus'] = 'collected';
                     [$person, $item] = self::item($snapshot, $line);
                     $holder = $snapshot['responsible']['name'] ?? '';
                     $registration = $item['registration'] ?? $line['registration'] ?? '';
                     $entry = ['row' => $row, 'index' => $index, 'line' => $line, 'holder' => $holder, 'item' => $item,
-                        'cpf' => $person['cpf'] ?? '', 'registration' => $registration, 'version' => $operations['version'], 'order' => $order];
+                        'cpf' => $person['cpf'] ?? '', 'registration' => $registration, 'version' => $operations['version'], 'order' => $order, 'voucher' => $voucher];
                     if (self::matches($entry, $filters)) yield $entry;
                 }
             }

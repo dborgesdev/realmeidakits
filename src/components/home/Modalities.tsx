@@ -4,21 +4,23 @@ import { Action } from "../UI";
 export default function Modalities() {
   return (
     <section className="container section" id="modalidades">
-      <span className="eyebrow">DO SEU JEITO</span>
-      <h2>Escolha sua modalidade</h2>
-      <p>Dois caminhos, a mesma praticidade para solicitar a retirada.</p>
+      <span className="eyebrow">OPÇÕES POR CORRIDA</span>
+      <h2>Modalidades de retirada</h2>
+      <p>
+        Consulte quais modalidades estão disponíveis para a corrida escolhida.
+      </p>
       <div className="grid two modality-grid">
         {[
           {
-            name: "Kit oficial",
-            text: "Para quem já tem inscrição na corrida. Confira os documentos exigidos pelo evento.",
+            name: "Kit Oficial",
+            text: "Para quem já tem inscrição oficial e precisa solicitar a retirada do kit.",
             image: "modality-kit-oficial.webp",
             Icon: Shirt,
             query: "oficial",
           },
           {
             name: "Associado à APPAI",
-            text: "Informe sua matrícula e escolha camiseta com tamanho ou somente número de peito.",
+            text: "Informe sua matrícula. Conforme a corrida, escolha camiseta com número ou apenas o número de peito.",
             image: "modality-associado-appai.webp",
             Icon: UsersRound,
             query: "appai",
@@ -30,10 +32,10 @@ export default function Modalities() {
               width="400"
               height="400"
               loading="lazy"
-              alt={`Imagem conceitual da modalidade ${name}`}
+              alt=""
             />
             <div>
-              <Icon className="red" size={32} />
+              <Icon className="red" size={32} aria-hidden="true" />
               <h3>{name}</h3>
               <p>{text}</p>
               <Action to={`/corridas?modalidade=${query}`}>

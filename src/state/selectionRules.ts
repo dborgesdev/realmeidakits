@@ -10,12 +10,26 @@ export function isAvailable(race: Race, now = Date.now()) {
 }
 export function availabilityLabel(race: Race, now = Date.now()) {
   return isAvailable(race, now)
-    ? "Inscrições abertas"
+    ? "Solicitações abertas"
     : race.status === "unavailable" ||
         (race.opensAt && Date.parse(race.opensAt) > now)
       ? "Indisponível"
-      : "Inscrições encerradas";
+      : "Solicitações encerradas";
 }
+const localRaceDay = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+export function isPubliclyListed(
+  race: Pick<Race, "raceDate">,
+  now = new Date(),
+) {
+  return !race.raceDate || race.raceDate >= localRaceDay.format(now);
+}
+
 export function makeSelection(race: Race, preferred?: Modality): RaceSelection {
   const mode =
     race.modalities.find((m) => m.id === preferred) || race.modalities[0];

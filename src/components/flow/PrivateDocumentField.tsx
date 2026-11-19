@@ -1,3 +1,4 @@
+import FilePicker from "../FilePicker";
 import { useState } from "react";
 import type {
   DocumentRequirement,
@@ -109,20 +110,12 @@ export default function PrivateDocumentField({
 
   return (
     <div {...field(target)} tabIndex={-1} aria-busy={!!operation}>
-      <label>
-        {token ? "Substituir " : "Anexar "}
-        {document.label}
-        <input
-          type="file"
-          accept={personal ? ".jpg,.jpeg,.png" : ".pdf,.jpg,.jpeg,.png"}
-          disabled={!editable}
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            event.currentTarget.value = "";
-            if (file) void run("Enviando documento…", () => upload(file));
-          }}
-        />
-      </label>
+      <FilePicker
+        label={(token ? "Substituir " : "Anexar ") + document.label}
+        accept={personal ? ".jpg,.jpeg,.png" : ".pdf,.jpg,.jpeg,.png"}
+        disabled={!editable}
+        onFile={(file) => void run("Enviando documento…", () => upload(file))}
+      />
       <FieldError id={target} />
       {personal && canReuse && !reused && (
         <div className="account-actions">

@@ -1,4 +1,4 @@
-import { digits } from "./identityRules.ts";
+import { digits, normalizePhone } from "./identityRules.ts";
 
 export type MaskedIdentityField = "cpf" | "phone" | "birthDate";
 
@@ -18,7 +18,9 @@ export function formatIdentity(
       .filter(Boolean)
       .join("/");
   }
-  const number = digits(value).slice(0, 11);
+  const number = (
+    key === "phone" ? normalizePhone(value) : digits(value)
+  ).slice(0, 11);
   if (key === "cpf") {
     const head = [number.slice(0, 3), number.slice(3, 6), number.slice(6, 9)]
       .filter(Boolean)

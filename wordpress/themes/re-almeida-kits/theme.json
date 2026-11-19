@@ -1,0 +1,35 @@
+{
+  "version": 3,
+  "settings": {
+    "color": {
+      "palette": [
+        {
+          "slug": "rak-ink",
+          "name": "Preto Re Almeida",
+          "color": "var(--rak-ink, #111)"
+        },
+        {
+          "slug": "rak-white",
+          "name": "Branco",
+          "color": "var(--rak-white, #fff)"
+        },
+        {
+          "slug": "rak-action",
+          "name": "Vermelho Re Almeida",
+          "color": "var(--rak-action, #c90803)"
+        }
+      ]
+    }
+  },
+  "styles": {
+    "typography": {
+      "fontFamily": "var(--rak-body, system-ui)",
+      "lineHeight": "1.55"
+    },
+    "elements": {
+      "heading": {
+        "typography": { "fontFamily": "var(--rak-heading, system-ui)" }
+      }
+    }
+  }
+}

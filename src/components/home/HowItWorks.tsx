@@ -1,24 +1,30 @@
-import { CalendarCheck, Files, CreditCard, Ticket } from "lucide-react";
+import {
+  CalendarCheck,
+  ChevronRight,
+  Files,
+  UsersRound,
+  Ticket,
+} from "lucide-react";
 const steps = [
   {
     Icon: CalendarCheck,
-    title: "Escolha suas corridas",
-    text: "Selecione uma ou várias provas e configure cada modalidade.",
+    title: "Escolha a corrida",
+    text: "Veja as corridas disponíveis e selecione as que você procura.",
+  },
+  {
+    Icon: UsersRound,
+    title: "Cadastre os participantes",
+    text: "Informe os dados de cada pessoa e escolha as opções de retirada.",
   },
   {
     Icon: Files,
-    title: "Organize os documentos",
-    text: "Preencha seus dados e confira o que a corrida exige.",
-  },
-  {
-    Icon: CreditCard,
-    title: "Revise seu pedido",
-    text: "Confira os dados e os valores do serviço de retirada.",
+    title: "Envie os documentos",
+    text: "Anexe o que a corrida exige e confira os dados antes de finalizar.",
   },
   {
     Icon: Ticket,
-    title: "Acompanhe cada corrida",
-    text: "Veja números de peito, retirada e vouchers ilustrativos por prova.",
+    title: "Acompanhe o pedido",
+    text: "Consulte a situação do pedido e as informações de retirada.",
   },
 ];
 export default function HowItWorks() {
@@ -27,19 +33,28 @@ export default function HowItWorks() {
       <div className="container">
         <span className="eyebrow">DO INÍCIO À RETIRADA</span>
         <h2>Como funciona</h2>
-        <p>Uma etapa de cada vez. Tudo em um só lugar.</p>
-        <div className="grid four steps">
+        <p>Da escolha da corrida ao acompanhamento do pedido.</p>
+        <ol className="grid four steps">
           {steps.map(({ Icon, title, text }, i) => (
-            <article className="panel" key={title}>
+            <li className="panel" key={title}>
               <div className="step-top">
-                <span className="step-number">0{i + 1}</span>
-                <Icon size={30} />
+                <Icon size={32} aria-hidden="true" />
               </div>
+              <span className="step-number" aria-hidden="true">
+                {i + 1}
+              </span>
               <h3>{title}</h3>
+              {i < steps.length - 1 && (
+                <ChevronRight
+                  className="step-connector"
+                  size={20}
+                  aria-hidden="true"
+                />
+              )}
               <p>{text}</p>
-            </article>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );

@@ -1,10 +1,12 @@
+import { ChevronDown } from "lucide-react";
+
 export default function FAQ() {
   return (
     <section className="container section faq">
       <div>
-        <span className="eyebrow">PODE PERGUNTAR</span>
-        <h2>Antes de começar</h2>
-        <p>Respostas para seguir com tranquilidade.</p>
+        <span className="eyebrow">DÚVIDAS FREQUENTES</span>
+        <h2>Perguntas e respostas</h2>
+        <p>Confira o que você precisa saber antes de solicitar a retirada.</p>
       </div>
       <div>
         {[
@@ -22,11 +24,14 @@ export default function FAQ() {
           ],
           [
             "Como consultar os documentos exigidos?",
-            "Confira os documentos e modelos de autorização na corrida e na modalidade selecionadas.",
+            "Ao preencher a solicitação, consulte os documentos e os modelos exigidos para a corrida e a modalidade escolhidas.",
           ],
         ].map(([q, a]) => (
           <details key={q}>
-            <summary>{q}</summary>
+            <summary>
+              {q}
+              <ChevronDown size={20} aria-hidden="true" />
+            </summary>
             <p>{a}</p>
           </details>
         ))}

@@ -3,13 +3,12 @@ import { Action } from "../UI";
 export default function Guidance() {
   return (
     <section className="container guidance">
-      <div>
-        <span className="eyebrow">INFORMAÇÃO QUE FAZ DIFERENÇA</span>
+      <div className="guidance-intro">
+        <span className="eyebrow">SERVIÇO DE RETIRADA</span>
         <h2>Retirada pela Re Almeida</h2>
         <p>
-          A autorização permite que a Re Almeida retire fisicamente o kit por
-          você. Cada pessoa mantém sua própria identificação e autorização por
-          corrida.
+          Com a autorização exigida pela corrida, a Re Almeida pode retirar o
+          kit em seu nome.
         </p>
         <p>
           As exigências variam por corrida. Consulte os documentos antes de
@@ -21,7 +20,7 @@ export default function Guidance() {
       </div>
       <div className="document-note">
         <ShieldCheck size={45} className="red" />
-        <h3>Documentos, sem complicação</h3>
+        <h3>O que a corrida pode pedir</h3>
         <p>
           <Check size={18} /> Comprovante de inscrição, quando exigido
         </p>

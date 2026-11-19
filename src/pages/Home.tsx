@@ -1,3 +1,4 @@
+import "./home.css";
 import Hero from "../components/home/Hero";
 import Events from "../components/home/Events";
 import HowItWorks from "../components/home/HowItWorks";
@@ -7,7 +8,7 @@ import FAQ from "../components/home/FAQ";
 import FinalCTA from "../components/home/FinalCTA";
 export default function Home() {
   return (
-    <>
+    <div className="home">
       <Hero />
       <Events />
       <HowItWorks />
@@ -15,6 +16,6 @@ export default function Home() {
       <Guidance />
       <FAQ />
       <FinalCTA />
-    </>
+    </div>
   );
 }

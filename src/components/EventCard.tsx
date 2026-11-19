@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin } from "lucide-react";
+import { CalendarDays, MapPin, PackageCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { asset } from "../data/assets";
 import type { Race } from "../types/domain";
@@ -18,7 +18,7 @@ export default function EventCard({ event }: { event: Race }) {
             src={asset(event.image)}
             width="640"
             height="480"
-            alt={`Imagem: ${event.name}`}
+            alt=""
             loading="lazy"
           />
         ) : (
@@ -26,43 +26,37 @@ export default function EventCard({ event }: { event: Race }) {
         )}
       </div>
       <div className="card-body">
-        <h3>{event.name}</h3>
+        <h3>
+          <Link
+            className="event-card-link"
+            reloadDocument
+            to={`/corridas/${event.slug}`}
+          >
+            {event.name}
+          </Link>
+        </h3>
         <span className={`availability ${available ? "available" : "closed"}`}>
           {availabilityLabel(event)}
         </span>
         <p className="icon-line">
-          <CalendarDays size={17} />
+          <CalendarDays size={19} aria-hidden="true" />
           {event.raceDate
             ? `${new Date(event.raceDate + "T12:00:00").toLocaleDateString("pt-BR")}`
             : "Data a confirmar"}
+          {event.raceTime && ` · ${event.raceTime}`}
         </p>
-        {event.closesAt && (
-          <p className="caption">
-            Prazo:{" "}
-            {new Date(event.closesAt).toLocaleString("pt-BR", {
-              timeZone: "America/Sao_Paulo",
-              dateStyle: "short",
-              timeStyle: "short",
-            })}{" "}
-            (Brasília)
-          </p>
-        )}
         <p className="icon-line">
-          <MapPin size={17} />
+          <MapPin size={19} aria-hidden="true" />
           {event.location || "Local a confirmar"}
         </p>
-        <p className="caption">
-          {event.modalities.map((m) => m.label).join(" · ")}
-        </p>
+        {event.modalities.length > 0 && (
+          <p className="icon-line">
+            <PackageCheck size={19} aria-hidden="true" />
+            {event.modalities.map((m) => m.label).join(" · ")}
+          </p>
+        )}
         <div className="card-selection">
           <RaceSelectionButton event={event} />
-          <Link
-            className="text-link"
-            reloadDocument
-            to={`/corridas/${event.slug}`}
-          >
-            Conhecer corrida →
-          </Link>
         </div>
       </div>
     </article>

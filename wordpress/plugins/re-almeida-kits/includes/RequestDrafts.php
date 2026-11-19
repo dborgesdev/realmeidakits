@@ -34,7 +34,7 @@ final class RequestDrafts {
         if (!is_object($decoded) || !isset($decoded->version)) return ['version' => 0, 'draft' => null];
         $result = (array) $decoded;
         if (KitOrderRepository::ready() && !empty($result['key'])) {
-            $result['submitted'] = (bool) KitOrderRepository::find($owner, $result['key']);
+            $result['submitted'] = (bool) KitOrderRepository::find($owner, $result['key']) || (bool) get_user_meta($owner, '_rak_draft_order_' . $result['key'], true);
         }
         return $result;
     }
